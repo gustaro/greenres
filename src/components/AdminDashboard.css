@@ -6,7 +6,7 @@
     grid-template-columns: 248px minmax(0, 1fr)
 }
 
-.ad-sidebar {
+.admin-sidebar {
     position: sticky;
     top: 0;
     height: 100vh;
@@ -18,7 +18,7 @@
     z-index: 20
 }
 
-.ad-brand {
+.admin-brand {
     border: 0;
     background: transparent;
     color: inherit;
@@ -29,7 +29,7 @@
     text-align: left
 }
 
-.ad-brand>span {
+.admin-brand>span {
     width: 42px;
     height: 42px;
     display: grid;
@@ -40,28 +40,28 @@
     font-weight: 1000
 }
 
-.ad-brand div {
+.admin-brand div {
     display: grid;
     gap: 3px
 }
 
-.ad-brand b {
+.admin-brand b {
     font-size: 19px
 }
 
-.ad-brand small {
+.admin-brand small {
     color: #a9c4b1;
     font-size: 9px;
     letter-spacing: 1.5px
 }
 
-.ad-sidebar nav {
+.admin-sidebar nav {
     display: grid;
     gap: 5px;
     margin-top: 15px
 }
 
-.ad-sidebar nav button {
+.admin-sidebar nav button {
     min-height: 46px;
     border: 0;
     border-radius: 9px;
@@ -75,18 +75,18 @@
     font-weight: 700
 }
 
-.ad-sidebar nav button i {
+.admin-sidebar nav button i {
     width: 23px;
     font-size: 19px;
     font-style: normal;
     text-align: center
 }
 
-.ad-sidebar nav button span {
+.admin-sidebar nav button span {
     flex: 1
 }
 
-.ad-sidebar nav button>b {
+.admin-sidebar nav button>b {
     min-width: 22px;
     height: 22px;
     border-radius: 11px;
@@ -97,17 +97,17 @@
     font-size: 11px
 }
 
-.ad-sidebar nav button:hover,
-.ad-sidebar nav button.active {
+.admin-sidebar nav button:hover,
+.admin-sidebar nav button.active {
     background: rgba(184, 255, 53, .13);
     color: #d8ff8d
 }
 
-.ad-sidebar nav button.active {
+.admin-sidebar nav button.active {
     box-shadow: inset 3px 0 #b8ff35
 }
 
-.ad-admin-card {
+.admin-admin-card {
     margin-top: auto;
     padding: 14px 10px 0;
     border-top: 1px solid rgba(255, 255, 255, .12);
@@ -116,7 +116,7 @@
     gap: 10px
 }
 
-.ad-admin-card>span {
+.admin-admin-card>span {
     width: 36px;
     height: 36px;
     border-radius: 50%;
@@ -127,31 +127,31 @@
     font-weight: 900
 }
 
-.ad-admin-card div {
+.admin-admin-card div {
     display: grid;
     gap: 3px
 }
 
-.ad-admin-card small {
+.admin-admin-card small {
     color: #9eb2a3;
     font-size: 11px
 }
 
-.ad-main {
+.admin-main {
     min-width: 0
 }
 
-.ad-content {
+.admin-content {
     width: min(1320px, 100%);
     margin: auto;
     padding: 42px clamp(24px, 4vw, 58px) 70px
 }
 
-.ad-mobile-top {
+.admin-mobile-top {
     display: none
 }
 
-.ad-page-head {
+.admin-page-head {
     display: flex;
     justify-content: space-between;
     align-items: flex-end;
@@ -159,31 +159,31 @@
     margin-bottom: 28px
 }
 
-.ad-page-head span {
+.admin-page-head span {
     color: #15952b;
     font-size: 11px;
     letter-spacing: 2px;
     font-weight: 900
 }
 
-.ad-page-head h1 {
+.admin-page-head h1 {
     margin: 5px 0;
     font-size: clamp(27px, 3vw, 38px);
     letter-spacing: -.8px
 }
 
-.ad-page-head p {
+.admin-page-head p {
     margin: 0;
     color: #718075;
     font-size: 14px
 }
 
-.ad-page-actions {
+.admin-page-actions {
     flex: none
 }
 
-.ad-primary,
-.ad-danger {
+.admin-primary,
+.admin-danger {
     border: 0;
     border-radius: 8px;
     min-height: 42px;
@@ -191,41 +191,41 @@
     font-weight: 900
 }
 
-.ad-primary {
+.admin-primary {
     background: #15952b;
     color: #fff;
     box-shadow: 0 6px 14px rgba(21, 149, 43, .18)
 }
 
-.ad-primary:hover {
+.admin-primary:hover {
     background: #107d23
 }
 
-.ad-danger {
+.admin-danger {
     background: #fff0ed;
     color: #c33b2d
 }
 
-.ad-link,
-.ad-text-danger {
+.admin-link,
+.admin-text-danger {
     border: 0;
     background: transparent;
     font-weight: 800;
     color: #15952b
 }
 
-.ad-text-danger {
+.admin-text-danger {
     color: #c94a3e
 }
 
-.ad-stats {
+.admin-stats {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 17px;
     margin-bottom: 22px
 }
 
-.ad-stats article {
+.admin-stats article {
     background: #fff;
     border: 1px solid #e3e9e0;
     border-radius: 14px;
@@ -237,7 +237,7 @@
     box-shadow: 0 5px 18px rgba(40, 65, 43, .045)
 }
 
-.ad-stats article>span {
+.admin-stats article>span {
     grid-row: 1/4;
     width: 44px;
     height: 44px;
@@ -248,48 +248,48 @@
     font-weight: 900
 }
 
-.ad-stats .green {
+.admin-stats .green {
     background: #e4f8e7;
     color: #15952b
 }
 
-.ad-stats .lime {
+.admin-stats .lime {
     background: #eeffd0;
     color: #648e0d
 }
 
-.ad-stats .blue {
+.admin-stats .blue {
     background: #e4f2ff;
     color: #2a75b5
 }
 
-.ad-stats .orange {
+.admin-stats .orange {
     background: #fff1db;
     color: #da7b15
 }
 
-.ad-stats small {
+.admin-stats small {
     color: #77827a
 }
 
-.ad-stats strong {
+.admin-stats strong {
     font-size: 24px
 }
 
-.ad-stats em {
+.admin-stats em {
     font-size: 10px;
     font-style: normal;
     color: #91a095
 }
 
-.ad-overview-grid,
-.ad-report-grid {
+.admin-overview-grid,
+.admin-report-grid {
     display: grid;
     grid-template-columns: 1.3fr .9fr;
     gap: 20px
 }
 
-.ad-panel {
+.admin-panel {
     background: #fff;
     border: 1px solid #e1e7df;
     border-radius: 14px;
@@ -297,7 +297,7 @@
     overflow: hidden
 }
 
-.ad-panel-head {
+.admin-panel-head {
     padding: 19px 21px;
     border-bottom: 1px solid #edf0eb;
     display: flex;
@@ -305,18 +305,18 @@
     justify-content: space-between
 }
 
-.ad-panel-head h2 {
+.admin-panel-head h2 {
     font-size: 17px;
     margin: 0 0 3px
 }
 
-.ad-panel-head p {
+.admin-panel-head p {
     margin: 0;
     color: #8a968c;
     font-size: 11px
 }
 
-.ad-order-list>div {
+.admin-order-list>div {
     display: grid;
     grid-template-columns: 38px minmax(100px, 1fr) auto auto;
     gap: 10px;
@@ -325,11 +325,11 @@
     border-bottom: 1px solid #f0f2ee
 }
 
-.ad-order-list>div:last-child {
+.admin-order-list>div:last-child {
     border-bottom: 0
 }
 
-.ad-order-icon {
+.admin-order-icon {
     width: 34px;
     height: 34px;
     border-radius: 9px;
@@ -339,22 +339,22 @@
     color: #15952b
 }
 
-.ad-order-list div div {
+.admin-order-list div div {
     display: grid
 }
 
-.ad-order-list small,
-.ad-top-products small {
+.admin-order-list small,
+.admin-top-products small {
     color: #8b958d;
     font-size: 10px;
     margin-top: 3px
 }
 
-.ad-order-list strong {
+.admin-order-list strong {
     font-size: 13px
 }
 
-.ad-badge {
+.admin-badge {
     display: inline-flex;
     width: max-content;
     border-radius: 20px;
@@ -367,18 +367,18 @@
     white-space: nowrap
 }
 
-.ad-badge.pending,
-.ad-badge.warning {
+.admin-badge.pending,
+.admin-badge.warning {
     background: #fff2d8;
     color: #9c6412
 }
 
-.ad-badge.blocked {
+.admin-badge.blocked {
     background: #ffe8e5;
     color: #b84539
 }
 
-.ad-top-products>div {
+.admin-top-products>div {
     padding: 11px 20px;
     display: grid;
     grid-template-columns: 22px 43px 1fr auto;
@@ -387,33 +387,33 @@
     border-bottom: 1px solid #f0f2ee
 }
 
-.ad-top-products>div:last-child {
+.admin-top-products>div:last-child {
     border: 0
 }
 
-.ad-top-products>div>b {
+.admin-top-products>div>b {
     color: #8b968d
 }
 
-.ad-top-products img {
+.admin-top-products img {
     width: 43px;
     height: 43px;
     object-fit: cover;
     border-radius: 9px
 }
 
-.ad-top-products span {
+.admin-top-products span {
     display: grid;
     font-size: 12px;
     font-weight: 800
 }
 
-.ad-top-products strong {
+.admin-top-products strong {
     font-size: 12px;
     color: #15952b
 }
 
-.ad-empty {
+.admin-empty {
     grid-column: 1/-1;
     padding: 65px 20px;
     display: grid;
@@ -424,36 +424,36 @@
     border-radius: 14px
 }
 
-.ad-empty span {
+.admin-empty span {
     font-size: 42px;
     color: #a9b7aa
 }
 
-.ad-empty p {
+.admin-empty p {
     margin: 8px 0 0
 }
 
-.ad-order-cards {
+.admin-order-cards {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 18px;
     margin-bottom: 24px
 }
 
-.ad-order-card {
+.admin-order-card {
     background: #fff;
     border-radius: 14px;
     border: 1px solid #e2e8df;
     padding: 20px
 }
 
-.ad-order-card header {
+.admin-order-card header {
     display: flex;
     justify-content: space-between;
     align-items: start
 }
 
-.ad-order-card header span {
+.admin-order-card header span {
     display: inline-block;
     color: #9c6412;
     background: #fff2d8;
@@ -463,46 +463,46 @@
     font-weight: 900
 }
 
-.ad-order-card h3 {
+.admin-order-card h3 {
     margin: 8px 0 0
 }
 
-.ad-order-card header>strong {
+.admin-order-card header>strong {
     font-size: 22px;
     color: #15952b
 }
 
-.ad-order-card>p {
+.admin-order-card>p {
     color: #77837a;
     font-size: 12px
 }
 
-.ad-order-card ul {
+.admin-order-card ul {
     list-style: none;
     padding: 12px 0;
     margin: 12px 0;
     border-block: 1px solid #edf0eb
 }
 
-.ad-order-card li {
+.admin-order-card li {
     display: flex;
     justify-content: space-between;
     padding: 5px 0;
     font-size: 12px
 }
 
-.ad-order-card footer {
+.admin-order-card footer {
     display: flex;
     justify-content: flex-end;
     gap: 8px
 }
 
-.ad-history {
+.admin-history {
     margin-top: 24px
 }
 
-.ad-inline-form,
-.ad-grid-form {
+.admin-inline-form,
+.admin-grid-form {
     background: #fff;
     border: 1px solid #e1e7df;
     border-radius: 14px;
@@ -513,24 +513,24 @@
     gap: 12px
 }
 
-.ad-inline-form label {
+.admin-inline-form label {
     flex: 1
 }
 
-.ad-grid-form {
+.admin-grid-form {
     display: grid;
     grid-template-columns: 1.2fr 1.2fr 1fr .6fr .7fr auto
 }
 
-.ad-grid-form.promo,
-.ad-grid-form.stock {
+.admin-grid-form.promo,
+.admin-grid-form.stock {
     grid-template-columns: 1fr 1.5fr .7fr auto
 }
 
 
 
-.ad-inline-form label,
-.ad-grid-form label {
+.admin-inline-form label,
+.admin-grid-form label {
     display: grid;
     gap: 6px;
     font-size: 10px;
@@ -538,11 +538,11 @@
     color: #627066
 }
 
-.ad-inline-form input,
-.ad-grid-form input,
-.ad-grid-form select,
-.ad-table-wrap select,
-.ad-number-input {
+.admin-inline-form input,
+.admin-grid-form input,
+.admin-grid-form select,
+.admin-table-wrap select,
+.admin-number-input {
     min-height: 40px;
     border: 1px solid #dce4da;
     border-radius: 7px;
@@ -551,24 +551,24 @@
     outline: none
 }
 
-.ad-inline-form input:focus,
-.ad-grid-form input:focus,
-.ad-grid-form select:focus {
+.admin-inline-form input:focus,
+.admin-grid-form input:focus,
+.admin-grid-form select:focus {
     border-color: #15952b;
     box-shadow: 0 0 0 3px rgba(21, 149, 43, .1)
 }
 
-.ad-table-wrap {
+.admin-table-wrap {
     overflow-x: auto
 }
 
-.ad-table-wrap table {
+.admin-table-wrap table {
     width: 100%;
     border-collapse: collapse;
     min-width: 680px
 }
 
-.ad-table-wrap th {
+.admin-table-wrap th {
     background: #f8faf6;
     color: #77847a;
     font-size: 10px;
@@ -578,47 +578,47 @@
     padding: 12px 18px
 }
 
-.ad-table-wrap td {
+.admin-table-wrap td {
     padding: 13px 18px;
     border-top: 1px solid #edf0eb;
     font-size: 12px
 }
 
-.ad-table-wrap select {
+.admin-table-wrap select {
     min-width: 110px;
     min-height: 34px
 }
 
-.ad-number-input {
+.admin-number-input {
     width: 90px;
     min-height: 34px
 }
 
-.ad-product-cell,
-.ad-user-cell {
+.admin-product-cell,
+.admin-user-cell {
     display: flex;
     align-items: center;
     gap: 10px
 }
 
-.ad-product-cell img {
+.admin-product-cell img {
     width: 43px;
     height: 43px;
     border-radius: 8px;
     object-fit: cover
 }
 
-.ad-product-cell span {
+.admin-product-cell span {
     display: grid;
     min-width: 150px
 }
 
-.ad-product-cell small {
+.admin-product-cell small {
     color: #8e9890;
     margin-top: 3px
 }
 
-.ad-user-cell>span {
+.admin-user-cell>span {
     width: 34px;
     height: 34px;
     background: #e9f7e6;
@@ -629,24 +629,24 @@
     font-weight: 900
 }
 
-.ad-user-cell>div {
+.admin-user-cell>div {
     display: grid;
     gap: 3px
 }
 
-.ad-user-cell small {
+.admin-user-cell small {
     color: #8e9890;
     font-size: 10px
 }
 
-.ad-promo-grid {
+.admin-promo-grid {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 20px;
     align-items: flex-start;
 }
 
-.ad-promo-grid article {
+.admin-promo-grid article {
     background: #fff;
     border: 1px solid #e1e7df;
     border-radius: 16px;
@@ -655,17 +655,17 @@
     transition: transform 0.2s, box-shadow 0.2s;
 }
 
-.ad-promo-grid article:hover {
+.admin-promo-grid article:hover {
     transform: translateY(-4px);
     box-shadow: 0 12px 24px rgba(30, 43, 32, .06);
 }
 
-.ad-promo-grid article.inactive {
+.admin-promo-grid article.inactive {
     filter: grayscale(1);
     opacity: 0.6;
 }
 
-.ad-promo-badge {
+.admin-promo-badge {
     position: absolute;
     top: 14px;
     right: 14px;
@@ -682,15 +682,15 @@
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
-.ad-promo-content {
+.admin-promo-content {
     padding: 20px;
 }
 
-.ad-promo-title-row {
+.admin-promo-title-row {
     margin-bottom: 8px;
 }
 
-.ad-promo-title-row .code {
+.admin-promo-title-row .code {
     display: inline-block;
     padding: 4px 10px;
     background: #e8ffd0;
@@ -701,7 +701,7 @@
     letter-spacing: 0.5px;
 }
 
-.ad-promo-grid h2 {
+.admin-promo-grid h2 {
     margin: 0 0 6px;
     font-size: 22px;
     font-weight: 800;
@@ -709,7 +709,7 @@
     line-height: 1.2;
 }
 
-.ad-promo-grid p {
+.admin-promo-grid p {
     color: #627066;
     font-size: 13px;
     margin: 0 0 16px;
@@ -717,13 +717,13 @@
     line-height: 1.5;
 }
 
-.ad-promo-discount strong {
+.admin-promo-discount strong {
     font-size: 20px;
     color: #15952b;
     font-weight: 900;
 }
 
-.ad-promo-grid footer {
+.admin-promo-grid footer {
     padding: 16px 20px;
     border-top: 1px solid #edf0eb;
     background: #fafcfa;
@@ -732,7 +732,7 @@
     border-radius: 0 0 16px 16px;
 }
 
-.ad-promo-grid footer button {
+.admin-promo-grid footer button {
     border: 0;
     background: transparent;
     color: #15952b;
@@ -742,11 +742,11 @@
     transition: color 0.15s;
 }
 
-.ad-promo-grid footer button:hover {
+.admin-promo-grid footer button:hover {
     color: #0f7520;
 }
 
-.ad-stepper {
+.admin-stepper {
     display: inline-flex;
     align-items: center;
     border: 1px solid #dce4da;
@@ -754,7 +754,7 @@
     overflow: hidden
 }
 
-.ad-stepper button {
+.admin-stepper button {
     width: 30px;
     height: 30px;
     border: 0;
@@ -763,32 +763,32 @@
     font-weight: 900
 }
 
-.ad-stepper span {
+.admin-stepper span {
     min-width: 35px;
     text-align: center;
     font-weight: 800
 }
 
-.ad-stats.report {
+.admin-stats.report {
     grid-template-columns: repeat(3, 1fr)
 }
 
-.ad-stats.report article {
+.admin-stats.report article {
     display: grid;
     grid-template-columns: 1fr
 }
 
-.ad-report-grid {
+.admin-report-grid {
     grid-template-columns: 1.2fr .8fr
 }
 
-.ad-bars {
+.admin-bars {
     padding: 20px;
     display: grid;
     gap: 15px
 }
 
-.ad-bars>div {
+.admin-bars>div {
     display: grid;
     grid-template-columns: minmax(120px, 1fr) 2fr 28px;
     gap: 10px;
@@ -796,27 +796,27 @@
     font-size: 11px
 }
 
-.ad-bars>div>div {
+.admin-bars>div>div {
     height: 8px;
     background: #edf2e9;
     border-radius: 5px;
     overflow: hidden
 }
 
-.ad-bars i {
+.admin-bars i {
     display: block;
     height: 100%;
     border-radius: 5px;
     background: linear-gradient(90deg, #15952b, #b8ff35)
 }
 
-.ad-payment-list {
+.admin-payment-list {
     padding: 20px;
     display: grid;
     gap: 21px
 }
 
-.ad-payment-list>div {
+.admin-payment-list>div {
     position: relative;
     padding-bottom: 11px;
     display: flex;
@@ -824,7 +824,7 @@
     font-size: 12px
 }
 
-.ad-payment-list i {
+.admin-payment-list i {
     position: absolute;
     bottom: 0;
     left: 0;
@@ -833,11 +833,11 @@
     border-radius: 3px
 }
 
-.ad-payment-list b {
+.admin-payment-list b {
     color: #15952b
 }
 
-.ad-toast {
+.admin-toast {
     position: fixed;
     z-index: 100;
     right: 24px;
@@ -856,49 +856,49 @@
         grid-template-columns: 82px minmax(0, 1fr)
     }
 
-    .ad-sidebar {
+    .admin-sidebar {
         padding-inline: 10px
     }
 
-    .ad-sidebar .ad-brand div,
-    .ad-sidebar nav button span,
-    .ad-sidebar .ad-admin-card div {
+    .admin-sidebar .admin-brand div,
+    .admin-sidebar nav button span,
+    .admin-sidebar .admin-admin-card div {
         display: none
     }
 
-    .ad-sidebar .ad-brand {
+    .admin-sidebar .admin-brand {
         justify-content: center;
         padding-inline: 0
     }
 
-    .ad-sidebar nav button {
+    .admin-sidebar nav button {
         justify-content: center;
         padding: 0
     }
 
-    .ad-sidebar nav button.active {
+    .admin-sidebar nav button.active {
         box-shadow: inset 0 -3px #b8ff35
     }
 
-    .ad-admin-card {
+    .admin-admin-card {
         justify-content: center;
         padding-inline: 0
     }
 
-    .ad-stats {
+    .admin-stats {
         grid-template-columns: repeat(2, 1fr)
     }
 
-    .ad-grid-form {
+    .admin-grid-form {
         grid-template-columns: repeat(3, 1fr)
     }
 
-    .ad-grid-form.promo,
-    .ad-grid-form.stock {
+    .admin-grid-form.promo,
+    .admin-grid-form.stock {
         grid-template-columns: repeat(2, 1fr)
     }
 
-    .ad-promo-grid {
+    .admin-promo-grid {
         grid-template-columns: repeat(2, 1fr)
     }
 }
@@ -909,7 +909,7 @@
         padding-bottom: 72px
     }
 
-    .ad-sidebar {
+    .admin-sidebar {
         position: fixed;
         top: auto;
         bottom: 0;
@@ -920,12 +920,12 @@
         overflow-x: auto
     }
 
-    .ad-sidebar>.ad-brand,
-    .ad-admin-card {
+    .admin-sidebar>.admin-brand,
+    .admin-admin-card {
         display: none
     }
 
-    .ad-sidebar nav {
+    .admin-sidebar nav {
         display: flex;
         gap: 3px;
         margin: 0;
@@ -934,7 +934,7 @@
         justify-content: space-around
     }
 
-    .ad-sidebar nav button {
+    .admin-sidebar nav button {
         position: relative;
         width: 72px;
         min-height: 54px;
@@ -944,21 +944,21 @@
         font-size: 9px
     }
 
-    .ad-sidebar nav button i {
+    .admin-sidebar nav button i {
         font-size: 17px
     }
 
-    .ad-sidebar nav button span {
+    .admin-sidebar nav button span {
         display: block
     }
 
-    .ad-sidebar nav button>b {
+    .admin-sidebar nav button>b {
         position: absolute;
         right: 5px;
         top: 3px
     }
 
-    .ad-mobile-top {
+    .admin-mobile-top {
         height: 58px;
         background: #113d25;
         color: #fff;
@@ -971,95 +971,95 @@
         z-index: 15
     }
 
-    .ad-mobile-top .ad-brand {
+    .admin-mobile-top .admin-brand {
         padding: 0
     }
 
-    .ad-mobile-top .ad-brand>span {
+    .admin-mobile-top .admin-brand>span {
         width: 34px;
         height: 34px;
         border-radius: 9px
     }
 
-    .ad-mobile-top .ad-brand b {
+    .admin-mobile-top .admin-brand b {
         font-size: 15px
     }
 
-    .ad-mobile-top>strong {
+    .admin-mobile-top>strong {
         font-size: 12px;
         color: #d8ff8d
     }
 
-    .ad-content {
+    .admin-content {
         padding: 24px 15px 45px
     }
 
-    .ad-page-head {
+    .admin-page-head {
         align-items: flex-start;
         flex-direction: column;
         margin-bottom: 20px
     }
 
-    .ad-page-head h1 {
+    .admin-page-head h1 {
         font-size: 27px
     }
 
-    .ad-page-head p {
+    .admin-page-head p {
         font-size: 12px
     }
 
-    .ad-stats,
-    .ad-stats.report,
-    .ad-overview-grid,
-    .ad-report-grid,
-    .ad-order-cards {
+    .admin-stats,
+    .admin-stats.report,
+    .admin-overview-grid,
+    .admin-report-grid,
+    .admin-order-cards {
         grid-template-columns: 1fr
     }
 
-    .ad-stats {
+    .admin-stats {
         gap: 10px
     }
 
-    .ad-stats article {
+    .admin-stats article {
         padding: 15px
     }
 
-    .ad-grid-form,
-    .ad-grid-form.promo,
-    .ad-grid-form.stock {
+    .admin-grid-form,
+    .admin-grid-form.promo,
+    .admin-grid-form.stock {
         grid-template-columns: 1fr
     }
 
-    .ad-inline-form {
+    .admin-inline-form {
         align-items: stretch;
         flex-direction: column
     }
 
-    .ad-promo-grid {
+    .admin-promo-grid {
         grid-template-columns: 1fr
     }
 
-    .ad-order-list>div {
+    .admin-order-list>div {
         grid-template-columns: 36px 1fr auto
     }
 
-    .ad-order-list>div>i {
+    .admin-order-list>div>i {
         grid-column: 2/4
     }
 
-    .ad-order-card footer {
+    .admin-order-card footer {
         flex-direction: column-reverse
     }
 
-    .ad-order-card footer button {
+    .admin-order-card footer button {
         width: 100%
     }
 
-    .ad-bars>div {
+    .admin-bars>div {
         grid-template-columns: 100px 1fr 22px
     }
 
-    .ad-toast {
+    .admin-toast {
         bottom: 82px;
         left: 15px;
         right: 15px;
@@ -1068,21 +1068,21 @@
 }
 
 @media(max-width:420px) {
-    .ad-sidebar nav {
+    .admin-sidebar nav {
         justify-content: flex-start
     }
 
-    .ad-stats strong {
+    .admin-stats strong {
         font-size: 21px
     }
 
-    .ad-page-actions,
-    .ad-page-actions button {
+    .admin-page-actions,
+    .admin-page-actions button {
         width: 100%
     }
 }
 
-.ad-marketing-form {
+.admin-marketing-form {
     margin-bottom: 22px;
     padding: 20px;
     display: grid;
@@ -1094,8 +1094,8 @@
     background: #fff
 }
 
-.ad-marketing-form label,
-.ad-edit-form label {
+.admin-marketing-form label,
+.admin-edit-form label {
     display: grid;
     gap: 6px;
     color: #627066;
@@ -1103,17 +1103,17 @@
     font-weight: 900
 }
 
-.ad-marketing-form .wide,
-.ad-edit-form .wide {
+.admin-marketing-form .wide,
+.admin-edit-form .wide {
     grid-column: span 2
 }
 
-.ad-marketing-form input,
-.ad-marketing-form textarea,
-.ad-marketing-form select,
-.ad-edit-form input,
-.ad-edit-form textarea,
-.ad-edit-form select {
+.admin-marketing-form input,
+.admin-marketing-form textarea,
+.admin-marketing-form select,
+.admin-edit-form input,
+.admin-edit-form textarea,
+.admin-edit-form select {
     width: 100%;
     min-height: 40px;
     padding: 9px 11px;
@@ -1123,25 +1123,25 @@
     outline: none
 }
 
-.ad-marketing-form textarea,
-.ad-edit-form textarea {
+.admin-marketing-form textarea,
+.admin-edit-form textarea {
     min-height: 84px;
     resize: vertical
 }
 
-.ad-marketing-form input[type=color],
-.ad-edit-form input[type=color] {
+.admin-marketing-form input[type=color],
+.admin-edit-form input[type=color] {
     padding: 4px
 }
 
-.ad-marketing-form input[type=file],
-.ad-edit-form input[type=file] {
+.admin-marketing-form input[type=file],
+.admin-edit-form input[type=file] {
     padding: 6px;
     font-weight: 500
 }
 
-.ad-marketing-form input[type=file]::file-selector-button,
-.ad-edit-form input[type=file]::file-selector-button {
+.admin-marketing-form input[type=file]::file-selector-button,
+.admin-edit-form input[type=file]::file-selector-button {
     padding: 6px 14px;
     margin-right: 12px;
     border: 0;
@@ -1154,27 +1154,27 @@
     transition: background 0.15s;
 }
 
-.ad-marketing-form input[type=file]::file-selector-button:hover,
-.ad-edit-form input[type=file]::file-selector-button:hover {
+.admin-marketing-form input[type=file]::file-selector-button:hover,
+.admin-edit-form input[type=file]::file-selector-button:hover {
     background: #dde5d9;
 }
 
-.ad-marketing-form input:focus,
-.ad-marketing-form textarea:focus,
-.ad-marketing-form select:focus,
-.ad-edit-form input:focus,
-.ad-edit-form textarea:focus,
-.ad-edit-form select:focus {
+.admin-marketing-form input:focus,
+.admin-marketing-form textarea:focus,
+.admin-marketing-form select:focus,
+.admin-edit-form input:focus,
+.admin-edit-form textarea:focus,
+.admin-edit-form select:focus {
     border-color: #15952b;
     box-shadow: 0 0 0 3px rgba(21, 149, 43, .1)
 }
 
-.ad-hero-list {
+.admin-hero-list {
     display: grid;
     gap: 18px
 }
 
-.ad-hero-list>article {
+.admin-hero-list>article {
     display: grid;
     grid-template-columns: 260px minmax(0, 1fr) auto;
     gap: 20px;
@@ -1187,12 +1187,12 @@
     background: #fff
 }
 
-.ad-hero-list>article.inactive {
+.admin-hero-list>article.inactive {
     opacity: .58;
     filter: grayscale(.65)
 }
 
-.ad-hero-preview {
+.admin-hero-preview {
     position: relative;
     align-self: stretch;
     min-height: 148px;
@@ -1200,14 +1200,14 @@
     border-radius: 10px
 }
 
-.ad-hero-preview img {
+.admin-hero-preview img {
     width: 100%;
     height: 100%;
     object-fit: contain;
     filter: drop-shadow(0 10px 8px rgba(0, 0, 0, .15))
 }
 
-.ad-hero-preview span {
+.admin-hero-preview span {
     position: absolute;
     top: 9px;
     left: 9px;
@@ -1219,35 +1219,35 @@
     font-weight: 900
 }
 
-.ad-hero-info small {
+.admin-hero-info small {
     color: #15952b;
     font-size: 9px;
     font-weight: 900;
     letter-spacing: 1.5px
 }
 
-.ad-hero-info h2 {
+.admin-hero-info h2 {
     margin: 5px 0;
     font-size: 25px
 }
 
-.ad-hero-info p {
+.admin-hero-info p {
     margin: 0 0 10px;
     color: #738077;
     font-size: 12px
 }
 
-.ad-hero-info b {
+.admin-hero-info b {
     color: #15952b;
     font-size: 11px
 }
 
-.ad-hero-list>article>footer {
+.admin-hero-list>article>footer {
     display: grid;
     gap: 7px
 }
 
-.ad-hero-list>article>footer button {
+.admin-hero-list>article>footer button {
     min-height: 35px;
     border: 0;
     border-radius: 6px;
@@ -1257,12 +1257,12 @@
     font-weight: 800
 }
 
-.ad-hero-list>article>footer .ad-text-danger {
+.admin-hero-list>article>footer .admin-text-danger {
     background: #fff0ed;
     color: #c94a3e
 }
 
-.ad-edit-form {
+.admin-edit-form {
     grid-column: 2/4;
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -1270,19 +1270,19 @@
     align-items: flex-start
 }
 
-.ad-marketing-form>button,
-.ad-form-actions {
+.admin-marketing-form>button,
+.admin-form-actions {
     align-self: flex-end;
 }
 
-.ad-form-actions {
+.admin-form-actions {
     grid-column: 1/-1;
     display: flex;
     justify-content: flex-end;
     gap: 8px
 }
 
-.ad-form-actions button {
+.admin-form-actions button {
     min-height: 38px;
     padding: 0 16px;
     border: 0;
@@ -1290,17 +1290,17 @@
     font-weight: 800
 }
 
-.ad-form-actions button:first-child {
+.admin-form-actions button:first-child {
     background: #eef2ec;
     color: #56635a
 }
 
-.ad-promo-grid article {
+.admin-promo-grid article {
     overflow: hidden;
     padding: 0;
 }
 
-.ad-promo-image {
+.admin-promo-image {
     width: 100%;
     height: 160px;
     margin: 0;
@@ -1309,78 +1309,78 @@
     border-radius: 16px 16px 0 0;
 }
 
-.ad-promo-grid .ad-edit-form {
+.admin-promo-grid .admin-edit-form {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     padding: 20px;
 }
 
-.ad-promo-grid .ad-edit-form .ad-form-actions {
+.admin-promo-grid .admin-edit-form .admin-form-actions {
     display: flex
 }
 
-.ad-promo-grid .ad-edit-form .ad-form-actions button {
+.admin-promo-grid .admin-edit-form .admin-form-actions button {
     width: auto;
     height: auto;
     background: #eef2ec
 }
 
-.ad-promo-grid .ad-edit-form .ad-form-actions .ad-primary {
+.admin-promo-grid .admin-edit-form .admin-form-actions .admin-primary {
     background: #15952b;
     color: #fff
 }
 
 @media(max-width:1100px) {
-    .ad-marketing-form {
+    .admin-marketing-form {
         grid-template-columns: repeat(2, minmax(0, 1fr))
     }
 
-    .ad-hero-list>article {
+    .admin-hero-list>article {
         grid-template-columns: 210px 1fr
     }
 
-    .ad-hero-list>article>footer {
+    .admin-hero-list>article>footer {
         grid-column: 1/-1;
         grid-template-columns: repeat(3, 1fr)
     }
 
-    .ad-edit-form {
+    .admin-edit-form {
         grid-column: 2;
         grid-template-columns: repeat(2, minmax(0, 1fr))
     }
 }
 
 @media(max-width:760px) {
-    .ad-marketing-form {
+    .admin-marketing-form {
         grid-template-columns: 1fr
     }
 
-    .ad-marketing-form .wide,
-    .ad-edit-form .wide {
+    .admin-marketing-form .wide,
+    .admin-edit-form .wide {
         grid-column: auto
     }
 
-    .ad-hero-list>article {
+    .admin-hero-list>article {
         grid-template-columns: 1fr
     }
 
-    .ad-hero-preview {
+    .admin-hero-preview {
         min-height: 190px
     }
 
-    .ad-edit-form,
-    .ad-promo-grid .ad-edit-form {
+    .admin-edit-form,
+    .admin-promo-grid .admin-edit-form {
         grid-column: auto;
         grid-template-columns: 1fr
     }
 }
 
-.ad-grid-form.products {
+.admin-grid-form.products {
     grid-template-columns: 1.5fr 1.5fr 1.2fr 0.8fr 0.8fr auto auto;
 }
 
-.ad-text-input,
-.ad-url-input {
+.admin-text-input,
+.admin-url-input {
     min-height: 34px;
     padding: 0 9px;
     border: 1px solid #dce4da;
@@ -1389,37 +1389,37 @@
     outline: none
 }
 
-.ad-text-input:focus,
-.ad-url-input:focus {
+.admin-text-input:focus,
+.admin-url-input:focus {
     border-color: var(--brand-primary)
 }
 
-.ad-product-cell .ad-text-input {
+.admin-product-cell .admin-text-input {
     min-width: 180px;
     font-weight: 800
 }
 
-.ad-product-cell .ad-text-input.small {
+.admin-product-cell .admin-text-input.small {
     min-height: 28px;
     color: #7b887e;
     font-size: 10px;
     font-weight: 500
 }
 
-.ad-url-input {
+.admin-url-input {
     width: 190px;
     font-size: 10px
 }
 
 /* Styled file upload button */
-.ad-file-label {
+.admin-file-label {
     display: inline-flex;
     align-items: center;
     cursor: pointer;
     position: relative
 }
 
-.ad-file-label span {
+.admin-file-label span {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -1439,12 +1439,12 @@
     width: 100%;
 }
 
-.ad-file-label:hover span {
+.admin-file-label:hover span {
     background: #d4edcd;
     border-color: #0f9e1e
 }
 
-.ad-file-input {
+.admin-file-input {
     position: absolute;
     inset: 0;
     opacity: 0;
@@ -1455,22 +1455,25 @@
 
 
 @media(max-width:1200px) {
-    .ad-grid-form.products {
+    .admin-grid-form.products {
         grid-template-columns: repeat(3, 1fr)
     }
 }
 
-.ad-grid-form.users {
+.admin-grid-form.users {
     grid-template-columns: 1.2fr 1fr 1fr 0.7fr auto;
 }
 
 @media(max-width:760px) {
-    .ad-grid-form.products {
+    .admin-grid-form.products {
         grid-template-columns: 1fr
     }
 
-    .ad-grid-form.users {
+    .admin-grid-form.users {
         grid-template-columns: 1fr;
     }
 }
 /* trigger Vercel deployment */
+
+
+
