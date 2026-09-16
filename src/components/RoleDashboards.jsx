@@ -64,18 +64,26 @@ export function KitchenDashboard({ setOrders }) {
 
     const startOrder = async order => {
         try {
-            await kitchenApi.start(order.id)
+            // Optimistic update
             setOrders(current => current.map(item => item.id === order.id ? { ...item, foodStatus: 'กำลังทำ', serverStatus: 'PREPARING' } : item))
-            await loadKitchenData(true)
-        } catch (error) { window.alert(error.message) }
+            await kitchenApi.start(order.id)
+            loadKitchenData(true)
+        } catch (error) {
+            window.alert('Error updating order: ' + error.message)
+            loadKitchenData(true) // rollback
+        }
     }
 
     const finishOrder = async order => {
         try {
-            await kitchenApi.ready(order.id)
+            // Optimistic update
             setOrders(current => current.map(item => item.id === order.id ? { ...item, foodStatus: item.deliveryType === 'ให้จัดส่ง' ? 'พร้อมจัดส่ง' : 'ทำเสร็จแล้ว', serverStatus: 'READY' } : item))
-            await loadKitchenData(true)
-        } catch (error) { window.alert(error.message) }
+            await kitchenApi.ready(order.id)
+            loadKitchenData(true)
+        } catch (error) {
+            window.alert('Error finishing order: ' + error.message)
+            loadKitchenData(true) // rollback
+        }
     }
 
     const waiting = queue.filter(order => order.serverStatus === 'CONFIRMED')
@@ -186,9 +194,12 @@ export function CashierDashboard({ orders, setOrders }) {
 
     const completeCounterOrder = async order => {
         try {
-            await updateOrder(order.id, { status: 'DELIVERED' })
             setOrders(current => current.map(item => item.id === order.id ? { ...item, serverStatus: 'DELIVERED', foodStatus: 'เสร็จสิ้น' } : item))
-        } catch (error) { window.alert(error.message) }
+            await updateOrder(order.id, { status: 'DELIVERED' })
+        } catch (error) {
+            window.alert('Error completing order: ' + error.message)
+            fetchOrders?.()
+        }
     }
 
     const exportSales = () => {
@@ -322,27 +333,39 @@ export function DeliveryDashboard({ setOrders }) {
         if (!flow) return
         const [nextStatus] = flow
         try {
-            if (isAdmin) await deliveryApi.updateStatus(job.deliveryId ?? job.id, nextStatus)
-            else await deliveryApi.updateRiderDelivery(job.deliveryId ?? job.id, nextStatus)
+            // Optimistic update
+            setJobs(current => current.map(j => (j.id === job.id || j.deliveryId === job.deliveryId) ? { ...j, status: nextStatus, serverDeliveryStatus: nextStatus, foodStatus: DELIVERY_STATUS_LABEL[nextStatus] ?? nextStatus } : j))
             if (nextStatus === 'DELIVERED') {
                 const oid = job.orderId ?? job.order?.id
                 if (oid) setOrders(current => current.map(o => o.id === oid ? { ...o, foodStatus: 'จัดส่งเสร็จสิ้น', serverStatus: 'DELIVERED' } : o))
             }
+
+            if (isAdmin) await deliveryApi.updateStatus(job.deliveryId ?? job.id, nextStatus)
+            else await deliveryApi.updateRiderDelivery(job.deliveryId ?? job.id, nextStatus)
+
             notify('อัปเดตสถานะแล้ว')
-            await load(true)
-        } catch (err) { window.alert(err.message) }
+            load(true) // async refresh
+        } catch (err) {
+            window.alert('Error updating status: ' + err.message)
+            load(true) // rollback
+        }
     }
 
     const confirmCashPayment = async job => {
         const orderId = job.orderId ?? job.order?.id
         if (!orderId) return window.alert('ไม่พบ Order ID')
         try {
-            await markOrderPaid(orderId)
+            // Optimistic update
             setOrders(current => current.map(o => o.id === orderId ? { ...o, isPaid: true, paymentStatus: 'PAID' } : o))
             setJobs(current => current.map(j => (j.id === job.id || j.deliveryId === job.deliveryId) ? { ...j, order: { ...j.order, isPaid: true } } : j))
             setCashConfirm(null)
+
+            await markOrderPaid(orderId)
             notify('บันทึกรับเงินสดแล้ว')
-        } catch (err) { window.alert(err.message) }
+        } catch (err) {
+            window.alert('Error updating payment: ' + err.message)
+            load(true) // rollback
+        }
     }
 
     // Normalize: backend returns delivery objects with nested order
