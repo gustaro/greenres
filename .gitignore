@@ -1,0 +1,28 @@
+# Dependencies
+node_modules/
+server/node_modules/
+
+# Build output
+dist/
+
+# Environment variables (sensitive!)
+.env
+.env.local
+.env.production
+server/.env
+
+# Logs
+*.log
+npm-debug.log*
+
+# IDE / OS
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Uploaded files (large binary)
+server/uploads/
+
+# Prisma generated
+server/prisma/migrations/*.db

@@ -1,0 +1,123 @@
+.hero-home {
+    min-height: 620px;
+    padding-top: 60px;
+    position: relative;
+    overflow: hidden;
+    background: var(--slide-color);
+    isolation: isolate;
+}
+
+.hero-home::before {
+    content: '';
+    position: absolute;
+    inset: 60% -10% -35% 35%;
+    z-index: -1;
+    background: rgba(255, 255, 255, .18);
+    transform: rotate(9deg);
+}
+
+.hero-slide {
+    width: min(1180px, calc(100% - 110px));
+    min-height: 560px;
+    margin: auto;
+    display: grid;
+    grid-template-columns: .9fr 1.25fr;
+    align-items: center;
+    gap: 45px;
+    animation: hero-reveal .45s ease both;
+}
+
+@keyframes hero-reveal {
+    from { opacity: .35; transform: translateX(18px) }
+    to { opacity: 1; transform: translateX(0) }
+}
+
+.hero-copy { position: relative; z-index: 2 }
+.hero-copy>span { display: inline-block; margin-bottom: 12px; font-size: 13px; font-weight: 900; letter-spacing: 2.5px; color: #075c1b }
+.hero-copy h1 { max-width: 570px; margin: 0; color: #12351d; font-size: clamp(52px, 6.2vw, 88px); line-height: .94; letter-spacing: -4px }
+.hero-copy p { max-width: 530px; margin: 22px 0 30px; color: #21472b; font-size: clamp(17px, 1.6vw, 22px); line-height: 1.55; font-weight: 700 }
+.hero-copy button { min-width: 155px; min-height: 52px; padding: 0 22px; border: 0; border-radius: 4px; background: #075c1b; color: #fff; font-weight: 900; box-shadow: 0 9px 22px rgba(7, 92, 27, .2) }
+.hero-copy button b { margin-left: 10px; color: var(--chart); font-size: 18px }
+
+.hero-picture { height: 500px; position: relative; display: grid; place-items: center }
+.hero-picture-glow { position: absolute; width: min(420px, 70%); aspect-ratio: 1; border-radius: 50%; background: rgba(255, 255, 255, .35); filter: blur(2px) }
+.hero-picture img { position: relative; z-index: 1; width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 28px 24px rgba(64, 67, 12, .24)); transform: scale(1.08) }
+
+.hero-arrow { position: absolute; top: 50%; z-index: 4; width: 45px; height: 55px; border: 0; border-radius: 4px; background: rgba(255, 255, 255, .72); color: #12351d; font-size: 36px; line-height: 1; transform: translateY(-50%); box-shadow: 0 6px 18px rgba(22, 53, 29, .12) }
+.hero-arrow:hover { background: #fff }
+.hero-arrow.previous { left: 22px }
+.hero-arrow.next { right: 22px }
+.hero-dots { position: absolute; z-index: 4; left: 50%; bottom: 22px; display: flex; gap: 9px; transform: translateX(-50%) }
+.hero-dots button { width: 9px; height: 9px; padding: 0; border: 0; border-radius: 50%; background: rgba(18, 53, 29, .28) }
+.hero-dots button.active { width: 28px; border-radius: 10px; background: #075c1b }
+
+.promotion-section { padding: 42px max(25px, calc((100% - 1000px) / 2)) 48px; background: var(--brand-primary) }
+.promotion-heading { display: flex; align-items: end; justify-content: space-between; gap: 35px; margin-bottom: 24px }
+.promotion-heading small { color: var(--chart); font-size: 11px; font-weight: 900; letter-spacing: 2.5px }
+.promotion-heading h2 { margin: 5px 0 0; color: #fff; font-size: clamp(28px, 3vw, 38px); letter-spacing: -1.2px }
+.promotion-heading>p { max-width: 390px; margin: 0 0 5px; color: #e1eee0; line-height: 1.6 }
+.promotion-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 28px }
+.promotion-grid article { min-width: 0 }
+.promotion-grid article>h3 { min-height: 44px; margin: 0 0 10px; color: #fff; font-size: 19px; line-height: 1.08 }
+.promotion-mini-card { height: 118px; display: grid; grid-template-columns: 42% 58%; overflow: hidden; border-radius: 5px; background: var(--brand-accent); box-shadow: 0 8px 18px rgba(7, 92, 27, .2); transition: transform .2s ease }
+.promotion-grid article:hover .promotion-mini-card { transform: translateY(-3px) }
+.promotion-image { height: 118px; position: relative; overflow: hidden; background: var(--brand-primary-dark) }
+.promotion-image img { width: 100%; height: 100%; object-fit: cover; transition: transform .3s ease }
+.promotion-grid article:hover .promotion-image img { transform: scale(1.04) }
+.promotion-image span { position: absolute; left: 7px; top: 7px; padding: 4px 6px; border-radius: 3px; background: var(--brand-primary-dark); color: var(--brand-accent); font-size: 10px; font-weight: 900 }
+.promotion-copy { min-width: 0; padding: 12px 11px; display: flex; flex-direction: column; align-items: flex-start }
+.promotion-copy small { color: var(--brand-primary-dark); font-size: 8px; font-weight: 900; letter-spacing: 1px }
+.promotion-copy p { display: -webkit-box; min-height: 0; margin: 6px 0; overflow: hidden; color: #31533a; font-size: 10px; line-height: 1.35; -webkit-box-orient: vertical; -webkit-line-clamp: 3 }
+.promotion-copy button { margin-top: auto; border: 0; background: transparent; color: var(--brand-primary-dark); padding: 0; font-size: 9px; font-weight: 900 }
+
+.food-preview { width: min(1000px, calc(100% - 50px)); margin: 55px auto 70px }
+.preview-head { display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 16px }
+.preview-head small { font-size: 10px; letter-spacing: 2px; color: #13a923 }
+.preview-head h2 { margin: 2px 0; font-size: 31px; color: #075c1b }
+.preview-head button { border: 0; background: transparent; color: #0e971c; font-weight: 800 }
+.preview-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px }
+.preview-grid article { border: 1px solid #e0e5dc; background: white }
+.preview-grid img { width: 100%; height: 150px; object-fit: cover }
+.preview-grid article>div { padding: 12px }
+.preview-grid h3 { font-size: 14px; margin: 0 0 3px }
+.preview-grid small { font-size: 9px; color: #798279 }
+.preview-grid strong { display: block; font-size: 18px; color: #0e971c; margin: 10px 0 }
+.preview-grid button { width: 100%; border: 0; background: var(--chart); padding: 9px; color: #075c1b; font-weight: 800 }
+
+@media(max-width:900px) {
+    .hero-home { min-height: 560px }
+    .hero-slide { width: min(100% - 80px, 760px); min-height: 500px; grid-template-columns: 1fr 1fr; gap: 10px }
+    .hero-copy h1 { font-size: clamp(44px, 8vw, 68px) }
+    .hero-picture { height: 390px }
+    .promotion-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) }
+    .preview-grid { grid-template-columns: repeat(2, 1fr) }
+}
+
+@media(max-width:620px) {
+    .hero-home { min-height: 690px; padding-top: 54px }
+    .hero-home::before { inset: 68% -20% -20% 10% }
+    .hero-slide { width: calc(100% - 42px); min-height: 610px; padding: 42px 0 50px; grid-template-columns: 1fr; align-content: center; text-align: center }
+    .hero-copy>span { font-size: 10px }
+    .hero-copy h1 { margin: auto; font-size: 48px; letter-spacing: -2.5px }
+    .hero-copy p { margin: 16px auto 20px; font-size: 15px }
+    .hero-copy button { min-height: 46px }
+    .hero-picture { height: 250px; order: -1 }
+    .hero-picture img { transform: scale(1) }
+    .hero-arrow { width: 34px; height: 44px; font-size: 29px }
+    .hero-arrow.previous { left: 7px }
+    .hero-arrow.next { right: 7px }
+    .promotion-section { padding-block: 48px }
+    .promotion-heading { display: block }
+    .promotion-heading>p { margin-top: 10px; font-size: 13px }
+    .promotion-grid, .preview-grid { grid-template-columns: 1fr }
+    .promotion-mini-card,.promotion-image { height: 112px }
+    .preview-head { align-items: start; gap: 15px }
+    .preview-head h2 { font-size: 26px }
+    .preview-head button { font-size: 11px }
+    .preview-grid img { height: 210px }
+}
+
+@media(prefers-reduced-motion:reduce) {
+    .hero-slide { animation: none }
+    .promotion-grid article, .promotion-image img { transition: none }
+}

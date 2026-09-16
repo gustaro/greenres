@@ -1,0 +1,444 @@
+.floating-header {
+    position: fixed;
+    z-index: 30;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: #0f9e1e;
+    padding: 0;
+    transition: background 0.3s;
+}
+
+.floating-header.transparent {
+    background: transparent;
+}
+
+.nav-shell {
+    height: 56px;
+    width: min(935px, calc(100% - 40px));
+    margin: 0 auto;
+    background: #fff;
+    display: grid;
+    grid-template-columns: 70px 1fr 66px 58px 62px;
+    align-items: center;
+    box-shadow: 0 8px 18px rgba(0, 0, 0, .22);
+    border-radius: 0 0 8px 8px;
+    overflow: hidden;
+    position: relative;
+    z-index: 3;
+}
+
+.brand {
+    border: 0;
+    background: transparent;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0;
+}
+
+.nav-shell>.brand {
+    height: 60px;
+    justify-content: center;
+}
+
+.brand-mark {
+    width: 40px;
+    height: 42px;
+    position: relative;
+    display: inline-block;
+}
+
+.brand-mark i {
+    position: absolute;
+    width: 20px;
+    height: 35px;
+    background: var(--chart);
+    border-radius: 90% 0 90% 0;
+    transform: rotate(-36deg);
+}
+
+.brand-mark i:first-child {
+    left: 4px;
+    top: 1px;
+}
+
+.brand-mark i:last-child {
+    right: 1px;
+    bottom: 1px;
+    transform: rotate(30deg) scale(.82);
+    background: #62d837;
+}
+
+.brand-name {
+    display: grid;
+    text-align: left;
+    line-height: 1;
+}
+
+.brand-name b {
+    font-size: 22px;
+    color: var(--pine);
+}
+
+.brand-name small {
+    font-size: 8px;
+    letter-spacing: 4px;
+    margin-top: 4px;
+}
+
+.main-nav {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    overflow: hidden;
+}
+
+.main-nav button {
+    height: 100%;
+    border: 0;
+    background: #fff;
+    padding: 0 7px;
+    font-size: 11px;
+    font-weight: 800;
+    white-space: nowrap;
+    color: #171717;
+}
+
+.main-nav button:hover {
+    background: #f4f4f1;
+}
+
+.menu-toggle,
+.responsive-nav,
+.nav-backdrop {
+    display: none;
+}
+
+.lang {
+    height: 100%;
+    border: 0;
+    border-left: 1px solid #eee;
+    background: #fff;
+    font-size: 11px;
+    color: #7e921f;
+}
+
+/* Profile & Cart share the same dark-green background */
+.profile,
+.cart-head {
+    height: 100%;
+    border: 0;
+    background: #0f9e1e;
+    color: var(--chart);
+    position: relative;
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+}
+
+/* Dashed divider between profile and cart */
+.profile {
+    border-right: 1.5px dashed rgba(255, 255, 255, 0.35);
+}
+
+.cart-head {
+    font-size: 16px;
+}
+
+/* Make SVG icons white on dark-background buttons */
+.profile img,
+.cart-head img {
+    filter: brightness(0) invert(1);
+    display: block;
+}
+
+/* Chartreuse tint on hover */
+.profile:hover img,
+.cart-head:hover img {
+    filter: brightness(0) saturate(100%) invert(93%) sepia(60%) saturate(500%) hue-rotate(40deg) brightness(105%);
+}
+
+.cart-head b {
+    position: absolute;
+    right: 7px;
+    top: 8px;
+    background: var(--chart);
+    color: var(--deep);
+    border-radius: 50%;
+    font-size: 9px;
+    min-width: 17px;
+    height: 17px;
+    display: grid;
+    place-items: center;
+}
+
+.profile-icon {
+    font-size: 25px;
+}
+
+.logged-dot {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #fff;
+    right: 11px;
+    top: 10px;
+}
+
+@media(max-width:1150px) and (min-width:1025px) {
+    .main-nav button {
+        padding: 0 4px;
+        font-size: 9px;
+    }
+
+    .nav-shell {
+        grid-template-columns: 65px 1fr 58px 50px 55px;
+    }
+}
+
+@media(max-width:1024px) {
+    .nav-shell {
+        width: min(720px, calc(100% - 32px));
+        grid-template-columns: 64px 1fr 54px 58px;
+    }
+
+    .main-nav {
+        display: none;
+    }
+
+    .menu-toggle {
+        width: 44px;
+        height: 44px;
+        border: 0;
+        border-radius: 8px;
+        background: transparent;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 5px;
+        cursor: pointer;
+        justify-self: start;
+    }
+
+    .menu-toggle span {
+        width: 22px;
+        height: 2px;
+        border-radius: 2px;
+        background: var(--deep);
+        transition: transform .2s, opacity .2s;
+    }
+
+    .menu-open .menu-toggle span:first-child {
+        transform: translateY(7px) rotate(45deg);
+    }
+
+    .menu-open .menu-toggle span:nth-child(2) {
+        opacity: 0;
+    }
+
+    .menu-open .menu-toggle span:last-child {
+        transform: translateY(-7px) rotate(-45deg);
+    }
+
+    .responsive-nav {
+        position: absolute;
+        z-index: 4;
+        top: 64px;
+        left: 50%;
+        width: min(720px, calc(100% - 32px));
+        padding: 12px;
+        border-radius: 12px;
+        background: #fff;
+        box-shadow: 0 18px 40px rgba(0, 0, 0, .24);
+        transform: translate(-50%, -8px);
+        opacity: 0;
+        visibility: hidden;
+        display: block;
+        transition: opacity .2s, transform .2s, visibility .2s;
+    }
+
+    .menu-open .responsive-nav {
+        transform: translate(-50%, 0);
+        opacity: 1;
+        visibility: visible;
+    }
+
+    .responsive-nav-links {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 4px;
+    }
+
+    .responsive-nav-links button,
+    .responsive-lang {
+        min-height: 44px;
+        border: 0;
+        border-radius: 8px;
+        background: transparent;
+        color: #171717;
+        font-size: 13px;
+        font-weight: 800;
+        text-align: left;
+        padding: 10px 14px;
+        cursor: pointer;
+    }
+
+    .responsive-nav-links button:hover,
+    .responsive-nav-links button:focus-visible {
+        background: #effbe9;
+        color: #0f861a;
+    }
+
+    .responsive-lang {
+        width: 100%;
+        margin-top: 8px;
+        border-top: 1px solid #e8e8e3;
+        border-radius: 0;
+        color: #6d8019;
+    }
+
+    .nav-backdrop {
+        position: fixed;
+        z-index: 2;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        border: 0;
+        background: rgba(15, 35, 18, .32);
+        display: block;
+    }
+
+    .lang {
+        display: none;
+    }
+
+    .breadcrumb-bar {
+        width: min(720px, calc(100% - 32px));
+    }
+}
+
+@media(max-width:560px) {
+    .nav-shell {
+        width: calc(100% - 16px);
+        height: 54px;
+        grid-template-columns: 54px 1fr 48px 50px;
+    }
+
+    .nav-shell>.brand {
+        height: 54px;
+    }
+
+    .brand-mark {
+        width: 34px;
+        height: 37px;
+        transform: scale(.88);
+    }
+
+    .responsive-nav {
+        top: 62px;
+        width: calc(100% - 16px);
+        max-height: calc(100vh - 74px);
+        overflow-y: auto;
+    }
+
+    .responsive-nav-links {
+        grid-template-columns: 1fr;
+    }
+
+    .profile,
+    .cart-head {
+        min-width: 48px;
+    }
+
+    .profile img {
+        width: 24px !important;
+        height: 24px !important;
+    }
+
+    .cart-head img {
+        width: 22px !important;
+        height: 22px !important;
+    }
+
+    .cart-head b {
+        right: 4px;
+        top: 6px;
+    }
+
+    .breadcrumb-bar {
+        width: calc(100% - 20px);
+        overflow-x: auto;
+        white-space: nowrap;
+    }
+}
+
+/* ── Breadcrumb bar ─────────────────────────────────── */
+.breadcrumb-bar {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    width: min(935px, calc(100% - 40px));
+    margin: 0 auto;
+    padding: 8px 4px;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.breadcrumb-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: rgba(255, 255, 255, 0.85);
+}
+
+button.breadcrumb-item,
+.breadcrumb-item button {
+    background: transparent;
+    border: 0;
+    outline: none;
+    color: rgba(255, 255, 255, 0.85);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+    transition: color 0.15s;
+}
+
+.breadcrumb-item button:hover {
+    color: #b8ff35;
+    text-decoration: underline;
+}
+
+.breadcrumb-sep {
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 16px;
+    line-height: 1;
+    margin: 0 2px;
+}
+
+.breadcrumb-current {
+    color: #b8ff35;
+    font-weight: 700;
+}
+
+/* Extra padding-top for pages with breadcrumb header */
+.profile-page {
+    padding-top: 100px;
+}
+
+@media(max-width:1024px) {
+    .breadcrumb-bar {
+        width: min(720px, calc(100% - 32px));
+    }
+}
+
+@media(max-width:560px) {
+    .breadcrumb-bar {
+        width: calc(100% - 20px);
+    }
+}
