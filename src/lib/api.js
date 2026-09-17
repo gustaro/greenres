@@ -89,9 +89,19 @@ export async function api(path, options = {}, retry = true) {
         headers.set('Content-Type', 'application/json')
     }
 
+    const fetchOptions = { ...options, headers }
+    const method = String(options.method || 'GET').toUpperCase()
+
+    // Prevent iOS Safari aggressive caching for API GET requests
+    if (method === 'GET') {
+        fetchOptions.cache = 'no-store'
+        headers.set('Cache-Control', 'no-cache, no-store, must-revalidate')
+        headers.set('Pragma', 'no-cache')
+    }
+
     let response
     try {
-        response = await fetch(`${API_BASE}${path}`, { ...options, headers })
+        response = await fetch(`${API_BASE}${path}`, fetchOptions)
     } catch (error) {
         throw new ApiError(`เชื่อมต่อ Server ไม่สำเร็จ (${error.message})`, 0)
     }
@@ -102,7 +112,6 @@ export async function api(path, options = {}, retry = true) {
     if (response.status === 401) clearTokens()
 
     const data = await parseResponse(response)
-    const method = String(options.method || 'GET').toUpperCase()
     if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(method) && shouldBroadcastMutation(path)) {
         broadcastServerChange(path, method)
     }
