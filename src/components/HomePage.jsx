@@ -29,26 +29,53 @@ const fallbackPromotions = [
 export function HomePage({ onOrder, user, onAuth, onLogout, cartCount, onCart }) {
     const navigate = useNavigate()
     const [slide, setSlide] = useState(0)
-    const [heroSlides, setHeroSlides] = useState(fallbackSlides)
-    const [promotions, setPromotions] = useState(fallbackPromotions)
-    const [popularProducts, setPopularProducts] = useState(fallbackProducts.slice(0, 4))
-    const [newProducts, setNewProducts] = useState(fallbackProducts.slice(0, 4))
+    const [heroSlides, setHeroSlides] = useState([])
+    const [promotions, setPromotions] = useState([])
+    const [popularProducts, setPopularProducts] = useState([])
+    const [newProducts, setNewProducts] = useState([])
+    const [isLoading, setIsLoading] = useState(true)
 
     useEffect(() => {
+        let active = true
         const loadMarketing = () => fetchMarketing().then(data => {
-            if (data.heroSlides.length) setHeroSlides(data.heroSlides)
-            if (data.promotions.length) setPromotions(data.promotions)
-        }).catch(error => console.error('[Marketing]', error))
+            if (!active) return
+            if (data.heroSlides?.length) setHeroSlides(data.heroSlides)
+            else setHeroSlides(fallbackSlides)
+
+            if (data.promotions?.length) setPromotions(data.promotions)
+            else setPromotions(fallbackPromotions)
+        }).catch(error => {
+            if (!active) return
+            console.error('[Marketing]', error)
+            setHeroSlides(fallbackSlides)
+            setPromotions(fallbackPromotions)
+        })
 
         const loadProducts = () => {
-            fetchPopularProducts(4).then(data => { if (data.length) setPopularProducts(data) }).catch(console.error)
-            fetchNewProducts(4).then(data => { if (data.length) setNewProducts(data) }).catch(console.error)
+            const p1 = fetchPopularProducts(4).then(data => {
+                if (!active) return
+                if (data?.length) setPopularProducts(data)
+                else setPopularProducts(fallbackProducts.slice(0, 4))
+            }).catch(() => { if (active) setPopularProducts(fallbackProducts.slice(0, 4)) })
+
+            const p2 = fetchNewProducts(4).then(data => {
+                if (!active) return
+                if (data?.length) setNewProducts(data)
+                else setNewProducts(fallbackProducts.slice(0, 4))
+            }).catch(() => { if (active) setNewProducts(fallbackProducts.slice(0, 4)) })
+
+            return Promise.all([p1, p2])
         }
 
-        loadMarketing()
-        loadProducts()
+        Promise.all([loadMarketing(), loadProducts()]).then(() => {
+            if (active) setIsLoading(false)
+        })
+
         const timer = window.setInterval(loadMarketing, 30000)
-        return () => window.clearInterval(timer)
+        return () => {
+            active = false
+            window.clearInterval(timer)
+        }
     }, [])
 
     useEffect(() => {
@@ -65,6 +92,21 @@ export function HomePage({ onOrder, user, onAuth, onLogout, cartCount, onCart })
         if (!link || link === '/order') return onOrder()
         if (link.startsWith('http')) return window.open(link, '_blank', 'noopener,noreferrer')
         navigate(link)
+    }
+
+    if (isLoading) {
+        return (
+            <div className="home-page" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--brand-primary)' }}>
+                <Navbar onOrder={onOrder} user={user} onAuth={onAuth} onLogout={onLogout} cartCount={cartCount} onCart={onCart} transparent />
+                <div style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                    <div className="app-loading" role="status" aria-label="กำลังโหลด">
+                        <div className="app-loading-mark"><i /><i /></div>
+                        <span className="app-loading-spinner" style={{ borderColor: 'rgba(255,255,255,0.3)', borderTopColor: '#fff' }} />
+                        <p style={{ marginTop: 16, color: '#e8f3e5', fontWeight: 600, fontSize: 14 }}>กำลังเตรียมหน้าหลัก...</p>
+                    </div>
+                </div>
+            </div>
+        )
     }
     const currentSlide = heroSlides[slide] || fallbackSlides[0]
     const changeSlide = direction => setSlide(current => (current + direction + heroSlides.length) % heroSlides.length)
