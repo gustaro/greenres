@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from '../lib/AuthContext'
 import { validatePromotion } from '../lib/database'
+import { MapLocationPicker } from './MapLocationPicker'
 
 export const SERVER_DELIVERY_FEE = Number(import.meta.env.VITE_DELIVERY_FEE || 35)
 export const SERVER_FREE_DELIVERY_THRESHOLD = Number(import.meta.env.VITE_FREE_DELIVERY_THRESHOLD || 300)
@@ -92,6 +93,9 @@ export function CheckoutModal({ cart, products, itemNotes, onClose, onDone }) {
             <div className="checkout-modal">
                 <button className="checkout-modal-close" onClick={onClose} type="button">×</button>
                 <section>
+                    <div style={{ marginBottom: 24, textAlign: 'center' }}>
+                        <h2 style={{ fontSize: 24, fontWeight: 800, margin: 0 }}>Check out</h2>
+                    </div>
                     <form onSubmit={submit} id="checkout-form">
 
                         {/* Personal Information */}
@@ -147,7 +151,16 @@ export function CheckoutModal({ cart, products, itemNotes, onClose, onDone }) {
                                             {addressId === 'new' && (
                                                 <div className="chk-input-wrap" style={{ gridColumn: '1 / -1' }}>
                                                     <label>ที่อยู่จัดส่ง ({savedAddresses.length > 0 ? 'ระบุที่อยู่ใหม่' : 'Delivery Address'})</label>
-                                                    <textarea required value={manualAddress} onChange={e => setManualAddress(e.target.value)} rows={3} placeholder="M7J4+M93 ถ.ราษฎร์บำรุง..." />
+                                                    <div style={{ marginBottom: 12 }}>
+                                                        <MapLocationPicker onLocationSelect={(obj) => {
+                                                            const parts = []
+                                                            if (obj.street) parts.push(obj.street)
+                                                            if (obj.province) parts.push(obj.province)
+                                                            if (obj.zip) parts.push(obj.zip)
+                                                            setManualAddress(parts.join(' '))
+                                                        }} />
+                                                    </div>
+                                                    <textarea required value={manualAddress} onChange={e => setManualAddress(e.target.value)} rows={3} placeholder="บ้านเลขที่, ซอย, ถ.ราษฎร์บำรุง..." />
                                                 </div>
                                             )}
 
