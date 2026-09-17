@@ -328,7 +328,7 @@ export const markOrderPaid = id => api(`/orders/${id}/payment`, {
     body: JSON.stringify({ paymentMethod: 'CASH' }),
 })
 
-export const cancelOwnOrder = id => api(`/orders/${id}/cancel`, { method: 'PUT' })
+export const cancelOwnOrder = id => api(`/orders/${id}/cancel`, { method: 'PUT', body: JSON.stringify({}) })
 
 export const confirmOrder = id =>
     api(`/orders/${id}/status`, { method: 'PUT', body: JSON.stringify({ status: 'CONFIRMED' }) })
@@ -403,8 +403,8 @@ export async function ensureDeliveryForOrder(order) {
 export const kitchenApi = {
     queue: async () => (await api('/kitchen/queue')).map(mapOrder),
     stats: () => api('/kitchen/stats'),
-    start: id => api(`/kitchen/${id}/prepare`, { method: 'PUT' }),
-    ready: id => api(`/kitchen/${id}/ready`, { method: 'PUT' }),
+    start: id => api(`/kitchen/${id}/prepare`, { method: 'PUT', body: JSON.stringify({}) }),
+    ready: id => api(`/kitchen/${id}/ready`, { method: 'PUT', body: JSON.stringify({}) }),
 }
 
 export const deliveryApi = {
@@ -424,7 +424,7 @@ export const deliveryApi = {
         method: 'PUT',
         body: JSON.stringify({ status, ...extra }),
     }),
-    autoAssign: id => api(`/delivery/${id}/auto`, { method: 'POST' }),
+    autoAssign: id => api(`/delivery/${id}/auto`, { method: 'POST', body: JSON.stringify({}) }),
 }
 
 export const adminApi = {
