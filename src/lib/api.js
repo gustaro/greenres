@@ -91,17 +91,19 @@ export async function api(path, options = {}, retry = true) {
 
     const fetchOptions = { ...options, headers }
     const method = String(options.method || 'GET').toUpperCase()
+    let requestPath = path
 
     // Prevent iOS Safari aggressive caching for API GET requests
     if (method === 'GET') {
         fetchOptions.cache = 'no-store'
         headers.set('Cache-Control', 'no-cache, no-store, must-revalidate')
         headers.set('Pragma', 'no-cache')
+        requestPath += (requestPath.includes('?') ? '&' : '?') + `_t=${Date.now()}`
     }
 
     let response
     try {
-        response = await fetch(`${API_BASE}${path}`, fetchOptions)
+        response = await fetch(`${API_BASE}${requestPath}`, fetchOptions)
     } catch (error) {
         throw new ApiError(`เชื่อมต่อ Server ไม่สำเร็จ (${error.message})`, 0)
     }
