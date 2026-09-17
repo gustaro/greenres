@@ -2,6 +2,20 @@ const API_BASE = (import.meta.env.VITE_API_URL || '/api').trim().replace(/\/+$/,
 const ACCESS_TOKEN_KEY = 'limeleaf-access-token'
 const REFRESH_TOKEN_KEY = 'limeleaf-refresh-token'
 
+export const SERVER_CHANGE_EVENT = 'limeleaf:server-change'
+export const SERVER_SYNC_KEY = 'limeleaf-server-sync'
+
+const shouldBroadcastMutation = path => (
+    path.startsWith('/orders') || path.startsWith('/kitchen') || path.startsWith('/delivery')
+)
+
+const broadcastServerChange = (path, method) => {
+    if (typeof window === 'undefined') return
+    const detail = { path, method, at: Date.now() }
+    window.dispatchEvent(new CustomEvent(SERVER_CHANGE_EVENT, { detail }))
+    try { localStorage.setItem(SERVER_SYNC_KEY, JSON.stringify(detail)) } catch { /* ignore storage errors */ }
+}
+
 const getAccessToken = () => localStorage.getItem(ACCESS_TOKEN_KEY)
 const getRefreshToken = () => localStorage.getItem(REFRESH_TOKEN_KEY)
 
@@ -87,7 +101,12 @@ export async function api(path, options = {}, retry = true) {
     }
     if (response.status === 401) clearTokens()
 
-    return parseResponse(response)
+    const data = await parseResponse(response)
+    const method = String(options.method || 'GET').toUpperCase()
+    if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(method) && shouldBroadcastMutation(path)) {
+        broadcastServerChange(path, method)
+    }
+    return data
 }
 
 export const hasSessionToken = () => Boolean(getAccessToken() || getRefreshToken())

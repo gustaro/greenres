@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
-import { mapProduct, api, deliveryApi, ensureDeliveryForOrder, updateOrder, placeCounterOrder, markOrderPaid } from '../lib/database'
+import { mapProduct, api, updateOrder, placeCounterOrder, markOrderPaid } from '../lib/database'
 import { StaffShell, OrderItems, Empty, money, orderCode } from './StaffShared'
 import { useAuth } from '../lib/AuthContext'
 
-export function CashierDashboard({ orders, setOrders }) {
+export function CashierDashboard({ orders, setOrders, refreshOrders }) {
     const { settings } = useAuth()
     const [tab, setTab] = useState('payments')
     const [receipt, setReceipt] = useState(null)
@@ -15,6 +15,7 @@ export function CashierDashboard({ orders, setOrders }) {
     const [counterSource, setCounterSource] = useState('walkin')
     const [counterNote, setCounterNote] = useState('')
     const [counterLoading, setCounterLoading] = useState(false)
+    const [counterNotice, setCounterNotice] = useState('')
 
     useEffect(() => {
         api('/products?limit=100').then(result => setCounterProducts((result.products || []).map(mapProduct))).catch(() => { })
@@ -29,10 +30,13 @@ export function CashierDashboard({ orders, setOrders }) {
         if (counterItems.length === 0) return window.alert('กรุณาเลือกสินค้าก่อน')
         setCounterLoading(true)
         try {
-            await placeCounterOrder({ cart: counterCart, orderSource: counterSource, notes: counterNote })
+            const createdOrder = await placeCounterOrder({ cart: counterCart, orderSource: counterSource, notes: counterNote })
+            setOrders(current => [createdOrder, ...current.filter(order => order.id !== createdOrder.id)])
             setCounterCart({})
             setCounterNote('')
-            window.alert('✅ ส่งออเดอร์เข้าครัวเรียบร้อย!')
+            setCounterNotice('✅ ส่งออเดอร์เข้าครัวเรียบร้อย')
+            window.setTimeout(() => setCounterNotice(''), 2500)
+            refreshOrders?.()
         } catch (error) {
             window.alert('เกิดข้อผิดพลาด: ' + error.message)
         } finally {
@@ -40,21 +44,6 @@ export function CashierDashboard({ orders, setOrders }) {
         }
     }
 
-    useEffect(() => {
-        let active = true
-        const prepareDeliveries = async () => {
-            const readyDeliveryOrders = orders.filter(order => order.deliveryType === 'ให้จัดส่ง' && order.serverStatus === 'READY' && order.deliveryAddress)
-            for (const order of readyDeliveryOrders) {
-                try {
-                    const delivery = await ensureDeliveryForOrder(order)
-                    if (active && delivery?.status === 'PENDING') await deliveryApi.autoAssign(delivery.id).catch(() => null)
-                } catch (error) { console.warn('[Delivery setup]', error.message) }
-            }
-        }
-        prepareDeliveries()
-        const timer = window.setInterval(prepareDeliveries, 10000)
-        return () => { active = false; window.clearInterval(timer) }
-    }, [orders])
 
     const validOrders = orders.filter(order => order.foodStatus !== 'ยกเลิก')
     const unpaidOrders = validOrders.filter(order => !order.isPaid).sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt))
@@ -105,6 +94,7 @@ export function CashierDashboard({ orders, setOrders }) {
 
     return <StaffShell role="cashier" title="ระบบแคชเชียร์" subtitle="ดูสถานะการชำระเงินจริงจาก Server และจัดเตรียมงาน Delivery" active={tab} onTab={setTab} tabs={[{ key: 'counter', label: 'รับออเดอร์', icon: 'bi-pencil-square', count: 0 }, { key: 'payments', label: 'รอชำระเงิน', icon: 'bi-currency-bitcoin', count: unpaidOrders.length }, { key: 'history', label: 'ประวัติและใบเสร็จ', icon: 'bi-receipt', count: 0 }, { key: 'summary', label: 'สรุปยอดขาย', icon: 'bi-graph-up-arrow', count: 0 }]}>
         <div className="staff-alert">กด "ชำระเงินแล้ว" เมื่อลูกค้าชำระเงินสดเงินสดบนระบบ</div>
+        {counterNotice && <div className="staff-alert" style={{ borderColor: '#75c94a', color: '#287a20' }}>{counterNotice}</div>}
         {tab === 'counter' && <section>
             <div className="staff-section-head"><div><h2>รับออเดอร์หน้าร้าน</h2><p>สร้างออเดอร์สำหรับลูกค้าทานที่ร้านหรือสั่งกลับบ้าน — ส่งเข้าครัวทันที</p></div></div>
             <div className="counter-order-layout">

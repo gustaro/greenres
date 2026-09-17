@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useAuth } from '../lib/AuthContext'
-import { mapCategory, mapProduct, updateOrder, confirmOrder, adminApi, catalogApi, ensureDeliveryForOrder, deliveryApi, settingsApi, heroApi } from '../lib/database'
+import { mapCategory, mapProduct, updateOrder, confirmOrder, adminApi, catalogApi, settingsApi, heroApi } from '../lib/database'
 import { WebSettings } from './WebSettings'
 import { WebSocial } from './WebSocial'
 import './AdminDashboard.css'
@@ -62,21 +62,6 @@ export function AdminDashboard({ orders, setOrders, products, setProducts, categ
         }).catch(fail)
     }, [])
 
-    useEffect(() => {
-        let active = true
-        const prepareDeliveries = async () => {
-            const ready = orders.filter(order => order.deliveryType === 'ให้จัดส่ง' && order.serverStatus === 'READY' && order.deliveryAddress)
-            for (const order of ready) {
-                try {
-                    const delivery = await ensureDeliveryForOrder(order)
-                    if (active && delivery?.status === 'PENDING') await deliveryApi.autoAssign(delivery.id).catch(() => null)
-                } catch (error) { console.warn('[Delivery setup]', error.message) }
-            }
-        }
-        prepareDeliveries()
-        const timer = window.setInterval(prepareDeliveries, 10000)
-        return () => { active = false; window.clearInterval(timer) }
-    }, [orders])
 
     const approveOrder = async id => {
         const approvedAt = new Date().toISOString()

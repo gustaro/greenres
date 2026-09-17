@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { BrowserRouter, Routes, Route, useNavigate } from 'react-router-dom'
 import { Brand } from './components/Navbar'
 import { OrderPage } from './components/OrderPage'
@@ -9,7 +9,9 @@ import { DeliveryDashboard } from './components/DeliveryDashboard'
 import { CashierDashboard } from './components/CashierDashboard'
 import { AdminDashboard } from './components/AdminDashboard'
 import { AuthProvider, useAuth } from './lib/AuthContext'
-import { fetchCatalog, fetchOrders, placeOrder, validatePromotion } from './lib/database'
+import { deliveryApi, ensureDeliveryForOrder, fetchCatalog, fetchOrders, placeOrder, validatePromotion } from './lib/database'
+import { SERVER_CHANGE_EVENT, SERVER_SYNC_KEY } from './lib/api'
+import { attachRealtimeFallback, subscribeDatabaseChanges } from './lib/realtime'
 import { CartDrawer } from './components/Cart'
 import { CheckoutModal } from './components/Checkout'
 const money = value => new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB', maximumFractionDigits: 0 }).format(value || 0)
@@ -117,6 +119,32 @@ function MainApp() {
   const [auth, setAuth] = useState(false)
   const [drawer, setDrawer] = useState(false)
   const [checkout, setCheckout] = useState(false)
+  const ordersRequestRef = useRef(null)
+  const deliverySetupRef = useRef(new Map())
+
+  const refreshOrders = useCallback(async () => {
+    if (!session) {
+      setOrders([])
+      return []
+    }
+    if (ordersRequestRef.current) return ordersRequestRef.current
+
+    const request = fetchOrders()
+      .then(data => {
+        setOrders(data)
+        return data
+      })
+      .catch(error => {
+        console.error('[API] โหลดออเดอร์ไม่สำเร็จ', error.message)
+        return null
+      })
+      .finally(() => {
+        ordersRequestRef.current = null
+      })
+
+    ordersRequestRef.current = request
+    return request
+  }, [session])
 
   useEffect(() => localStorage.setItem('lime-cart', JSON.stringify(cart)), [cart])
   useEffect(() => localStorage.setItem('lime-cart-notes', JSON.stringify(itemNotes)), [itemNotes])
@@ -124,13 +152,95 @@ function MainApp() {
     fetchCatalog().then(data => { setProducts(data.products); setCategories(data.categories) }).catch(error => console.error('[API] โหลดสินค้าไม่สำเร็จ', error.message))
   }, [])
   useEffect(() => {
-    fetchOrders().then(setOrders).catch(error => console.error('[API] โหลดออเดอร์ไม่สำเร็จ', error.message))
-  }, [session])
+    refreshOrders()
+  }, [refreshOrders])
+
   useEffect(() => {
     if (!session) return undefined
-    const timer = window.setInterval(() => fetchOrders().then(setOrders).catch(() => { }), 15000)
-    return () => window.clearInterval(timer)
-  }, [session])
+
+    const refresh = () => refreshOrders()
+    const onServerChange = () => refresh()
+    const onStorage = event => {
+      if (event.key === SERVER_SYNC_KEY) refresh()
+    }
+
+    // Supabase Realtime is the primary sync path. We refetch through our Server API
+    // instead of trusting database rows directly, so existing auth/mapping stays intact.
+    const unsubscribeRealtime = subscribeDatabaseChanges({
+      channelName: `limeleaf-orders-${profile?.role || 'user'}`,
+      tables: ['orders', 'order_items', 'deliveries', 'tracking_events'],
+      onChange: refresh,
+      onStatus: (status, error) => {
+        if (status === 'SUBSCRIBED') console.info('[Realtime] Orders connected')
+        if (error) console.warn('[Realtime] Orders connection error', error)
+      },
+    })
+
+    // Keep a slow fallback in case WebSocket is blocked or temporarily disconnected.
+    const detachFallback = attachRealtimeFallback({
+      refresh,
+      pollMs: 30000,
+    })
+
+    // Same-browser / same-origin mutations still refresh instantly even before
+    // the database Realtime event arrives.
+    window.addEventListener(SERVER_CHANGE_EVENT, onServerChange)
+    window.addEventListener('storage', onStorage)
+
+    return () => {
+      unsubscribeRealtime()
+      detachFallback()
+      window.removeEventListener(SERVER_CHANGE_EVENT, onServerChange)
+      window.removeEventListener('storage', onStorage)
+    }
+  }, [session, profile?.role, refreshOrders])
+
+  // Frontend-only compatibility for the current Server: READY delivery orders still
+  // need a staff browser to ensure a Delivery exists. Keeping this at MainApp level
+  // means it continues working even if Admin/Cashier navigates to another staff page.
+  useEffect(() => {
+    if (!session || !['cashier', 'admin'].includes(profile?.role)) return undefined
+
+    const now = Date.now()
+    const ready = orders.filter(order =>
+      order.deliveryType === 'ให้จัดส่ง' &&
+      order.serverStatus === 'READY' &&
+      order.deliveryAddress
+    )
+    const readyIds = new Set(ready.map(order => order.id))
+
+    for (const id of deliverySetupRef.current.keys()) {
+      if (!readyIds.has(id)) deliverySetupRef.current.delete(id)
+    }
+
+    let cancelled = false
+    const prepareDeliveries = async () => {
+      for (const order of ready) {
+        if (cancelled) return
+
+        const lastAttempt = deliverySetupRef.current.get(order.id) || 0
+        if (lastAttempt === Infinity || now - lastAttempt < 4000) continue
+        deliverySetupRef.current.set(order.id, now)
+
+        try {
+          const delivery = await ensureDeliveryForOrder(order)
+          if (!delivery || cancelled) continue
+
+          if (delivery.status === 'PENDING') {
+            const assigned = await deliveryApi.autoAssign(delivery.id).catch(() => null)
+            if (assigned) deliverySetupRef.current.set(order.id, Infinity)
+          } else {
+            deliverySetupRef.current.set(order.id, Infinity)
+          }
+        } catch (error) {
+          console.warn('[Delivery setup]', error.message)
+        }
+      }
+    }
+
+    prepareDeliveries()
+    return () => { cancelled = true }
+  }, [session, profile?.role, orders])
   const count = useMemo(() => products.reduce((sum, product) => sum + (cart[product.id] || 0), 0), [cart, products])
 
   const openCheckout = () => {
@@ -143,7 +253,7 @@ function MainApp() {
     try {
       const validCart = Object.fromEntries(products.filter(product => cart[product.id] > 0).map(product => [product.id, cart[product.id]]))
       await placeOrder({ cart: validCart, ...details, itemNotes })
-      setOrders(await fetchOrders())
+      await refreshOrders()
       const catalog = await fetchCatalog()
       setProducts(catalog.products)
       setCheckout(false); setCart({}); navigate('/success')
@@ -170,7 +280,7 @@ function MainApp() {
       <Route path="/success" element={<Success onHome={() => navigate('/')} />} />
       <Route path="/kitchen" element={<RoleRoute session={session} profile={profile} loading={loading} roles={['kitchen', 'admin']} onAuth={() => setAuth(true)}><KitchenDashboard orders={orders} setOrders={setOrders} /></RoleRoute>} />
       <Route path="/delivery" element={<RoleRoute session={session} profile={profile} loading={loading} roles={['delivery', 'admin']} onAuth={() => setAuth(true)}><DeliveryDashboard orders={orders} setOrders={setOrders} /></RoleRoute>} />
-      <Route path="/cashier" element={<RoleRoute session={session} profile={profile} loading={loading} roles={['cashier', 'admin']} onAuth={() => setAuth(true)}><CashierDashboard orders={orders} setOrders={setOrders} /></RoleRoute>} />
+      <Route path="/cashier" element={<RoleRoute session={session} profile={profile} loading={loading} roles={['cashier', 'admin']} onAuth={() => setAuth(true)}><CashierDashboard orders={orders} setOrders={setOrders} refreshOrders={refreshOrders} /></RoleRoute>} />
       <Route path="/admin" element={<RoleRoute session={session} profile={profile} loading={loading} roles={['admin']} onAuth={() => setAuth(true)}><AdminDashboard orders={orders} setOrders={setOrders} products={products} setProducts={setProducts} categories={categories} setCategories={setCategories} /></RoleRoute>} />
     </Routes>
     {auth && <AuthModal onClose={() => setAuth(false)} />}

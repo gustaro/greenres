@@ -381,14 +381,23 @@ export async function ensureDeliveryForOrder(order) {
         if (!(error instanceof ApiError) || error.status !== 404) throw error
     }
 
-    return api('/delivery', {
-        method: 'POST',
-        body: JSON.stringify({
-            orderId: order.id,
-            dropAddress: order.deliveryAddress,
-            provider: 'INTERNAL',
-        }),
-    })
+    try {
+        return await api('/delivery', {
+            method: 'POST',
+            body: JSON.stringify({
+                orderId: order.id,
+                dropAddress: order.deliveryAddress,
+                provider: 'INTERNAL',
+            }),
+        })
+    } catch (error) {
+        // More than one staff browser can react to the same Realtime READY event.
+        // If another browser created the unique delivery first, reuse that record.
+        if (error instanceof ApiError && error.status === 409) {
+            return api(`/delivery/order/${order.id}`)
+        }
+        throw error
+    }
 }
 
 export const kitchenApi = {

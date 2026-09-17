@@ -1,7 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useAuth } from '../lib/AuthContext'
 import { deliveryApi, markOrderPaid } from '../lib/database'
 import { StaffShell, OrderItems, Empty, money } from './StaffShared'
+import { SERVER_CHANGE_EVENT, SERVER_SYNC_KEY } from '../lib/api'
+import { attachRealtimeFallback, subscribeDatabaseChanges } from '../lib/realtime'
 
 const DELIVERY_FLOW = {
     PENDING: ['ASSIGNED', '📋 รับงาน'],
@@ -33,36 +35,78 @@ export function DeliveryDashboard({ setOrders }) {
     const [expanded, setExpanded] = useState(null)
     const [cashConfirm, setCashConfirm] = useState(null)
     const [notice, setNotice] = useState('')
+    const loadRequestRef = useRef(null)
 
     const notify = msg => { setNotice(msg); setTimeout(() => setNotice(''), 2500) }
 
-    const load = async (silent = false) => {
+    const load = useCallback(async (silent = false) => {
+        if (loadRequestRef.current) return loadRequestRef.current
         if (!silent) setLoading(true)
-        try {
-            setError('')
-            if (isAdmin) {
-                const result = await deliveryApi.list()
-                setJobs(result.deliveries ?? result)
-            } else {
-                const [riderResult, deliveryResult] = await Promise.all([
-                    deliveryApi.riderProfile(),
-                    deliveryApi.riderDeliveries(),
-                ])
-                setRider(riderResult)
-                setJobs(deliveryResult)
+
+        const request = (async () => {
+            try {
+                setError('')
+                if (isAdmin) {
+                    const result = await deliveryApi.list()
+                    setJobs(result.deliveries ?? result)
+                } else {
+                    const [riderResult, deliveryResult] = await Promise.all([
+                        deliveryApi.riderProfile(),
+                        deliveryApi.riderDeliveries(),
+                    ])
+                    setRider(riderResult)
+                    setJobs(deliveryResult)
+                }
+            } catch (loadError) {
+                setError(loadError.message)
+            } finally {
+                if (!silent) setLoading(false)
             }
-        } catch (loadError) {
-            setError(loadError.message)
-        } finally {
-            if (!silent) setLoading(false)
-        }
-    }
+        })().finally(() => {
+            loadRequestRef.current = null
+        })
+
+        loadRequestRef.current = request
+        return request
+    }, [isAdmin])
 
     useEffect(() => {
+        const refresh = () => load(true)
+        const onServerChange = event => {
+            const path = event.detail?.path || ''
+            if (path.startsWith('/delivery') || path.startsWith('/orders')) refresh()
+        }
+        const onStorage = event => {
+            if (event.key !== SERVER_SYNC_KEY || !event.newValue) return
+            try {
+                const change = JSON.parse(event.newValue)
+                if (change.path?.startsWith('/delivery') || change.path?.startsWith('/orders')) refresh()
+            } catch { /* ignore malformed sync payload */ }
+        }
+
         load()
-        const timer = window.setInterval(() => load(true), 10000)
-        return () => window.clearInterval(timer)
-    }, [isAdmin])
+
+        const unsubscribeRealtime = subscribeDatabaseChanges({
+            channelName: 'limeleaf-delivery',
+            tables: ['deliveries', 'tracking_events', 'orders'],
+            onChange: refresh,
+            onStatus: (status, error) => {
+                if (status === 'SUBSCRIBED') console.info('[Realtime] Delivery connected')
+                if (error) console.warn('[Realtime] Delivery connection error', error)
+            },
+        })
+        const detachFallback = attachRealtimeFallback({ refresh, pollMs: 30000 })
+
+        window.addEventListener(SERVER_CHANGE_EVENT, onServerChange)
+        window.addEventListener('storage', onStorage)
+
+        return () => {
+            unsubscribeRealtime()
+            detachFallback()
+            window.removeEventListener(SERVER_CHANGE_EVENT, onServerChange)
+            window.removeEventListener('storage', onStorage)
+        }
+    }, [load])
 
     const toggleAvailability = async () => {
         if (!rider) return
@@ -179,7 +223,7 @@ export function DeliveryDashboard({ setOrders }) {
         <section>
             <div className="staff-section-head">
                 <div><h2>{tab === 'active' ? `งานจัดส่ง (${activeJobs.length})` : `ประวัติส่งสำเร็จ (${completedJobs.length})`}</h2>
-                    <p>{isAdmin ? 'ข้อมูลจาก /api/delivery' : 'ข้อมูลจาก /api/delivery/rider/me/deliveries'} · อัปเดตอัตโนมัติทุก 10 วินาที</p></div>
+                    <p>{isAdmin ? 'ข้อมูลจาก /api/delivery' : 'ข้อมูลจาก /api/delivery/rider/me/deliveries'} · Supabase Realtime (สำรองทุก 30 วินาที)</p></div>
             </div>
 
             {loading ? <Empty text="กำลังโหลดงานจัดส่ง..." /> : cards.length === 0 ? <Empty text={tab === 'active' ? 'ไม่มีงานจัดส่งที่รออยู่' : 'ยังไม่มีประวัติการจัดส่งสำเร็จ'} /> :

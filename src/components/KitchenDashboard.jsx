@@ -1,6 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { mapProduct, api, adminApi, kitchenApi } from '../lib/database'
 import { StaffShell, OrderItems, Empty, orderCode, scheduleLabel } from './StaffShared'
+import { SERVER_CHANGE_EVENT, SERVER_SYNC_KEY } from '../lib/api'
+import { attachRealtimeFallback, subscribeDatabaseChanges } from '../lib/realtime'
 
 export function KitchenDashboard({ setOrders }) {
     const [tab, setTab] = useState('orders')
@@ -9,22 +11,30 @@ export function KitchenDashboard({ setOrders }) {
     const [inventory, setInventory] = useState([])
     const [stats, setStats] = useState(null)
     const [loading, setLoading] = useState(true)
+    const loadRequestRef = useRef(null)
 
-    const loadKitchenData = async (silent = false) => {
+    const loadKitchenData = useCallback(async (silent = false) => {
+        if (loadRequestRef.current) return loadRequestRef.current
         if (!silent) setLoading(true)
-        try {
-            const [queueResult, statsResult] = await Promise.all([
-                kitchenApi.queue(),
-                kitchenApi.stats(),
-            ])
+
+        const request = Promise.all([
+            kitchenApi.queue(),
+            kitchenApi.stats(),
+        ]).then(([queueResult, statsResult]) => {
             setQueue(queueResult)
             setStats(statsResult)
-        } catch (error) {
+            return queueResult
+        }).catch(error => {
             if (!silent) window.alert('โหลดข้อมูลครัวไม่สำเร็จ: ' + error.message)
-        } finally {
+            return null
+        }).finally(() => {
+            loadRequestRef.current = null
             if (!silent) setLoading(false)
-        }
-    }
+        })
+
+        loadRequestRef.current = request
+        return request
+    }, [])
 
     useEffect(() => {
         api('/products?limit=100').then(result => setProducts((result.products || []).map(mapProduct))).catch(() => { })
@@ -36,15 +46,49 @@ export function KitchenDashboard({ setOrders }) {
             lowThreshold: Number(item.lowThreshold || 10),
             productId: item.productId,
         })))).catch(() => { })
+
+        const refresh = () => loadKitchenData(true)
+        const onServerChange = event => {
+            const path = event.detail?.path || ''
+            if (path.startsWith('/orders') || path.startsWith('/kitchen')) refresh()
+        }
+        const onStorage = event => {
+            if (event.key !== SERVER_SYNC_KEY || !event.newValue) return
+            try {
+                const change = JSON.parse(event.newValue)
+                if (change.path?.startsWith('/orders') || change.path?.startsWith('/kitchen')) refresh()
+            } catch { /* ignore malformed sync payload */ }
+        }
+
         loadKitchenData()
-        const timer = window.setInterval(() => loadKitchenData(true), 10000)
-        return () => window.clearInterval(timer)
-    }, [])
+
+        const unsubscribeRealtime = subscribeDatabaseChanges({
+            channelName: 'limeleaf-kitchen',
+            tables: ['orders', 'order_items'],
+            onChange: refresh,
+            onStatus: (status, error) => {
+                if (status === 'SUBSCRIBED') console.info('[Realtime] Kitchen connected')
+                if (error) console.warn('[Realtime] Kitchen connection error', error)
+            },
+        })
+        const detachFallback = attachRealtimeFallback({ refresh, pollMs: 30000 })
+
+        window.addEventListener(SERVER_CHANGE_EVENT, onServerChange)
+        window.addEventListener('storage', onStorage)
+
+        return () => {
+            unsubscribeRealtime()
+            detachFallback()
+            window.removeEventListener(SERVER_CHANGE_EVENT, onServerChange)
+            window.removeEventListener('storage', onStorage)
+        }
+    }, [loadKitchenData])
 
     const startOrder = async order => {
         try {
-            // Optimistic update
+            // Optimistic update: เปลี่ยนทั้ง shared orders และคิวบนหน้าครัวทันที
             setOrders(current => current.map(item => item.id === order.id ? { ...item, foodStatus: 'กำลังทำ', serverStatus: 'PREPARING' } : item))
+            setQueue(current => current.map(item => item.id === order.id ? { ...item, foodStatus: 'กำลังทำ', serverStatus: 'PREPARING' } : item))
             await kitchenApi.start(order.id)
             loadKitchenData(true)
         } catch (error) {
@@ -55,8 +99,9 @@ export function KitchenDashboard({ setOrders }) {
 
     const finishOrder = async order => {
         try {
-            // Optimistic update
+            // READY ไม่อยู่ใน kitchen queue แล้ว จึงเอาการ์ดออกทันทีเพื่อให้ UI ตอบสนองทันที
             setOrders(current => current.map(item => item.id === order.id ? { ...item, foodStatus: item.deliveryType === 'ให้จัดส่ง' ? 'พร้อมจัดส่ง' : 'ทำเสร็จแล้ว', serverStatus: 'READY' } : item))
+            setQueue(current => current.filter(item => item.id !== order.id))
             await kitchenApi.ready(order.id)
             loadKitchenData(true)
         } catch (error) {
@@ -68,7 +113,7 @@ export function KitchenDashboard({ setOrders }) {
     const waiting = queue.filter(order => order.serverStatus === 'CONFIRMED')
     const preparing = queue.filter(order => order.serverStatus === 'PREPARING')
 
-    return <StaffShell role="kitchen" title="ศูนย์จัดการครัว" subtitle="คิวครัวเชื่อมกับ Kitchen API ของ Server โดยตรง" active={tab} onTab={setTab} tabs={[
+    return <StaffShell role="kitchen" title="ศูนย์จัดการครัว" subtitle="คิวครัวอัปเดตผ่าน Supabase Realtime และอ่านข้อมูลจริงจาก Server API" active={tab} onTab={setTab} tabs={[
         { key: 'orders', label: 'คิวทำอาหาร', icon: 'bi-grid-1x2', count: queue.length },
         { key: 'products', label: 'สถานะสินค้า', icon: 'bi-box-seam' },
         { key: 'inventory', label: 'สต๊อกสินค้า', icon: 'bi-list-check' },

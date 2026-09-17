@@ -1,10 +1,20 @@
 import { createClient } from '@supabase/supabase-js'
 
-const url = import.meta.env.VITE_SUPABASE_URL
-const key = import.meta.env.VITE_SUPABASE_ANON_KEY
+const url = import.meta.env.VITE_SUPABASE_URL?.trim()
+const key = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY?.trim()
 
-if (!url || url.includes('YOUR_PROJECT')) {
-    console.warn('[Supabase] ⚠️  กรุณาใส่ค่า VITE_SUPABASE_URL ใน .env.local')
+export const isSupabaseConfigured = Boolean(
+    url && key && !url.includes('YOUR_PROJECT') && !key.includes('YOUR_')
+)
+
+if (!isSupabaseConfigured) {
+    console.warn('[Supabase] Realtime disabled: กรุณาตั้งค่า VITE_SUPABASE_URL และ VITE_SUPABASE_PUBLISHABLE_KEY ใน .env.local')
 }
 
-export const supabase = createClient(url ?? '', key ?? '')
+export const supabase = isSupabaseConfigured
+    ? createClient(url, key, {
+        realtime: {
+            params: { eventsPerSecond: 20 },
+        },
+    })
+    : null
