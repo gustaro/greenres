@@ -128,7 +128,15 @@ export function ProfilePage() {
         ? ['รอยืนยัน', 'รอครัว', 'กำลังทำ', 'รอไรเดอร์', 'พร้อมจัดส่ง', 'กำลังจัดส่ง', 'ถึงปลายทาง', 'จัดส่งเสร็จสิ้น']
         : ['รอยืนยัน', 'รอครัว', 'กำลังทำ', 'ทำเสร็จแล้ว', 'เสร็จสิ้น']
 
-    if (loading) return <div style={{ display: 'grid', placeItems: 'center', minHeight: '100vh', fontSize: 28 }}>⏳</div>
+    if (loading || (session && activityLoading && orders.length === 0)) {
+        return (
+            <div className="app-loading" role="status" aria-label="กำลังโหลด">
+                <div className="app-loading-mark"><i /><i /></div>
+                <span className="app-loading-spinner" />
+                <p style={{ marginTop: 16, color: '#e8f3e5', fontWeight: 600, fontSize: 14 }}>กำลังเตรียมข้อมูลของคุณ...</p>
+            </div>
+        )
+    }
 
     const initial = (profile?.name ?? session?.user?.email ?? '?')[0].toUpperCase()
 

@@ -484,63 +484,173 @@
     position: fixed;
     z-index: 100;
     inset: 0;
-    background: rgba(12, 29, 14, .65);
+    background: rgba(12, 29, 14, .7);
     display: grid;
     place-items: center;
     padding: 20px
 }
 
 .receipt {
-    width: min(380px, 100%);
+    width: min(340px, 100%);
     background: #fff;
-    padding: 28px;
-    border-radius: 4px;
-    color: #222
+    padding: 30px 25px;
+    border-radius: 2px;
+    color: #111;
+    font-family: "Courier New", Courier, monospace, "Noto Sans Thai";
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+    position: relative;
 }
 
-.receipt>header {
-    display: grid;
+.receipt::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 6px;
+    background: linear-gradient(135deg, transparent 2px, #fff 2px) 0 0,
+        linear-gradient(-135deg, transparent 2px, #fff 2px) 0 0;
+    background-size: 10px 10px;
+    background-repeat: repeat-x;
+    transform: translateY(-5px);
+}
+
+.thermal-header {
     text-align: center;
-    border-bottom: 1px dashed #aaa;
-    padding-bottom: 15px
+    margin-bottom: 15px;
 }
 
-.receipt>header b {
-    font-size: 20px
+.thermal-header h2 {
+    font-size: 22px;
+    margin: 0 0 5px;
+    font-weight: 800;
 }
 
-.receipt>header small,
-.receipt>small {
-    color: #777
-}
-
-.receipt>p {
+.thermal-address {
     font-size: 11px;
-    line-height: 1.7
+    color: #444;
+    white-space: pre-wrap;
+    line-height: 1.4;
+    margin: 0 0 10px;
 }
 
-.receipt-total {
+.thermal-title {
+    font-size: 16px;
+    font-weight: bold;
+    margin: 15px 0 10px;
+}
+
+.thermal-meta {
+    margin-bottom: 12px;
+}
+
+.thermal-meta-row {
     display: flex;
     justify-content: space-between;
-    padding: 12px 0;
-    font-size: 18px;
-    border-top: 2px solid #222
+    font-size: 12px;
+    line-height: 1.6;
 }
 
-.receipt footer {
-    display: flex;
+.thermal-items-header {
+    display: grid;
+    grid-template-columns: 1fr 35px 70px;
+    font-size: 12px;
+    font-weight: bold;
+    border-top: 1px dashed #000;
+    border-bottom: 1px dashed #000;
+    padding: 8px 0;
+    margin-bottom: 10px;
+}
+
+.col-qty {
+    text-align: center;
+}
+
+.col-price {
+    text-align: right;
+}
+
+.thermal-items {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 15px;
+    display: grid;
     gap: 8px;
-    margin-top: 20px
 }
 
-.receipt footer button {
+.thermal-items li {
+    display: grid;
+    grid-template-columns: 1fr 35px 70px;
+    font-size: 12px;
+}
+
+.thermal-divider {
+    border-top: 1px dashed #000;
+    margin: 10px 0;
+}
+
+.thermal-divider-dashed {
+    border-top: 1px dashed #000;
+    margin: 10px 0;
+}
+
+.thermal-summary {
+    font-size: 13px;
+    display: grid;
+    gap: 5px;
+}
+
+.thermal-sum-row {
+    display: flex;
+    justify-content: space-between;
+}
+
+.thermal-total {
+    display: flex;
+    justify-content: space-between;
+    font-size: 16px;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.thermal-payment-type {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+}
+
+.thermal-footer {
+    text-align: center;
+    font-size: 12px;
+    margin-top: 20px;
+}
+
+.thermal-footer p {
+    margin: 4px 0;
+}
+
+.receipt-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 25px;
+}
+
+.receipt-actions button {
     flex: 1;
     min-height: 40px;
-    border: 0
+    border: 0;
+    border-radius: 4px;
+    font-weight: 800;
 }
 
-.receipt footer button:first-child {
-    background: #eee
+.receipt-actions button:first-child {
+    background: #e4e7e2;
+    color: #444;
+}
+
+.receipt-actions .staff-primary {
+    background: #111;
+    color: #fff;
 }
 
 @media(max-width:960px) {
@@ -638,8 +748,8 @@
         padding: 20px
     }
 
-    .receipt footer {
-        display: none
+    .receipt .noprint {
+        display: none !important;
     }
 }
 
