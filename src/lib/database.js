@@ -403,8 +403,8 @@ export async function ensureDeliveryForOrder(order) {
 export const kitchenApi = {
     queue: async () => (await api('/kitchen/queue')).map(mapOrder),
     stats: () => api('/kitchen/stats'),
-    start: id => api(`/kitchen/${id}/prepare`, { method: 'PUT', body: JSON.stringify({}) }),
-    ready: id => api(`/kitchen/${id}/ready`, { method: 'PUT', body: JSON.stringify({}) }),
+    start: id => updateOrder(id, { status: 'PREPARING' }),
+    ready: id => updateOrder(id, { status: 'READY' }),
 }
 
 export const deliveryApi = {
