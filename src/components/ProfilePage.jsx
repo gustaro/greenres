@@ -22,6 +22,8 @@ export function ProfilePage() {
     const [tab, setTab] = useState('info')
     const [name, setName] = useState('')
     const [phone, setPhone] = useState('')
+    const [birthday, setBirthday] = useState('')
+    const [gender, setGender] = useState('')
     const [addresses, setAddresses] = useState([])
     const [newAddrLabel, setNewAddrLabel] = useState('')
     const [newAddrPhone, setNewAddrPhone] = useState('')
@@ -43,6 +45,8 @@ export function ProfilePage() {
         if (profile) {
             setName(profile.name ?? '')
             setPhone(profile.phone ?? '')
+            setBirthday(profile.birthday ?? profile.dateOfBirth ?? '')
+            setGender(profile.gender ?? '')
             setAddresses(profile.addresses ?? [])
         }
     }, [profile])
@@ -72,7 +76,7 @@ export function ProfilePage() {
 
     const handleSave = async () => {
         setSaving(true)
-        const { error } = await updateProfile({ name, phone })
+        const { error } = await updateProfile({ name, phone, birthday, gender })
         setSaving(false)
         if (error) showToast('❌ บันทึกไม่สำเร็จ: ' + error.message)
         else showToast('✅ บันทึกสำเร็จแล้ว!')
@@ -200,7 +204,33 @@ export function ProfilePage() {
                                 </div>
                             </div>
 
-                            <button className="pf-save-btn" onClick={handleSave} disabled={saving}>
+                            <p className="pf-section-title">ช่องทางการติดต่อและรายละเอียด</p>
+                            <div className="pf-grid" style={{ gridTemplateColumns: '1fr 1fr' }}>
+                                <div className="pf-field">
+                                    <label>อีเมล</label>
+                                    <input value={session?.user?.email || ''} disabled style={{ backgroundColor: '#f5f5f5', color: '#888' }} />
+                                </div>
+                                <div className="pf-field">
+                                    <label>เบอร์โทรศัพท์</label>
+                                    <input value={phone} onChange={e => setPhone(e.target.value)} placeholder="08x-xxx-xxxx" />
+                                </div>
+
+                                <div className="pf-field">
+                                    <label>วันเกิด</label>
+                                    <input type="date" value={birthday} onChange={e => setBirthday(e.target.value)} />
+                                </div>
+                                <div className="pf-field">
+                                    <label>เพศ</label>
+                                    <select value={gender} onChange={e => setGender(e.target.value)}>
+                                        <option value="">ไม่ระบุ</option>
+                                        <option value="male">ชาย</option>
+                                        <option value="female">หญิง</option>
+                                        <option value="other">อื่นๆ</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <button className="pf-save-btn" onClick={handleSave} disabled={saving} style={{ marginTop: 24 }}>
                                 {saving ? 'กำลังบันทึก...' : 'บันทึก'}
                             </button>
                         </>
