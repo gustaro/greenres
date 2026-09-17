@@ -134,11 +134,16 @@ export const mapOrder = row => {
     const deliveryType = meta.deliveryType || (row.address ? 'ให้จัดส่ง' : orderSource === 'walkin' ? 'ทานที่ร้าน' : orderSource === 'takeaway' ? 'สั่งกลับบ้าน' : 'รับเองที่ร้าน')
     const address = normalizeAddress(row.address) || meta.deliveryAddress || ''
     const foodStatus = statusLabel(row.status, deliveryType)
+    const accountName = row.user?.name || row.user?.email || row.userId || ''
+    const customerName = meta.customerName || meta.recipientName || (orderSource === 'online' ? accountName : '')
+    const tableNumber = orderSource === 'walkin' ? String(meta.tableNumber || '').trim() : ''
 
     return {
         id: row.id,
         orderNumber: `#${String(row.id).slice(-8).toUpperCase()}`,
-        customerId: row.user?.name || row.user?.email || row.userId,
+        customerId: accountName,
+        customerName,
+        tableNumber,
         userId: row.userId,
         items: (row.items || []).map(item => ({
             id: item.id,
@@ -334,7 +339,7 @@ export const confirmOrder = id =>
     api(`/orders/${id}/status`, { method: 'PUT', body: JSON.stringify({ status: 'CONFIRMED' }) })
 
 // Cashier places walk-in or takeaway order directly from counter
-export async function placeCounterOrder({ cart, orderSource, notes, products }) {
+export async function placeCounterOrder({ cart, orderSource, notes, customerName, tableNumber }) {
     // Instead of doing multiple cart updates, bypass cart completely
     const overrideItems = Object.entries(cart)
         .filter(([_, q]) => Number(q) > 0)
@@ -342,12 +347,20 @@ export async function placeCounterOrder({ cart, orderSource, notes, products }) 
 
     if (overrideItems.length === 0) throw new Error("Cart is empty")
 
+    // Counter-only data is stored inside the existing notes metadata so this feature
+    // works without a database migration and is returned by every existing order API.
+    const counterMeta = `${ORDER_META_PREFIX}${JSON.stringify({
+        note: String(notes || '').trim(),
+        customerName: String(customerName || '').trim(),
+        tableNumber: orderSource === 'walkin' ? String(tableNumber || '').trim() : '',
+    })}`
+
     const order = await api('/orders', {
         method: 'POST',
         body: JSON.stringify({
             paymentMethod: 'CASH',
             orderSource,
-            notes: notes || '',
+            notes: counterMeta,
             overrideItems
         }),
     })

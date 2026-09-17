@@ -123,6 +123,7 @@ export function KitchenDashboard({ setOrders }) {
             {stats && <div className="staff-metrics"><article><small>รอเริ่มทำ</small><strong>{stats.confirmed ?? waiting.length}</strong></article><article><small>กำลังทำ</small><strong>{stats.preparing ?? preparing.length}</strong></article><article><small>คิวทั้งหมด</small><strong>{queue.length}</strong></article></div>}
             <div className="staff-order-grid">{loading ? <Empty text="กำลังโหลดคิวครัว" /> : queue.length === 0 ? <Empty text="ยังไม่มีออเดอร์ที่ต้องทำ" /> : queue.map(order => <article className="staff-order-card" key={order.id}>
                 <header><div><small>ORDER</small><h3>{orderCode(order)}</h3></div><i className={`status ${order.serverStatus === 'PREPARING' ? 'cooking' : 'pending'}`}>{order.foodStatus}</i></header>
+                {order.deliveryType === 'ทานที่ร้าน' && <div className="kitchen-table-banner"><span>โต๊ะ</span><strong>{order.tableNumber || '—'}</strong>{order.customerName && <small>{order.customerName}</small>}</div>}
                 <p>{scheduleLabel(order)} · สั่งเมื่อ {new Date(order.createdAt).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })}</p>
                 <OrderItems order={order} />
                 {order.serverStatus === 'CONFIRMED' && <button className="staff-primary" onClick={() => startOrder(order)}>เริ่มทำอาหาร →</button>}

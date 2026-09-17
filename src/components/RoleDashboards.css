@@ -805,6 +805,42 @@
     font-weight: 800
 }
 
+.cashier-order-meta .table-number-badge {
+    background: #173f20;
+    color: #fff;
+    font-size: 11px;
+    letter-spacing: .2px
+}
+
+.kitchen-table-banner {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 12px 0 8px;
+    padding: 9px 11px;
+    border-radius: 9px;
+    background: #173f20;
+    color: #fff
+}
+
+.kitchen-table-banner span {
+    font-size: 11px;
+    font-weight: 800;
+    opacity: .8
+}
+
+.kitchen-table-banner strong {
+    font-size: 20px;
+    line-height: 1
+}
+
+.kitchen-table-banner small {
+    margin-left: auto;
+    font-size: 11px;
+    font-weight: 700;
+    color: #d9f6c2
+}
+
 .cashier-due {
     display: flex;
     align-items: center;
@@ -868,6 +904,59 @@
 
 .counter-source-bar input {
     display: none
+}
+
+.counter-category-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 0 0 16px
+}
+
+.counter-category-tabs button {
+    border: 1px solid #d8e3d5;
+    border-radius: 999px;
+    background: #fff;
+    color: #4f6253;
+    padding: 7px 13px;
+    font-size: 11px;
+    font-weight: 800;
+    cursor: pointer
+}
+
+.counter-category-tabs button.active {
+    border-color: var(--brand-primary);
+    background: var(--brand-primary);
+    color: #fff
+}
+
+.counter-category-list {
+    display: grid;
+    gap: 20px
+}
+
+.counter-category-section {
+    min-width: 0
+}
+
+.counter-category-heading {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 10px;
+    margin: 0 0 9px
+}
+
+.counter-category-heading h3 {
+    margin: 0;
+    font-size: 15px;
+    color: #24452c
+}
+
+.counter-category-heading span {
+    color: #839087;
+    font-size: 10px;
+    font-weight: 700
 }
 
 .counter-products {
@@ -939,6 +1028,60 @@
 
 .counter-cart h3 {
     margin: 0 0 14px;
+    font-size: 16px
+}
+
+.counter-cart .counter-cart-title {
+    margin-top: 18px
+}
+
+.counter-customer-fields {
+    display: grid;
+    gap: 10px;
+    margin-bottom: 12px
+}
+
+.counter-customer-fields label {
+    display: grid;
+    gap: 5px;
+    color: #405046;
+    font-size: 11px;
+    font-weight: 800
+}
+
+.counter-customer-fields label small {
+    color: #8a978d;
+    font-weight: 600
+}
+
+.counter-customer-fields label b {
+    color: #cf3c2e
+}
+
+.counter-customer-fields input {
+    width: 100%;
+    border: 1px solid #d5dfd3;
+    border-radius: 8px;
+    background: #fff;
+    padding: 10px 11px;
+    font: inherit;
+    font-size: 12px;
+    outline: none
+}
+
+.counter-customer-fields input:focus {
+    border-color: var(--brand-primary);
+    box-shadow: 0 0 0 3px rgba(14, 151, 28, .1)
+}
+
+.thermal-table-row {
+    margin: 4px 0;
+    padding: 5px 0;
+    border-top: 1px dashed #bbb;
+    border-bottom: 1px dashed #bbb
+}
+
+.thermal-table-row strong {
     font-size: 16px
 }
 
