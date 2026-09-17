@@ -10,8 +10,8 @@ import { CashierDashboard } from './components/CashierDashboard'
 import { AdminDashboard } from './components/AdminDashboard'
 import { AuthProvider, useAuth } from './lib/AuthContext'
 import { fetchCatalog, fetchOrders, placeOrder, validatePromotion } from './lib/database'
-import { CartDrawer, CheckoutModal } from './components/Cart'
-
+import { CartDrawer } from './components/Cart'
+import { CheckoutModal } from './components/Checkout'
 const money = value => new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB', maximumFractionDigits: 0 }).format(value || 0)
 
 // ─── Auth Modal ─────────────────────────────────────────────────────────────

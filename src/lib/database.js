@@ -269,13 +269,13 @@ export async function fetchOrderHistory() {
     return orders
 }
 
-export async function placeOrder({ cart, paymentMethod, deliveryType, deliveryAddress, deliveryScheduleType, scheduledAt, promotionCode, recipientName, recipientPhone, itemNotes }) {
+export async function placeOrder({ cart, paymentMethod, deliveryType, deliveryAddress, deliveryAddressId, deliveryScheduleType, scheduledAt, promotionCode, recipientName, recipientPhone, itemNotes }) {
     const overrideItems = Object.entries(cart)
         .filter(([_, q]) => Number(q) > 0)
         .map(([productId, quantity]) => ({ productId, quantity: Number(quantity) }))
 
-    let addressId = null
-    if (deliveryType === 'ให้จัดส่ง') {
+    let addressId = deliveryAddressId || null
+    if (deliveryType === 'ให้จัดส่ง' && !addressId) {
         const address = await api('/users/addresses', {
             method: 'POST',
             body: JSON.stringify({
