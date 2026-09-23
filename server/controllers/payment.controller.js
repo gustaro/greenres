@@ -51,6 +51,138 @@ export const createPaymentIntent = async (req, res, next) => {
   }
 };
 
+// Create a PromptPay PaymentIntent and confirm it to obtain genuine QR code
+export const createPromptPayIntent = async (req, res, next) => {
+  try {
+    const { amount, orderId, email, name } = req.body;
+    const numAmount = parseFloat(amount);
+    if (!numAmount || isNaN(numAmount) || numAmount <= 0) {
+      return res.status(400).json({ message: "Valid amount is required" });
+    }
+
+    const settings = getActiveSettings();
+    const isLive = settings.stripeMode === "live";
+    const secretKey = isLive
+      ? (settings.stripeLiveSecretKey || "")
+      : (settings.stripeTestSecretKey || env.STRIPE_SECRET_KEY);
+
+    if (!secretKey) {
+      return res.status(400).json({ message: "Stripe Secret Key is not configured" });
+    }
+
+    const stripe = getStripe();
+    const customerEmail = email || req.user?.email || "customer@limeleaf.com";
+    const customerName = name || req.user?.name || "LimeLeaf Customer";
+
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: Math.round(numAmount * 100), // satang
+      currency: "thb",
+      payment_method_types: ["promptpay"],
+      metadata: {
+        orderId: orderId || "",
+        userId: req.user?.id || "",
+        customerEmail,
+        customerName,
+      },
+    });
+
+    const confirmed = await stripe.paymentIntents.confirm(paymentIntent.id, {
+      payment_method_data: {
+        type: "promptpay",
+        billing_details: {
+          email: customerEmail,
+          name: customerName,
+        },
+      },
+    });
+
+    const qrDetails = confirmed.next_action?.promptpay_display_qr_code || {};
+
+    if (orderId) {
+      await prisma.order.updateMany({
+        where: { id: orderId },
+        data: { stripePaymentId: confirmed.id },
+      });
+    }
+
+    res.json({
+      clientSecret: confirmed.client_secret,
+      paymentIntentId: confirmed.id,
+      amount: numAmount,
+      currency: "thb",
+      status: confirmed.status,
+      qrImageUrl: qrDetails.image_url_png || qrDetails.image_url_svg || null,
+      hostedInstructionsUrl: qrDetails.hosted_instructions_url || null,
+      stripeTestUrl: qrDetails.data || null,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Simulate / Authorize test PromptPay payment into Stripe Sandbox
+export const simulatePromptPaySuccess = async (req, res, next) => {
+  try {
+    const { paymentIntentId, orderId } = req.body;
+    if (!paymentIntentId) {
+      return res.status(400).json({ message: "paymentIntentId is required" });
+    }
+
+    const stripe = getStripe();
+    let pi = await stripe.paymentIntents.retrieve(paymentIntentId);
+
+    if (pi.status !== "succeeded") {
+      const testUrl = pi.next_action?.promptpay_display_qr_code?.data;
+      if (testUrl) {
+        try {
+          const pageRes = await fetch(testUrl);
+          const pageHtml = await pageRes.text();
+          const match = pageHtml.match(/data-message="([^"]+)"/);
+          if (match && match[1]) {
+            const decodedJson = Buffer.from(match[1], "base64").toString("utf-8");
+            const payload = JSON.parse(decodedJson);
+            if (payload.notify_url_success) {
+              await fetch(payload.notify_url_success, { method: "GET" });
+            }
+          }
+        } catch (simErr) {
+          console.warn("[simulatePromptPaySuccess] Hook trigger notice:", simErr.message);
+        }
+      }
+
+      // Poll until succeeded or max 6 attempts
+      for (let i = 0; i < 6; i++) {
+        await new Promise(r => setTimeout(r, 700));
+        pi = await stripe.paymentIntents.retrieve(paymentIntentId);
+        if (pi.status === "succeeded") break;
+      }
+    }
+
+    // Update order in database if orderId is provided
+    if (orderId) {
+      await prisma.order.updateMany({
+        where: { id: orderId },
+        data: {
+          paymentStatus: "PAID",
+          status: "CONFIRMED",
+          paymentMethod: "STRIPE",
+          stripePaymentId: paymentIntentId,
+        },
+      });
+    }
+
+    res.json({
+      success: pi.status === "succeeded",
+      status: pi.status,
+      paymentIntentId: pi.id,
+      amount: (pi.amount_received || pi.amount) / 100,
+      currency: pi.currency,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 // Stripe webhook — must use raw body parser
 export const handleWebhook = async (req, res, next) => {
   const sig = req.headers["stripe-signature"];

@@ -117,14 +117,18 @@ export function useCashierOperations({ setOrders, refreshOrders, addToast, count
         const total = Number(order.totalAmount) || 0
 
         let paymentDetail = details?.paymentDetail || 'เงินสด'
+        let stripePaymentId = null
+
         if (selectedPaymentMethod === 'CARD') {
             if (details?.cardMode === 'manual' && details?.cardData?.maskedCard) {
                 paymentDetail = `บัตรเครดิต (${details.cardData.maskedCard})`
+                stripePaymentId = details.cardData.stripePaymentId || null
             } else {
                 paymentDetail = details?.paymentDetail || 'บัตรเครดิต (เครื่อง EDC)'
             }
         } else if (selectedPaymentMethod === 'QR') {
-            paymentDetail = 'สแกนคิวอาร์ (PromptPay)'
+            stripePaymentId = details?.qrData?.paymentIntentId || null
+            paymentDetail = details?.paymentDetail || (stripePaymentId ? `สแกนคิวอาร์ (PromptPay • Stripe ${stripePaymentId.slice(-8)})` : 'สแกนคิวอาร์ (PromptPay)')
         } else {
             paymentDetail = 'เงินสด'
             const cash = Number(cashReceived)
@@ -135,13 +139,14 @@ export function useCashierOperations({ setOrders, refreshOrders, addToast, count
 
         setPaymentLoading(true)
         try {
-            await markOrderPaid(order.id, selectedPaymentMethod, paymentDetail)
+            await markOrderPaid(order.id, selectedPaymentMethod, paymentDetail, stripePaymentId)
             setOrders(current => current.map(item => item.id === order.id ? {
                 ...item,
                 isPaid: true,
                 paymentStatus: 'PAID',
                 paymentMethod: paymentDetail,
-                meta: { ...item.meta, paymentMethod: paymentDetail, paymentMethodDetail: paymentDetail }
+                stripePaymentId: stripePaymentId || item.stripePaymentId,
+                meta: { ...item.meta, paymentMethod: paymentDetail, paymentMethodDetail: paymentDetail, stripePaymentId: stripePaymentId || item.meta?.stripePaymentId }
             } : item))
             playNotificationChime()
             addToast({

@@ -37,7 +37,7 @@ const findInsufficientIngredient = (usage) => usage.find(({ ingredient, required
 
 export const createOrder = async (req, res, next) => {
   try {
-    const { addressId, couponCode, notes, paymentMethod = "STRIPE", orderSource = "online", overrideItems, itemNotes } = req.body;
+    const { addressId, couponCode, notes, paymentMethod = "STRIPE", orderSource = "online", overrideItems, itemNotes, stripePaymentId } = req.body;
     const isCounterOrder = orderSource === "walkin" || orderSource === "takeaway";
     const taggedNotes = `[${orderSource}]${notes ? ` ${notes}` : ""}`;
 
@@ -122,8 +122,10 @@ export const createOrder = async (req, res, next) => {
           userId: req.user.id,
           addressId: addressId || null,
           couponId: coupon?.id || null,
-          paymentMethod,
-          status: isCounterOrder ? "CONFIRMED" : "PENDING",
+          paymentMethod: stripePaymentId ? "STRIPE" : paymentMethod,
+          paymentStatus: stripePaymentId ? "PAID" : "PENDING",
+          stripePaymentId: stripePaymentId || null,
+          status: (isCounterOrder || stripePaymentId) ? "CONFIRMED" : "PENDING",
           subtotal: parseFloat(subtotal.toFixed(2)),
           discount: parseFloat(discount.toFixed(2)),
           deliveryFee: parseFloat(deliveryFee.toFixed(2)),
@@ -321,7 +323,7 @@ export const cancelOrder = async (req, res, next) => {
 // Mark an order as paid (Cash, QR / PromptPay, Credit Card)
 export const markPaymentPaid = async (req, res, next) => {
   try {
-    const { paymentMethod = "CASH", paymentDetail } = req.body;
+    const { paymentMethod = "CASH", paymentDetail, stripePaymentId } = req.body;
     const order = await prisma.order.findUnique({ where: { id: req.params.id } });
     if (!order) return res.status(404).json({ message: "Order not found" });
     if (order.paymentStatus === "PAID") {
@@ -329,7 +331,7 @@ export const markPaymentPaid = async (req, res, next) => {
     }
 
     // Prisma enum only supports STRIPE or CASH
-    const prismaPaymentMethod = (paymentMethod === "STRIPE" || paymentMethod === "CARD") ? "STRIPE" : "CASH";
+    const prismaPaymentMethod = (paymentMethod === "STRIPE" || paymentMethod === "CARD" || stripePaymentId) ? "STRIPE" : "CASH";
     const detailLabel = paymentDetail || (paymentMethod === "STRIPE" || paymentMethod === "CARD" ? "บัตรเครดิต" : paymentMethod === "QR" ? "สแกนคิวอาร์" : "เงินสด");
 
     let updatedNotes = order.notes || "";
@@ -339,6 +341,7 @@ export const markPaymentPaid = async (req, res, next) => {
         const meta = JSON.parse(match[1]);
         meta.paymentMethodDetail = detailLabel;
         meta.paymentMethod = detailLabel;
+        if (stripePaymentId) meta.stripePaymentId = stripePaymentId;
         updatedNotes = updatedNotes.replace(match[0], `LIMELEAF_META:${JSON.stringify(meta)}`);
       } catch {}
     } else {
@@ -347,7 +350,13 @@ export const markPaymentPaid = async (req, res, next) => {
 
     const updated = await prisma.order.update({
       where: { id: req.params.id },
-      data: { paymentStatus: "PAID", paymentMethod: prismaPaymentMethod, notes: updatedNotes },
+      data: {
+        paymentStatus: "PAID",
+        paymentMethod: prismaPaymentMethod,
+        notes: updatedNotes,
+        status: order.status === "PENDING" ? "CONFIRMED" : order.status,
+        ...(stripePaymentId ? { stripePaymentId } : {}),
+      },
       include: { user: { select: { id: true, name: true, email: true } }, items: { include: { product: true } }, address: true },
     });
     res.json(updated);

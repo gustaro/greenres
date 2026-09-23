@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useAuth } from '../../lib/AuthContext'
+import { api } from '../../lib/api'
 
 export function PromptPayQR({
     total = 0,
@@ -21,6 +22,12 @@ export function PromptPayQR({
     const [simulating, setSimulating] = useState(false)
     const [localPaid, setLocalPaid] = useState(false)
 
+    // Stripe PromptPay Intent state
+    const [stripePaymentId, setStripePaymentId] = useState(null)
+    const [stripeQrUrl, setStripeQrUrl] = useState(null)
+    const [stripeTestUrl, setStripeTestUrl] = useState(null)
+    const [loadingStripe, setLoadingStripe] = useState(false)
+
     const effectivePaid = isPaid || localPaid
 
     // Generate stable ref ONCE if not provided - prevents recalculation on 1-sec timer ticks
@@ -32,6 +39,42 @@ export function PromptPayQR({
         maximumFractionDigits: 2,
     })
 
+    // Fetch real Stripe PromptPay PaymentIntent when in Sandbox mode
+    useEffect(() => {
+        if (!isSandboxMode || total <= 0 || effectivePaid) return
+
+        let cancelled = false
+        setLoadingStripe(true)
+
+        api('/payments/promptpay/create-intent', {
+            method: 'POST',
+            body: JSON.stringify({ amount: total }),
+        })
+            .then(res => {
+                if (cancelled) return
+                if (res?.paymentIntentId) {
+                    setStripePaymentId(res.paymentIntentId)
+                    if (res.qrImageUrl) {
+                        setStripeQrUrl(res.qrImageUrl)
+                        setImgLoaded(false)
+                    }
+                    if (res.stripeTestUrl) {
+                        setStripeTestUrl(res.stripeTestUrl)
+                    }
+                }
+            })
+            .catch(err => {
+                console.warn('[PromptPayQR] Stripe sandbox intent failed, using fallback static QR:', err.message)
+            })
+            .finally(() => {
+                if (!cancelled) setLoadingStripe(false)
+            })
+
+        return () => {
+            cancelled = true
+        }
+    }, [isSandboxMode, total, effectivePaid])
+
     // 15-min countdown (freezes when paid)
     useEffect(() => {
         if (effectivePaid) return
@@ -41,19 +84,51 @@ export function PromptPayQR({
         return () => clearInterval(timer)
     }, [effectivePaid])
 
-    const handleSimulatePayment = () => {
+    const handleSimulatePayment = async () => {
         if (effectivePaid || simulating) return
         setSimulating(true)
-        setTimeout(() => {
-            setSimulating(false)
+
+        try {
+            if (stripePaymentId && !stripePaymentId.startsWith('pi_mock_')) {
+                // Call real Stripe Sandbox simulation endpoint
+                const res = await api('/payments/promptpay/simulate-success', {
+                    method: 'POST',
+                    body: JSON.stringify({ paymentIntentId: stripePaymentId }),
+                })
+
+                setLocalPaid(true)
+                onSimulateSuccess?.({
+                    refCode,
+                    paymentIntentId: res?.paymentIntentId || stripePaymentId,
+                    amount: res?.amount || total,
+                    method: 'PROMPTPAY_STRIPE',
+                    timestamp: new Date().toISOString(),
+                })
+            } else {
+                // Fallback simulation
+                await new Promise(r => setTimeout(r, 650))
+                setLocalPaid(true)
+                onSimulateSuccess?.({
+                    refCode,
+                    paymentIntentId: stripePaymentId,
+                    amount: total,
+                    method: 'QR_SIMULATED',
+                    timestamp: new Date().toISOString(),
+                })
+            }
+        } catch (err) {
+            console.warn('[handleSimulatePayment] Stripe simulation error, falling back:', err.message)
             setLocalPaid(true)
             onSimulateSuccess?.({
                 refCode,
+                paymentIntentId: stripePaymentId,
                 amount: total,
                 method: 'QR_SIMULATED',
                 timestamp: new Date().toISOString(),
             })
-        }, 650)
+        } finally {
+            setSimulating(false)
+        }
     }
 
     const handleResetSimulation = () => {
@@ -81,9 +156,11 @@ export function PromptPayQR({
         }
     }
 
+    const activeQrUrl = stripeQrUrl || qrUrl
+
     const downloadQR = async () => {
         try {
-            const res = await fetch(qrUrl)
+            const res = await fetch(activeQrUrl)
             const blob = await res.blob()
             const blobUrl = URL.createObjectURL(blob)
             const a = document.createElement('a')
@@ -94,7 +171,7 @@ export function PromptPayQR({
             document.body.removeChild(a)
             URL.revokeObjectURL(blobUrl)
         } catch {
-            window.open(qrUrl, '_blank')
+            window.open(activeQrUrl, '_blank')
         }
     }
 
@@ -117,28 +194,65 @@ export function PromptPayQR({
                         ? 'linear-gradient(90deg, #ecfdf5 0%, #d1fae5 100%)'
                         : 'linear-gradient(90deg, #fef3c7 0%, #fffbeb 100%)',
                     borderBottom: effectivePaid ? '1px solid #a7f3d0' : '1px solid #fde68a',
-                    padding: '6px 14px',
+                    padding: '8px 14px',
                     display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
+                    flexDirection: 'column',
+                    gap: 4,
                     fontSize: 11,
                     color: effectivePaid ? '#065f46' : '#92400e',
                     fontWeight: 700,
                 }}>
-                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                        <i className={`bi ${effectivePaid ? 'bi-patch-check-fill' : 'bi-cone-striped'}`} style={{ color: effectivePaid ? '#059669' : '#d97706' }} />
-                        <span>{effectivePaid ? 'SANDBOX • จำลองสำเร็จ' : 'SANDBOX MODE • โหมดทดสอบ'}</span>
-                    </span>
-                    <span style={{
-                        fontSize: 10,
-                        background: effectivePaid ? '#a7f3d0' : '#fef3c7',
-                        color: effectivePaid ? '#065f46' : '#92400e',
-                        padding: '1px 6px',
-                        borderRadius: 4,
-                        border: effectivePaid ? '1px solid #6ee7b7' : '1px solid #fde68a',
-                    }}>
-                        {effectivePaid ? 'พร้อมบันทึก' : 'ไม่ต้องโอนเงินจริง'}
-                    </span>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                            <i className={`bi ${effectivePaid ? 'bi-patch-check-fill' : 'bi-stripe'}`} style={{ color: effectivePaid ? '#059669' : '#635bff', fontSize: 15 }} />
+                            <span>{effectivePaid ? 'STRIPE SANDBOX • ชำระเงินสำเร็จ' : 'STRIPE SANDBOX • โหมดทดสอบจริง'}</span>
+                        </span>
+                        <span style={{
+                            fontSize: 10,
+                            background: effectivePaid ? '#a7f3d0' : '#fef3c7',
+                            color: effectivePaid ? '#065f46' : '#92400e',
+                            padding: '1px 6px',
+                            borderRadius: 4,
+                            border: effectivePaid ? '1px solid #6ee7b7' : '1px solid #fde68a',
+                        }}>
+                            {effectivePaid ? 'บันทึกเข้า Stripe แล้ว' : 'เชื่อมต่อ Stripe Sandbox'}
+                        </span>
+                    </div>
+
+                    {stripePaymentId && (
+                        <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            fontSize: 10,
+                            paddingTop: 4,
+                            marginTop: 2,
+                            borderTop: effectivePaid ? '1px dashed #a7f3d0' : '1px dashed #fde68a',
+                            fontWeight: 600,
+                        }}>
+                            <span style={{ fontFamily: 'monospace', color: effectivePaid ? '#047857' : '#78350f' }}>
+                                ID: {stripePaymentId}
+                            </span>
+                            {stripeTestUrl && !effectivePaid && (
+                                <a
+                                    href={stripeTestUrl}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    style={{
+                                        color: '#4338ca',
+                                        textDecoration: 'none',
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        gap: 3,
+                                        fontWeight: 700,
+                                    }}
+                                >
+                                    <i className="bi bi-box-arrow-up-right" />
+                                    <span>หน้าทดสอบ Stripe</span>
+                                </a>
+                            )}
+                        </div>
+                    )}
                 </div>
             )}
 
@@ -192,7 +306,7 @@ export function PromptPayQR({
                     position: 'relative',
                     boxShadow: '0 4px 12px rgba(0,0,0,0.04)',
                 }}>
-                    {!imgLoaded && (
+                    {(!imgLoaded || loadingStripe) && (
                         <div style={{
                             width: compact ? 180 : 220,
                             height: compact ? 180 : 220,
@@ -200,20 +314,25 @@ export function PromptPayQR({
                             placeItems: 'center',
                             background: '#f3f4f6',
                             borderRadius: 12,
-                            color: '#9ca3af',
+                            color: '#6b7280',
                             fontSize: 12,
+                            padding: 12,
+                            textAlign: 'center',
                         }}>
-                            <span><i className="bi bi-arrow-repeat spin me-2" />กำลังสร้าง QR Code...</span>
+                            <span>
+                                <i className="bi bi-arrow-repeat spin me-2 text-primary" />
+                                {loadingStripe ? 'กำลังสร้าง Stripe PromptPay QR...' : 'กำลังสร้าง QR Code...'}
+                            </span>
                         </div>
                     )}
                     <img
-                        src={qrUrl}
+                        src={activeQrUrl}
                         alt="PromptPay QR Code"
                         onLoad={() => setImgLoaded(true)}
                         style={{
                             width: compact ? 180 : 220,
                             height: compact ? 180 : 220,
-                            display: imgLoaded ? 'block' : 'none',
+                            display: (imgLoaded && !loadingStripe) ? 'block' : 'none',
                             borderRadius: 8,
                             filter: effectivePaid ? 'blur(2px) grayscale(40%)' : 'none',
                             transition: 'filter 0.3s ease',
@@ -221,7 +340,7 @@ export function PromptPayQR({
                     />
 
                     {/* Center Brand Badge (when not paid) */}
-                    {imgLoaded && !effectivePaid && (
+                    {imgLoaded && !loadingStripe && !effectivePaid && (
                         <div style={{
                             position: 'absolute',
                             top: '50%',
@@ -291,7 +410,8 @@ export function PromptPayQR({
                                 alignItems: 'center',
                                 gap: 4,
                             }}>
-                                <i className="bi bi-patch-check" /> จำลองการโอนสำเร็จ (Sandbox)
+                                <i className="bi bi-patch-check-fill" />
+                                {stripePaymentId ? `ชำระสำเร็จใน Stripe Sandbox (${stripePaymentId.slice(-8)})` : 'จำลองการโอนสำเร็จ (Sandbox)'}
                             </div>
                         </div>
                     )}
@@ -381,17 +501,17 @@ export function PromptPayQR({
                             {simulating ? (
                                 <>
                                     <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true" />
-                                    <span>กำลังจำลองการสแกนจ่ายเงิน...</span>
+                                    <span>{stripePaymentId ? 'กำลังยืนยันยอดกับ Stripe Sandbox...' : 'กำลังจำลองการสแกนจ่ายเงิน...'}</span>
                                 </>
                             ) : effectivePaid ? (
                                 <>
                                     <i className="bi bi-check-circle-fill" style={{ fontSize: 16 }} />
-                                    <span>จำลองการชำระเงินสำเร็จแล้ว!</span>
+                                    <span>{stripePaymentId ? 'บันทึกเข้า Stripe Sandbox สำเร็จแล้ว!' : 'จำลองการชำระเงินสำเร็จแล้ว!'}</span>
                                 </>
                             ) : (
                                 <>
                                     <i className="bi bi-lightning-charge-fill" style={{ fontSize: 16 }} />
-                                    <span>จำลองการสแกนจ่ายสำเร็จ (Simulate QR Payment)</span>
+                                    <span>{stripePaymentId ? 'จำลองการสแกนจ่ายสำเร็จ (Stripe Sandbox)' : 'จำลองการสแกนจ่ายสำเร็จ (Sandbox Test)'}</span>
                                 </>
                             )}
                         </button>

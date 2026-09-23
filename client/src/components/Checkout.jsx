@@ -135,10 +135,16 @@ export function CheckoutModal({ cart, products, itemNotes = {}, onClose, onDone 
             }
         })
 
+        const stripePaymentId = (paymentMethod === 'พร้อมเพย์' && qrData?.paymentIntentId)
+            ? qrData.paymentIntentId
+            : (paymentMethod === 'บัตรเครดิต/เดบิต' && cardData?.stripePaymentId)
+                ? cardData.stripePaymentId
+                : null
+
         const paymentDetail = paymentMethod === 'บัตรเครดิต/เดบิต'
             ? (cardData.maskedCard || 'บัตรเครดิต')
             : paymentMethod === 'พร้อมเพย์'
-                ? (isQrPaid ? `สแกนคิวอาร์ (PromptPay จำลองสำเร็จ - REF: ${qrData?.refCode || ''})` : 'สแกนคิวอาร์ (PromptPay)')
+                ? (isQrPaid ? `สแกนคิวอาร์ (PromptPay จำลองสำเร็จ - REF: ${qrData?.refCode || ''}${qrData?.paymentIntentId ? ` | Stripe: ${qrData.paymentIntentId}` : ''})` : 'สแกนคิวอาร์ (PromptPay)')
                 : paymentMethod
 
         setIsSubmitting(true)
@@ -155,6 +161,7 @@ export function CheckoutModal({ cart, products, itemNotes = {}, onClose, onDone 
                 } : null,
                 paymentMethod,
                 paymentDetail,
+                stripePaymentId,
                 cardData: paymentMethod === 'บัตรเครดิต/เดบิต' ? {
                     maskedCard: cardData.maskedCard,
                     cardType: cardData.cardType,

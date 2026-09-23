@@ -184,6 +184,7 @@ export const mapOrder = row => {
         serverPaymentMethod: row.paymentMethod,
         paymentStatus: row.paymentStatus,
         isPaid: row.paymentStatus === 'PAID',
+        stripePaymentId: row.stripePaymentId || meta.stripePaymentId || null,
         deliveryType,
         deliveryAddress: address,
         deliveryScheduleType: meta.deliveryScheduleType,
@@ -322,6 +323,7 @@ export async function placeOrder({
     reservationGuests,
     newAddressObj,
     itemNotes,
+    stripePaymentId = null,
 }) {
     const overrideItems = Object.entries(cart)
         .filter(([_, q]) => Number(q) > 0)
@@ -359,9 +361,10 @@ export async function placeOrder({
         reservationTime: reservationTime || scheduledAt || null,
         reservationGuests: reservationGuests || null,
         paymentMethodDetail: paymentDetail || paymentMethod,
+        stripePaymentId: stripePaymentId || null,
     })}`
 
-    const serverPaymentMethod = paymentMethod === 'บัตรเครดิต/เดบิต' ? 'STRIPE' : 'CASH'
+    const serverPaymentMethod = (paymentMethod === 'บัตรเครดิต/เดบิต' || (paymentMethod === 'พร้อมเพย์' && stripePaymentId)) ? 'STRIPE' : 'CASH'
     const order = await api('/orders', {
         method: 'POST',
         body: JSON.stringify({
@@ -371,13 +374,14 @@ export async function placeOrder({
             paymentMethod: serverPaymentMethod,
             itemNotes,
             overrideItems,
+            stripePaymentId: stripePaymentId || null,
         }),
     })
 
     // If customer paid via embedded card or PromptPay, mark order paid directly
     if (paymentMethod === 'บัตรเครดิต/เดบิต' || paymentMethod === 'พร้อมเพย์') {
         try {
-            await markOrderPaid(order.id, serverPaymentMethod === 'STRIPE' ? 'STRIPE' : 'QR', paymentDetail || paymentMethod)
+            await markOrderPaid(order.id, serverPaymentMethod === 'STRIPE' ? 'STRIPE' : 'QR', paymentDetail || paymentMethod, stripePaymentId)
         } catch (e) {
             console.warn('[placeOrder] markOrderPaid notice:', e.message)
         }
@@ -386,9 +390,9 @@ export async function placeOrder({
     return { order: mapOrder(order), payment: null }
 }
 
-export const markOrderPaid = (id, paymentMethod = 'CASH', paymentDetail = '') => api(`/orders/${id}/payment`, {
+export const markOrderPaid = (id, paymentMethod = 'CASH', paymentDetail = '', stripePaymentId = null) => api(`/orders/${id}/payment`, {
     method: 'PUT',
-    body: JSON.stringify({ paymentMethod, paymentDetail }),
+    body: JSON.stringify({ paymentMethod, paymentDetail, stripePaymentId }),
 })
 
 export const cancelOwnOrder = id => api(`/orders/${id}/cancel`, { method: 'PUT', body: JSON.stringify({}) })
