@@ -1,9 +1,16 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../lib/AuthContext'
+import { useLanguage } from '../lib/LanguageContext'
 import './Navbar.css'
 
-const nav = ['หน้าแรก', 'สั่งอาหาร', 'โปรโมชั่น', 'เมนูแนะนำ', 'แผนที่ร้าน']
+const navItems = [
+    { key: 'navHome', index: 0 },
+    { key: 'navPromotions', index: 2 },
+    { key: 'navRecommended', index: 3 },
+    { key: 'navOrder', index: 1 },
+    { key: 'navMap', index: 4 },
+]
 
 export function Brand({ compact = false }) {
     const navigate = useNavigate()
@@ -26,8 +33,13 @@ export function Brand({ compact = false }) {
 
 export function Navbar({ onOrder, user, onAuth, onLogout, cartCount, onCart, breadcrumbs, transparent }) {
     const navigate = useNavigate()
+    const { profile, session } = useAuth()
+    const { lang, t, toggleLang } = useLanguage()
     const [menuOpen, setMenuOpen] = useState(false)
     const [scrolled, setScrolled] = useState(false)
+
+    const currentUser = user || profile || (session ? { name: session.user?.email } : null)
+    const avatarUrl = user?.avatarUrl || profile?.avatarUrl
 
     useEffect(() => {
         const closeMenu = event => {
@@ -64,19 +76,18 @@ export function Navbar({ onOrder, user, onAuth, onLogout, cartCount, onCart, bre
             if (window.location.pathname !== '/') navigate('/')
             setTimeout(() => document.getElementById('about')?.scrollIntoView({ behavior: 'smooth' }), 100)
         } else if (index === 4) { // แผนที่ร้าน
-            // currently there is no map section, but we can scroll to footer or open a link
-            window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' })
+            navigate('/map')
         }
     }
 
     return (
-        <header className={`floating-header${transparent ? ' transparent' : ''}${breadcrumbs ? ' has-breadcrumb' : ''}${menuOpen ? ' menu-open' : ''}`}>
+        <header className={`floating-header${transparent ? ' transparent' : ''}${breadcrumbs ? ' has-breadcrumb' : ''}${menuOpen ? ' menu-open' : ''}${scrolled ? ' is-scrolled' : ''}`}>
             <div className="nav-shell">
                 <Brand compact />
                 <button
                     className="menu-toggle"
                     type="button"
-                    aria-label={menuOpen ? 'ปิดเมนู' : 'เปิดเมนู'}
+                    aria-label={menuOpen ? t('navCloseMenu') : t('navOpenMenu')}
                     aria-expanded={menuOpen}
                     aria-controls="responsive-navigation"
                     onClick={() => setMenuOpen(open => !open)}
@@ -86,34 +97,48 @@ export function Navbar({ onOrder, user, onAuth, onLogout, cartCount, onCart, bre
                     <span />
                 </button>
                 <nav className="main-nav">
-                    {nav.map((x, i) => (
+                    {navItems.map((item) => (
                         <button
-                            key={x}
-                            onClick={() => handleNav(i)}
+                            key={item.key}
+                            onClick={() => handleNav(item.index)}
                         >
-                            {x}
+                            {t(item.key)}
                         </button>
                     ))}
                 </nav>
-                <button className="lang">ENG <i className="bi bi-arrow-down-short"></i></button>
-                <button className="profile" onClick={user ? () => navigate('/profile') : onAuth} title={user ? 'โปรไฟล์' : 'เข้าสู่ระบบ'}>
-                    <i className="bi bi-person-circle" style={{ fontSize: 24 }}></i>
-                    {user && <span className="logged-dot" />}
+                <button
+                    className="lang"
+                    onClick={toggleLang}
+                    title={lang === 'th' ? 'Switch to English' : 'เปลี่ยนเป็นภาษาไทย'}
+                    aria-label={t('currentLangLabel')}
+                >
+                    <i className="bi bi-globe2" style={{ fontSize: 13, marginRight: 4 }}></i>
+                    {lang === 'th' ? 'ENG' : 'ไทย'}
                 </button>
-                <button className="cart-head" onClick={onCart} title="Cart">
+                <button className="profile" onClick={currentUser ? () => navigate('/profile') : onAuth} title={currentUser ? t('navProfile') : t('navLogin')}>
+                    {avatarUrl ? (
+                        <img src={avatarUrl} alt={currentUser?.name || 'User'} className="nav-avatar-img" />
+                    ) : (
+                        <i className="bi bi-person-circle" style={{ fontSize: 24 }}></i>
+                    )}
+                    {currentUser && <span className="logged-dot" />}
+                </button>
+                <button className="cart-head" onClick={onCart} title={t('navCart')}>
                     <i className="bi bi-cart" style={{ fontSize: 24 }}></i>
                     {cartCount > 0 && <b>{cartCount}</b>}
                 </button>
-                {user?.points > 0 && <div className="points-badge" title="แต้มสะสม" style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 13, color: '#0f9e1e', fontWeight: 700 }}><i className="bi bi-star-fill" style={{ color: '#ffc107' }}></i>{user.points}</div>}
             </div>
 
             <nav id="responsive-navigation" className="responsive-nav" aria-hidden={!menuOpen}>
                 <div className="responsive-nav-links">
-                    {nav.map((item, index) => (
-                        <button key={item} onClick={() => handleNav(index)}>{item}</button>
+                    {navItems.map((item) => (
+                        <button key={item.key} onClick={() => handleNav(item.index)}>{t(item.key)}</button>
                     ))}
                 </div>
-                <button className="responsive-lang" onClick={() => setMenuOpen(false)}>Language: ENG</button>
+                <button className="responsive-lang" onClick={() => { toggleLang(); setMenuOpen(false); }}>
+                    <i className="bi bi-globe2" style={{ marginRight: 6 }}></i>
+                    {lang === 'th' ? 'Language: Switch to English (ENG)' : 'ภาษา: เปลี่ยนเป็นภาษาไทย (TH)'}
+                </button>
             </nav>
             {menuOpen && <button className="nav-backdrop" aria-label="ปิดเมนู" onClick={() => setMenuOpen(false)} />}
 

@@ -1,28 +1,48 @@
 import { useMemo, useState } from 'react'
 import { OrderNavbar } from './OrderNavbar'
 import { CartSidebar } from './Cart'
+import { useLanguage } from '../lib/LanguageContext'
+import { categoryNameTranslations } from '../locales/translations'
 import './OrderPage.css'
 
 export function OrderPage({ onHome, user, onAuth, onLogout, products, categories, cart, setCart, itemNotes, setItemNotes, onCheckout }) {
+    const { lang, isEn, t } = useLanguage()
     const [query, setQuery] = useState('')
     const [cat, setCat] = useState('promo')
 
     const add = (p) => setCart(prev => ({ ...prev, [p.id]: (prev[p.id] || 0) + 1 }))
     const remove = (p) => setCart(prev => ({ ...prev, [p.id]: Math.max(0, (prev[p.id] || 0) - 1) }))
 
+    const getCategoryLabel = (name) => {
+        if (!name) return ''
+        if (isEn && categoryNameTranslations[name]?.en) return categoryNameTranslations[name].en
+        return name
+    }
+
     const list = products.filter(p => {
         const matchCat = cat === 'promo' || p.categoryId === cat
-        const matchQ = `${p.name} ${p.en}`.toLowerCase().includes(query.toLowerCase())
+        const matchQ = `${p.name} ${p.en || ''}`.toLowerCase().includes(query.toLowerCase())
         return matchCat && matchQ
     })
 
     const cartItems = products.filter(p => cart[p.id])
     const total = cartItems.reduce((s, p) => s + p.price * cart[p.id], 0)
     const count = cartItems.reduce((s, p) => s + cart[p.id], 0)
+
+    const promoTabLabel = isEn ? 'New & Promos' : 'เมนูและโปรโมชั่นใหม่'
+
+    const activeCatObj = categories.find(category => category.id === cat)
+    const currentCategoryTitle = cat === 'promo' 
+        ? promoTabLabel 
+        : (activeCatObj ? getCategoryLabel(activeCatObj.name) : (isEn ? 'All Menu' : 'เมนูทั้งหมด'))
+
     return (
         <div className="op-page">
             <OrderNavbar
-                categories={[{ id: 'promo', label: 'เมนูและโปรโมชั่นใหม่' }, ...categories.map(category => ({ id: category.id, label: category.name }))]}
+                categories={[
+                    { id: 'promo', label: promoTabLabel },
+                    ...categories.map(category => ({ id: category.id, label: getCategoryLabel(category.name) }))
+                ]}
                 activeCategory={cat}
                 onCategoryChange={setCat}
                 user={user}
@@ -40,7 +60,7 @@ export function OrderPage({ onHome, user, onAuth, onLogout, products, categories
                     {/* Search row */}
                     <div className="op-search-row">
                         <h2 className="op-section-title">
-                            {cat === 'promo' ? 'เมนูและโปรโมชั่นใหม่' : categories.find(category => category.id === cat)?.name || 'เมนูทั้งหมด'}
+                            {currentCategoryTitle}
                         </h2>
                         <div className="op-search-bar">
                             <div className="op-search-input">
@@ -48,32 +68,43 @@ export function OrderPage({ onHome, user, onAuth, onLogout, products, categories
                                 <input
                                     value={query}
                                     onChange={e => setQuery(e.target.value)}
-                                    placeholder="ค้นหาเมนู"
+                                    placeholder={t('searchPlaceholder')}
                                 />
                             </div>
-                            <button className="op-fav-btn"><i className="bi bi-heart"></i> เมนูโปรด</button>
+                            <button className="op-fav-btn"><i className="bi bi-heart"></i> {isEn ? 'Favorites' : 'เมนูโปรด'}</button>
                         </div>
                     </div>
 
                     {/* Menu grid */}
                     <div className="op-menu-grid">
-                        {list.map(p => (
-                            <article className="op-card" key={p.id}>
-                                <div className="op-card-img">
-                                    <img src={p.img} alt={p.name} />
-                                </div>
-                                <div className="op-card-body">
-                                    <h3>{p.name}</h3>
-                                    <span className="op-card-label">ราคา</span>
-                                    <div className="op-card-footer">
-                                        <span className="op-price">฿{p.price}</span>
-                                        <button className="op-add-btn" disabled={['หมด', 'วัตถุดิบไม่เพียงพอ'].includes(p.status)} onClick={() => add(p)}>{p.status === 'หมด' ? 'สินค้าหมด' : p.status === 'วัตถุดิบไม่เพียงพอ' ? 'วัตถุดิบไม่พอ' : 'สั่งซื้อ'}</button>
+                        {list.map(p => {
+                            const mainName = isEn && p.en ? p.en : p.name
+                            const subName = isEn && p.en ? p.name : (p.en || '')
+                            return (
+                                <article className="op-card" key={p.id}>
+                                    <div className="op-card-img">
+                                        <img src={p.img} alt={mainName} />
                                     </div>
-                                </div>
-                            </article>
-                        ))}
+                                    <div className="op-card-body">
+                                        <h3>{mainName}</h3>
+                                        {subName && <small style={{ color: '#888', fontSize: '11px', display: 'block', marginTop: '-2px', marginBottom: '4px' }}>{subName}</small>}
+                                        <span className="op-card-label">{isEn ? 'Price' : 'ราคา'}</span>
+                                        <div className="op-card-footer">
+                                            <span className="op-price">฿{p.price}</span>
+                                            <button
+                                                className="op-add-btn"
+                                                disabled={['หมด', 'วัตถุดิบไม่เพียงพอ'].includes(p.status)}
+                                                onClick={() => add(p)}
+                                            >
+                                                {p.status === 'หมด' ? t('outOfStock') : p.status === 'วัตถุดิบไม่เพียงพอ' ? (isEn ? 'Out of Stock' : 'วัตถุดิบไม่พอ') : (isEn ? 'Add' : 'สั่งซื้อ')}
+                                            </button>
+                                        </div>
+                                    </div>
+                                </article>
+                            )
+                        })}
                         {list.length === 0 && (
-                            <div className="op-empty">ไม่พบเมนูที่ค้นหา</div>
+                            <div className="op-empty">{t('noProductsFound')}</div>
                         )}
                     </div>
                 </main>
@@ -86,6 +117,7 @@ export function OrderPage({ onHome, user, onAuth, onLogout, products, categories
                     itemNotes={itemNotes}
                     setItemNotes={setItemNotes}
                     onCheckout={onCheckout}
+                    onAuth={onAuth}
                 />
             </div>
         </div>

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { Navbar } from './Navbar'
 import { Footer } from './Footer'
 import { fetchMarketing, fetchPopularProducts, fetchNewProducts } from '../lib/database'
+import { useLanguage } from '../lib/LanguageContext'
 import './HomePage.css'
 
 const fallbackProducts = [
@@ -26,8 +27,14 @@ const fallbackPromotions = [
     { id: 'promo-3', code: 'MEMBER', title: 'สะสมแต้ม แลกความอร่อย', description: 'ทุกยอดสั่งซื้อรับคะแนนสมาชิกสำหรับครั้งถัดไป', discountValue: 10, imageUrl: '/assets/mango-sticky-rice.png', buttonLabel: 'เริ่มสะสมแต้ม', buttonLink: '/order' },
 ]
 
+const getHeroColor = color => {
+    const legacyColors = ['#b8ff35', '#0e971c', '#0f9e1e', '#15952b']
+    return legacyColors.includes(String(color || '').toLowerCase()) ? '#b8ff35' : (color || '#b8ff35')
+}
+
 export function HomePage({ onOrder, user, onAuth, onLogout, cartCount, onCart }) {
     const navigate = useNavigate()
+    const { lang, isEn, t } = useLanguage()
     const [slide, setSlide] = useState(0)
     const [heroSlides, setHeroSlides] = useState([])
     const [promotions, setPromotions] = useState([])
@@ -99,10 +106,10 @@ export function HomePage({ onOrder, user, onAuth, onLogout, cartCount, onCart })
             <div className="home-page" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--brand-primary)' }}>
                 <Navbar onOrder={onOrder} user={user} onAuth={onAuth} onLogout={onLogout} cartCount={cartCount} onCart={onCart} transparent />
                 <div style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                    <div className="app-loading" role="status" aria-label="กำลังโหลด">
+                    <div className="app-loading" role="status" aria-label="Loading">
                         <div className="app-loading-mark"><i /><i /></div>
                         <span className="app-loading-spinner" style={{ borderColor: 'rgba(255,255,255,0.3)', borderTopColor: '#fff' }} />
-                        <p style={{ marginTop: 16, color: '#e8f3e5', fontWeight: 600, fontSize: 14 }}>กำลังเตรียมหน้าหลัก...</p>
+                        <p style={{ marginTop: 16, color: '#e8f3e5', fontWeight: 600, fontSize: 14 }}>{isEn ? 'Preparing LimeLeaf...' : 'กำลังเตรียมหน้าหลัก...'}</p>
                     </div>
                 </div>
             </div>
@@ -114,13 +121,13 @@ export function HomePage({ onOrder, user, onAuth, onLogout, cartCount, onCart })
     return <>
         <Navbar onOrder={onOrder} user={user} onAuth={onAuth} onLogout={onLogout} cartCount={cartCount} onCart={onCart} transparent />
         <main className="home-page">
-            <section className="hero-home" style={{ '--slide-color': currentSlide.backgroundColor || '#b8ff35' }} aria-roledescription="carousel" aria-label="โปรโมชั่นแนะนำ">
+            <section className="hero-home" style={{ '--slide-color': getHeroColor(currentSlide.backgroundColor) }} aria-roledescription="carousel" aria-label={t('promotionsTitle')}>
                 <div className="hero-slide" key={currentSlide.id}>
                     <div className="hero-copy">
                         <span>{currentSlide.eyebrow}</span>
                         <h1>{currentSlide.title}</h1>
                         <p>{currentSlide.description}</p>
-                        <button onClick={() => goTo(currentSlide.buttonLink)}>{currentSlide.buttonLabel || 'ดูเพิ่มเติม'} <b>→</b></button>
+                        <button onClick={() => goTo(currentSlide.buttonLink)}>{currentSlide.buttonLabel || (isEn ? 'Order Now' : 'สั่งเลย')} <i className="bi bi-arrow-right ms-2" /></button>
                     </div>
                     <div className="hero-picture">
                         <span className="hero-picture-glow" />
@@ -129,35 +136,75 @@ export function HomePage({ onOrder, user, onAuth, onLogout, cartCount, onCart })
                 </div>
                 {heroSlides.length > 1 && <>
                     <div className="hero-dots">
-                        {heroSlides.map((item, index) => <button key={item.id} className={slide === index ? 'active' : ''} onClick={() => setSlide(index)} aria-label={`ไปยังสไลด์ ${index + 1}`} aria-current={slide === index} />)}
+                        {heroSlides.map((item, index) => <button key={item.id} className={slide === index ? 'active' : ''} onClick={() => setSlide(index)} aria-label={`Slide ${index + 1}`} aria-current={slide === index} />)}
                     </div>
                 </>}
             </section>
 
             <section className="promotion-section" id="promotions">
-                <div className="promotion-heading"><div><small>LIMELEAF DEALS</small><h2>โปรโมชั่นและสิทธิพิเศษ</h2></div></div>
+                <div className="promotion-heading"><div><small>LIMELEAF DEALS</small><h2>{t('promotionsTitle')}</h2></div></div>
                 <div className="promotion-grid">
                     {promotions.map(promotion => <article key={promotion.id}>
                         <h3>{promotion.title}</h3>
                         <div className="promotion-mini-card">
                             <div className="promotion-image"><img src={promotion.imageUrl || '/assets/hero-food.png'} alt={promotion.title} /><span>{promotion.discountValue ? `${promotion.discountValue}%` : promotion.code}</span></div>
-                            <div className="promotion-copy"><small>{promotion.code}</small><p>{promotion.description}</p><button onClick={() => goTo(promotion.buttonLink)}>{promotion.buttonLabel || 'ดูรายละเอียด'} →</button></div>
+                            <div className="promotion-copy"><small>{promotion.code}</small><p>{promotion.description}</p><button onClick={() => goTo(promotion.buttonLink)}>{promotion.buttonLabel || t('claimOffer')}</button></div>
                         </div>
                     </article>)}
                 </div>
             </section>
 
-            <section className="food-preview" id="about">
-                <div className="preview-head"><div><small>OUR FOOD</small><h2>เมนูยอดนิยม</h2></div><button onClick={onOrder}>ดูเมนูทั้งหมด →</button></div>
+            <section className="food-preview menu-frame" id="about">
+                <div className="preview-head">
+                    <div className="preview-title-frame">
+                        <span className="preview-title-icon" aria-hidden="true"><i className="bi bi-star-fill" /></span>
+                        <div><small>{t('popularEyebrow')}</small><h2>{t('popularMenu')}</h2></div>
+                    </div>
+                    <button onClick={onOrder}>{t('viewAllMenu')} <i className="bi bi-arrow-right" /></button>
+                </div>
                 <div className="preview-grid">
-                    {popularProducts.map(product => <article key={`pop-${product.id}`}><img src={product.img || '/assets/basil-rice.png'} alt={product.name} /><div><h3>{product.name}</h3><small>{product.en}</small><strong>฿{product.price}</strong><button onClick={onOrder}>สั่งเลย</button></div></article>)}
+                    {popularProducts.map(product => {
+                        const mainTitle = isEn && product.en ? product.en : product.name
+                        const subTitle = isEn && product.en ? product.name : (product.en || '')
+                        return (
+                            <article key={`pop-${product.id}`}>
+                                <img src={product.img || '/assets/basil-rice.png'} alt={mainTitle} />
+                                <div>
+                                    <h3>{mainTitle}</h3>
+                                    <small>{subTitle}</small>
+                                    <strong>฿{product.price}</strong>
+                                    <button onClick={onOrder}>{t('orderNow')}</button>
+                                </div>
+                            </article>
+                        )
+                    })}
                 </div>
             </section>
 
-            <section className="food-preview" style={{ paddingBottom: '70px', paddingTop: '0px' }}>
-                <div className="preview-head"><div><small>NEW RELEASES</small><h2>เมนูมาใหม่</h2></div><button onClick={onOrder}>ดูเมนูทั้งหมด →</button></div>
+            <section className="food-preview menu-frame menu-frame-new">
+                <div className="preview-head">
+                    <div className="preview-title-frame">
+                        <span className="preview-title-icon" aria-hidden="true"><i className="bi bi-stars" /></span>
+                        <div><small>{t('newReleasesEyebrow')}</small><h2>{t('newReleases')}</h2></div>
+                    </div>
+                    <button onClick={onOrder}>{t('viewAllMenu')} <i className="bi bi-arrow-right" /></button>
+                </div>
                 <div className="preview-grid">
-                    {newProducts.map(product => <article key={`new-${product.id}`}><img src={product.img || '/assets/basil-rice.png'} alt={product.name} /><div><h3>{product.name}</h3><small>{product.en}</small><strong>฿{product.price}</strong><button onClick={onOrder}>สั่งเลย</button></div></article>)}
+                    {newProducts.map(product => {
+                        const mainTitle = isEn && product.en ? product.en : product.name
+                        const subTitle = isEn && product.en ? product.name : (product.en || '')
+                        return (
+                            <article key={`new-${product.id}`}>
+                                <img src={product.img || '/assets/basil-rice.png'} alt={mainTitle} />
+                                <div>
+                                    <h3>{mainTitle}</h3>
+                                    <small>{subTitle}</small>
+                                    <strong>฿{product.price}</strong>
+                                    <button onClick={onOrder}>{t('orderNow')}</button>
+                                </div>
+                            </article>
+                        )
+                    })}
                 </div>
             </section>
         </main>

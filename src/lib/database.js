@@ -81,7 +81,11 @@ export const mapProduct = row => ({
     price: Number(row.price),
     img: row.imageUrl || '/assets/basil-rice.png',
     imageUrl: row.imageUrl,
-    status: !row.isActive ? 'หมด' : Number(row.stock) <= 0 ? 'หมด' : row.inventory && Number(row.inventory.quantity) <= 0 ? 'วัตถุดิ้ ไม่เพียงพอ' : Number(row.stock) <= (row.inventory?.lowThreshold || 10) ? 'เหลือน้อย' : 'มี',
+    status: !row.isActive
+        ? 'หมด'
+        : row.recipeItems?.length && row.recipeItems.some(item => !item.ingredient?.isActive || Number(item.ingredient?.quantity || 0) < Number(item.quantityRequired || 0))
+            ? 'วัตถุดิบไม่เพียงพอ'
+            : 'มี',
     stock: Number(row.stock || 0),
     isActive: row.isActive,
     isFeatured: row.isFeatured,
@@ -112,7 +116,9 @@ export const mapPromotion = row => {
         minOrderAmount: row.minOrderAmount == null ? null : Number(row.minOrderAmount),
         maxDiscount: row.maxDiscount == null ? null : Number(row.maxDiscount),
         usageLimit: row.usageLimit,
-        usedCount: row.usedCount,
+        usedCount: row.usedCount || 0,
+        history: meta.history || [],
+        metadata: meta,
     }
 }
 
@@ -144,21 +150,37 @@ export const mapOrder = row => {
         customerId: accountName,
         customerName,
         tableNumber,
-        userId: row.userId,
-        items: (row.items || []).map(item => ({
-            id: item.id,
-            productId: item.productId,
-            productName: item.product?.name || 'สินค้า',
-            quantity: Number(item.quantity),
-            priceAtTime: Number(item.unitPrice),
-            note: item.note || '',
-        })),
-        subtotal: Number(row.subtotal || 0),
+        items: (row.items || []).map(item => {
+            const itemNote = item.note || ''
+            const isAddedLater = Boolean(itemNote.includes('[สั่งเพิ่ม'))
+            const roundMatch = itemNote.match(/\[สั่งเพิ่ม รอบ (\d+)\]/)
+            const roundNumber = roundMatch ? Number(roundMatch[1]) : (isAddedLater ? 2 : 1)
+            const itemStatuses = meta.itemStatuses || {}
+            const itemStatus = itemStatuses[item.id] || (row.status === 'READY' ? 'READY' : row.status === 'PREPARING' ? 'PREPARING' : 'CONFIRMED')
+            const cleanNote = itemNote
+                .replace(/\[กลับบ้าน\]\s*/g, '')
+                .replace(/\[สั่งเพิ่ม[^\]]*\]\s*/g, '')
+                .trim()
+
+            return {
+                id: item.id,
+                productId: item.productId,
+                productName: item.product?.name || 'สินค้า',
+                quantity: Number(item.quantity),
+                priceAtTime: Number(item.unitPrice),
+                note: itemNote,
+                cleanNote,
+                isTakeaway: Boolean(itemNote.includes('[กลับบ้าน]')),
+                isAddedLater,
+                roundNumber,
+                itemStatus,
+            }
+        }),
         discountAmount: Number(row.discount || 0),
         promotionCode: row.coupon?.code || meta.promotionCode || null,
         deliveryFee: Number(row.deliveryFee || 0),
         totalAmount: Number(row.total || 0),
-        paymentMethod: paymentLabel(row.paymentMethod, deliveryType),
+        paymentMethod: meta.paymentMethodDetail || meta.paymentMethod || paymentLabel(row.paymentMethod, deliveryType),
         serverPaymentMethod: row.paymentMethod,
         paymentStatus: row.paymentStatus,
         isPaid: row.paymentStatus === 'PAID',
@@ -173,6 +195,11 @@ export const mapOrder = row => {
         createdAt: row.createdAt,
         updatedAt: row.updatedAt,
         notes: meta.note || '',
+        customerPhone: meta.customerPhone || meta.recipientPhone || row.user?.phone || '',
+        reservationTime: meta.reservationTime || meta.scheduledAt || null,
+        reservationGuests: meta.reservationGuests || null,
+        rawNotes: notes,
+        meta,
     }
 }
 
@@ -274,24 +301,45 @@ export async function fetchOrderHistory() {
     return orders
 }
 
-export async function placeOrder({ cart, paymentMethod, deliveryType, deliveryAddress, deliveryAddressId, deliveryScheduleType, scheduledAt, promotionCode, recipientName, recipientPhone, itemNotes }) {
+export async function placeOrder({
+    cart,
+    paymentMethod,
+    deliveryType,
+    deliveryAddress,
+    deliveryAddressId,
+    deliveryScheduleType,
+    scheduledAt,
+    promotionCode,
+    recipientName,
+    recipientPhone,
+    tableNumber,
+    reservationTime,
+    reservationGuests,
+    newAddressObj,
+    itemNotes,
+}) {
     const overrideItems = Object.entries(cart)
         .filter(([_, q]) => Number(q) > 0)
         .map(([productId, quantity]) => ({ productId, quantity: Number(quantity) }))
 
     let addressId = deliveryAddressId || null
-    if (deliveryType === 'ให้จัดส่ง' && !addressId) {
-        const address = await api('/users/addresses', {
-            method: 'POST',
-            body: JSON.stringify({
-                label: 'Delivery',
-                street: deliveryAddress,
-                city: 'Bangkok',
-                state: 'Bangkok',
-                zip: '00000',
-            }),
-        })
-        addressId = address.id
+    if (deliveryType === 'ให้จัดส่ง' && !addressId && deliveryAddress) {
+        try {
+            const address = await api('/users/addresses', {
+                method: 'POST',
+                body: JSON.stringify({
+                    label: newAddressObj?.label || 'Delivery',
+                    street: newAddressObj?.street || deliveryAddress,
+                    city: newAddressObj?.city || 'Bangkok',
+                    state: newAddressObj?.state || newAddressObj?.province || 'Bangkok',
+                    zip: newAddressObj?.zip || '10110',
+                    phone: recipientPhone || '',
+                }),
+            })
+            addressId = address.id
+        } catch (e) {
+            console.warn('[placeOrder] could not save address to addressbook:', e.message)
+        }
     }
 
     const notes = `${ORDER_META_PREFIX}${JSON.stringify({
@@ -302,6 +350,9 @@ export async function placeOrder({ cart, paymentMethod, deliveryType, deliveryAd
         promotionCode,
         recipientName,
         recipientPhone,
+        tableNumber: tableNumber || '',
+        reservationTime: reservationTime || scheduledAt || null,
+        reservationGuests: reservationGuests || null,
     })}`
 
     const serverPaymentMethod = paymentMethod === 'บัตรเครดิต/เดบิต' ? 'STRIPE' : 'CASH'
@@ -328,9 +379,9 @@ export async function placeOrder({ cart, paymentMethod, deliveryType, deliveryAd
     return { order: mapOrder(order), payment }
 }
 
-export const markOrderPaid = id => api(`/orders/${id}/payment`, {
+export const markOrderPaid = (id, paymentMethod = 'CASH', paymentDetail = '') => api(`/orders/${id}/payment`, {
     method: 'PUT',
-    body: JSON.stringify({ paymentMethod: 'CASH' }),
+    body: JSON.stringify({ paymentMethod, paymentDetail }),
 })
 
 export const cancelOwnOrder = id => api(`/orders/${id}/cancel`, { method: 'PUT', body: JSON.stringify({}) })
@@ -339,7 +390,17 @@ export const confirmOrder = id =>
     api(`/orders/${id}/status`, { method: 'PUT', body: JSON.stringify({ status: 'CONFIRMED' }) })
 
 // Cashier places walk-in or takeaway order directly from counter
-export async function placeCounterOrder({ cart, orderSource, notes, customerName, tableNumber }) {
+export async function placeCounterOrder({
+    cart,
+    orderSource,
+    notes,
+    customerName,
+    tableNumber,
+    customerPhone,
+    reservationTime,
+    reservationGuests,
+    itemNotes = {},
+}) {
     // Instead of doing multiple cart updates, bypass cart completely
     const overrideItems = Object.entries(cart)
         .filter(([_, q]) => Number(q) > 0)
@@ -349,11 +410,17 @@ export async function placeCounterOrder({ cart, orderSource, notes, customerName
 
     // Counter-only data is stored inside the existing notes metadata so this feature
     // works without a database migration and is returned by every existing order API.
-    const counterMeta = `${ORDER_META_PREFIX}${JSON.stringify({
+    const metaObj = {
         note: String(notes || '').trim(),
         customerName: String(customerName || '').trim(),
         tableNumber: orderSource === 'walkin' ? String(tableNumber || '').trim() : '',
-    })}`
+        customerPhone: String(customerPhone || '').trim(),
+        reservationTime: reservationTime || null,
+        reservationGuests: reservationGuests || null,
+        deliveryType: orderSource === 'walkin' ? 'ทานที่ร้าน' : orderSource === 'takeaway' ? 'สั่งกลับบ้าน' : 'รับเองที่ร้าน',
+    }
+
+    const counterMeta = `${ORDER_META_PREFIX}${JSON.stringify(metaObj)}`
 
     const order = await api('/orders', {
         method: 'POST',
@@ -361,10 +428,29 @@ export async function placeCounterOrder({ cart, orderSource, notes, customerName
             paymentMethod: 'CASH',
             orderSource,
             notes: counterMeta,
-            overrideItems
+            overrideItems,
+            itemNotes,
         }),
     })
     return mapOrder(order)
+}
+
+export async function updateOrderMeta(id, currentOrder, newMetaUpdates) {
+    const existingMeta = currentOrder?.meta || {}
+    const mergedMeta = { ...existingMeta, ...newMetaUpdates }
+    const orderSource = mergedMeta.orderSource || currentOrder?.orderSource || 'walkin'
+    const newNotes = `[${orderSource}] ${ORDER_META_PREFIX}${JSON.stringify(mergedMeta)}`
+    return api(`/orders/${id}/details`, {
+        method: 'PUT',
+        body: JSON.stringify({ notes: newNotes, orderSource }),
+    })
+}
+
+export async function addItemsToOrder(id, { items, itemNotes = {} }) {
+    return api(`/orders/${id}/items`, {
+        method: 'POST',
+        body: JSON.stringify({ items, itemNotes }),
+    })
 }
 
 export async function updateOrder(id, changes) {
@@ -414,14 +500,42 @@ export async function ensureDeliveryForOrder(order) {
 }
 
 export const kitchenApi = {
-    queue: async () => (await api('/kitchen/queue')).map(mapOrder),
+    queue: async (status) => {
+        const query = status ? `?status=${encodeURIComponent(status)}` : ''
+        return (await api(`/kitchen/queue${query}`)).map(mapOrder)
+    },
     stats: () => api('/kitchen/stats'),
     start: id => updateOrder(id, { status: 'PREPARING' }),
     ready: id => updateOrder(id, { status: 'READY' }),
+    cancel: id => updateOrder(id, { status: 'CANCELLED' }),
+    updateItemStatus: async (orderId, itemId, status) => {
+        const result = await api(`/kitchen/${orderId}/item-status`, {
+            method: 'PUT',
+            body: JSON.stringify({ itemId, status }),
+        })
+        return mapOrder(result)
+    },
+    dispatchAllItems: async (orderId, itemIds) => {
+        const itemStatuses = {}
+        itemIds.forEach(id => { itemStatuses[id] = 'READY' })
+        const result = await api(`/kitchen/${orderId}/item-status`, {
+            method: 'PUT',
+            body: JSON.stringify({ itemStatuses }),
+        })
+        return mapOrder(result)
+    },
+    batchUpdateItemStatus: async (orderId, itemStatuses) => {
+        const result = await api(`/kitchen/${orderId}/item-status`, {
+            method: 'PUT',
+            body: JSON.stringify({ itemStatuses }),
+        })
+        return mapOrder(result)
+    },
 }
 
 export const deliveryApi = {
     riderProfile: () => api('/delivery/rider/me'),
+    updateProfile: data => api('/delivery/rider/me/profile', { method: 'PUT', body: JSON.stringify(data) }),
     riderDeliveries: async () => (await api('/delivery/rider/me/deliveries')).map(mapDelivery),
     setRiderStatus: status => api('/delivery/rider/me/status', { method: 'PUT', body: JSON.stringify({ status }) }),
     updateRiderLocation: (lat, lng) => api('/delivery/rider/me/location', { method: 'PUT', body: JSON.stringify({ lat, lng }) }),
@@ -463,7 +577,13 @@ export const adminApi = {
     updateCoupon: async (id, data) => mapPromotion(await api(`/coupons/${id}`, { method: 'PUT', body: requestBody(serializePromotion(data)) })),
     deleteCoupon: id => api(`/coupons/${id}`, { method: 'DELETE' }),
     inventory: () => api('/inventory'),
-    updateInventory: (productId, data) => api(`/inventory/${productId}`, { method: 'PUT', body: JSON.stringify(data) }),
+    ingredientCategories: () => api('/inventory/categories'),
+    createIngredientCategory: data => api('/inventory/categories', { method: 'POST', body: JSON.stringify(data) }),
+    createIngredient: data => api('/inventory', { method: 'POST', body: JSON.stringify(data) }),
+    updateInventory: (ingredientId, data) => api(`/inventory/${ingredientId}`, { method: 'PUT', body: JSON.stringify(data) }),
+    deleteIngredient: ingredientId => api(`/inventory/${ingredientId}`, { method: 'DELETE' }),
+    recipes: () => api('/inventory/recipes'),
+    updateRecipe: (productId, items) => api(`/inventory/recipes/${productId}`, { method: 'PUT', body: JSON.stringify({ items }) }),
     overview: () => api('/dashboard/overview'),
     topProducts: () => api('/dashboard/top-products'),
 }
@@ -502,5 +622,12 @@ export const heroApi = {
     remove: id => api(`/settings/hero/${id}`, { method: 'DELETE' }),
 }
 
+export const contactApi = {
+    send: payload => api('/settings/contact', {
+        method: 'POST',
+        body: JSON.stringify(payload)
+    }),
+    list: () => api('/settings/contact')
+}
 
 export { api }

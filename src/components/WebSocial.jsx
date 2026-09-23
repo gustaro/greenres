@@ -1,74 +1,83 @@
-import React, { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { PageHead } from './AdminDashboard'
 import { settingsApi } from '../lib/database'
 import { useAuth } from '../lib/AuthContext'
 
+const SOCIAL_FIELDS = [
+    { key: 'facebook', label: 'Facebook', icon: 'bi-facebook', placeholder: 'https://facebook.com/yourpage', className: 'facebook' },
+    { key: 'instagram', label: 'Instagram', icon: 'bi-instagram', placeholder: 'https://instagram.com/youraccount', className: 'instagram' },
+    { key: 'line', label: 'LINE Official', icon: 'bi-chat-dots-fill', placeholder: 'https://lin.ee/your-id', className: 'line' },
+]
+
 export const WebSocial = ({ notify, fail }) => {
     const { settings, setSettings } = useAuth()
-    const [tempFacebook, setTempFacebook] = useState('')
-    const [tempInstagram, setTempInstagram] = useState('')
-    const [tempLine, setTempLine] = useState('')
+    const [values, setValues] = useState({ facebook: '', instagram: '', line: '' })
 
     useEffect(() => {
-        if (settings) {
-            setTempFacebook(settings.facebookUrl || '')
-            setTempInstagram(settings.instagramUrl || '')
-            setTempLine(settings.lineUrl || '')
-        }
+        if (!settings) return
+        setValues({
+            facebook: settings.facebookUrl || '',
+            instagram: settings.instagramUrl || '',
+            line: settings.lineUrl || '',
+        })
     }, [settings])
 
-    return <>
-        <PageHead eyebrow="SETTINGS" title="โซเชียลมีเดีย" description="ตั้งค่าลิงก์เชื่อมต่อไปยังแอปพลิเคชันโซเชียลของคุณ" />
-        <section className="ad-panel" style={{ maxWidth: 600 }}>
-            <div className="ad-panel-head"><div><h2>อัปเดตช่องทางติดต่อ</h2><p>แก้ไขลิงก์ตามแพลตฟอร์มต่างๆ เพื่อให้ลูกค้ากดใน Footer</p></div></div>
-            <div style={{ padding: 24, display: 'grid', gap: 20 }}>
-                <label style={{ display: 'grid', gap: 6, fontSize: 13, fontWeight: 700, color: '#1a5c08' }}>
-                    Facebook URL
-                    <input
-                        placeholder="https://facebook.com/..."
-                        style={{ padding: 12, borderRadius: 8, border: '1px solid #d7ddd4', fontFamily: 'inherit' }}
-                        value={tempFacebook}
-                        onChange={e => setTempFacebook(e.target.value)}
-                    />
-                </label>
-                <label style={{ display: 'grid', gap: 6, fontSize: 13, fontWeight: 700, color: '#1a5c08' }}>
-                    Instagram URL
-                    <input
-                        placeholder="https://instagram.com/..."
-                        style={{ padding: 12, borderRadius: 8, border: '1px solid #d7ddd4', fontFamily: 'inherit' }}
-                        value={tempInstagram}
-                        onChange={e => setTempInstagram(e.target.value)}
-                    />
-                </label>
-                <label style={{ display: 'grid', gap: 6, fontSize: 13, fontWeight: 700, color: '#1a5c08' }}>
-                    LINE URL
-                    <input
-                        placeholder="https://lin.ee/..."
-                        style={{ padding: 12, borderRadius: 8, border: '1px solid #d7ddd4', fontFamily: 'inherit' }}
-                        value={tempLine}
-                        onChange={e => setTempLine(e.target.value)}
-                    />
-                </label>
+    const updateValue = (key, value) => setValues(current => ({ ...current, [key]: value }))
 
-                <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 10 }}>
-                    <button
-                        className="ad-primary"
-                        style={{ padding: '10px 20px', fontSize: 14 }}
-                        onClick={async () => {
-                            try {
-                                const facebookUrl = tempFacebook.trim();
-                                const instagramUrl = tempInstagram.trim();
-                                const lineUrl = tempLine.trim();
-                                setSettings(prev => ({ ...prev, facebookUrl, instagramUrl, lineUrl }));
-                                await settingsApi.update({ facebookUrl, instagramUrl, lineUrl });
-                                notify('บันทึกข้อมูลโซเชียลมีเดียสำเร็จ');
-                            } catch (e) { fail(e) }
-                        }}
-                    >
-                        บันทึกการตั้งค่า
-                    </button>
+    const handleSave = async () => {
+        try {
+            const updatePayload = {
+                facebookUrl: values.facebook.trim(),
+                instagramUrl: values.instagram.trim(),
+                lineUrl: values.line.trim(),
+            }
+            setSettings(prev => ({ ...prev, ...updatePayload }))
+            await settingsApi.update(updatePayload)
+            notify('บันทึกข้อมูลโซเชียลมีเดียสำเร็จ')
+        } catch (error) {
+            fail(error)
+        }
+    }
+
+    return (
+        <>
+            <PageHead eyebrow="SETTINGS" title="โซเชียลมีเดีย" description="จัดการช่องทางออนไลน์ที่จะแสดงให้ลูกค้าเห็นในส่วนท้ายเว็บไซต์" />
+
+            <section className="admin-settings-card admin-social-card">
+                <header className="admin-settings-card-head">
+                    <div className="admin-settings-card-icon"><i className="bi bi-share" /></div>
+                    <div>
+                        <h2>ช่องทางโซเชียล</h2>
+                        <p>เพิ่มลิงก์บัญชีของร้าน ลูกค้าจะสามารถกดไปยังแต่ละแพลตฟอร์มจาก Footer ได้ทันที</p>
+                    </div>
+                </header>
+
+                <div className="admin-settings-body admin-social-list">
+                    {SOCIAL_FIELDS.map(field => (
+                        <label className={`admin-social-field ${field.className}`} key={field.key}>
+                            <span className="admin-social-icon"><i className={`bi ${field.icon}`} /></span>
+                            <span className="admin-social-copy">
+                                <b>{field.label}</b>
+                                <small>กรอก URL แบบเต็มที่ขึ้นต้นด้วย https://</small>
+                            </span>
+                            <input
+                                type="url"
+                                inputMode="url"
+                                placeholder={field.placeholder}
+                                value={values[field.key]}
+                                onChange={event => updateValue(field.key, event.target.value)}
+                            />
+                        </label>
+                    ))}
                 </div>
-            </div>
-        </section>
-    </>
+
+                <footer className="admin-settings-actions">
+                    <span><i className="bi bi-eye" /> ลิงก์ที่บันทึกจะแสดงในส่วนท้ายของหน้าเว็บ</span>
+                    <button type="button" className="admin-primary admin-settings-save" onClick={handleSave}>
+                        <i className="bi bi-check2-circle" /> บันทึกช่องทางโซเชียล
+                    </button>
+                </footer>
+            </section>
+        </>
+    )
 }

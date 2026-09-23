@@ -94,7 +94,7 @@ function LeafletMapComponent({ onLocationSelect }) {
     }, [positioned])
 
     return (
-        <div style={{ height: '300px', width: '100%', borderRadius: '8px', overflow: 'hidden', border: '1px solid #d9d9d9', boxSizing: 'border-box' }}>
+        <div style={{ height: '300px', width: '100%', borderRadius: '8px', overflow: 'hidden', border: '1px solid #d9d9d9', boxSizing: 'border-box', position: 'relative', zIndex: 1, isolation: 'isolate' }}>
             <MapContainer center={position} zoom={15} scrollWheelZoom={true} style={{ height: '100%', width: '100%' }}>
                 <TileLayer
                     attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -151,10 +151,10 @@ function GoogleMapComponent({ apiKey, onLocationSelect }) {
     }
 
     if (loadError) return <div style={{ height: 300, background: '#eee', display: 'grid', placeItems: 'center', color: '#888' }}>Error loading Google Maps (Invalid API key?)</div>
-    if (!isLoaded) return <div style={{ height: 300, background: '#f5f5f5', display: 'grid', placeItems: 'center', color: '#aaa' }}>Loading Google Maps...</div>
+    if (!isLoaded) return <div style={{ height: 300, background: '#f6faf2', display: 'grid', placeItems: 'center', color: '#aaa' }}>Loading Google Maps...</div>
 
     return (
-        <div style={{ height: '300px', width: '100%', borderRadius: '8px', overflow: 'hidden', border: '1px solid #d9d9d9', boxSizing: 'border-box' }}>
+        <div style={{ height: '300px', width: '100%', borderRadius: '8px', overflow: 'hidden', border: '1px solid #d9d9d9', boxSizing: 'border-box', position: 'relative', zIndex: 1, isolation: 'isolate' }}>
             <GoogleMap
                 mapContainerStyle={{ width: '100%', height: '100%' }}
                 center={position}

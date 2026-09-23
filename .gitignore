@@ -26,3 +26,5 @@ server/uploads/
 
 # Prisma generated
 server/prisma/migrations/*.db
+.vercel
+.env*

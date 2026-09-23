@@ -92,9 +92,21 @@ create table if not exists public.hero_slides (
     updated_at timestamptz not null default now()
 );
 
+create table if not exists public.ingredient_categories (
+    id uuid primary key default gen_random_uuid(),
+    name text not null unique,
+    name_en text,
+    slug text not null unique,
+    sort_order integer not null default 0,
+    created_at timestamptz not null default now(),
+    updated_at timestamptz not null default now()
+);
+
 create table if not exists public.inventory (
     id uuid primary key default gen_random_uuid(),
+    category_id uuid references public.ingredient_categories(id) on delete restrict,
     ingredient_name text not null unique,
+    ingredient_name_en text,
     quantity numeric(12,2) not null default 0 check (quantity >= 0),
     unit text not null,
     low_stock_threshold numeric(12,2) not null default 10 check (low_stock_threshold >= 0),
@@ -104,6 +116,8 @@ create table if not exists public.inventory (
 );
 alter table public.inventory add column if not exists status text not null default 'ยังคงเหลือ';
 alter table public.inventory add column if not exists expires_at date;
+alter table public.inventory add column if not exists category_id uuid references public.ingredient_categories(id) on delete restrict;
+alter table public.inventory add column if not exists ingredient_name_en text;
 alter table public.inventory drop constraint if exists inventory_status_check;
 alter table public.inventory add constraint inventory_status_check check (status in ('หมดอายุ', 'ยังคงเหลือ'));
 
@@ -190,6 +204,7 @@ create index if not exists order_items_order_id_idx on public.order_items(order_
 create index if not exists points_transactions_user_id_idx on public.points_transactions(user_id, created_at desc);
 create index if not exists product_ingredients_product_id_idx on public.product_ingredients(product_id);
 create index if not exists product_ingredients_inventory_id_idx on public.product_ingredients(inventory_id);
+create index if not exists inventory_category_id_idx on public.inventory(category_id);
 
 create or replace function public.set_updated_at()
 returns trigger language plpgsql as $$
@@ -445,6 +460,7 @@ alter table public.products enable row level security;
 alter table public.promotions enable row level security;
 alter table public.hero_slides enable row level security;
 alter table public.inventory enable row level security;
+alter table public.ingredient_categories enable row level security;
 alter table public.orders enable row level security;
 alter table public.order_items enable row level security;
 alter table public.points_transactions enable row level security;
@@ -479,6 +495,10 @@ drop policy if exists "admin manages inventory" on public.inventory;
 create policy "admin manages inventory" on public.inventory for all using (public.has_role(array['admin'])) with check (public.has_role(array['admin']));
 drop policy if exists "kitchen manages inventory" on public.inventory;
 create policy "kitchen manages inventory" on public.inventory for all using (public.has_role(array['kitchen'])) with check (public.has_role(array['kitchen']));
+drop policy if exists "staff reads ingredient categories" on public.ingredient_categories;
+create policy "staff reads ingredient categories" on public.ingredient_categories for select using (public.has_role(array['admin','kitchen']));
+drop policy if exists "admin manages ingredient categories" on public.ingredient_categories;
+create policy "admin manages ingredient categories" on public.ingredient_categories for all using (public.has_role(array['admin'])) with check (public.has_role(array['admin']));
 drop policy if exists "kitchen updates product status" on public.products;
 create policy "kitchen updates product status" on public.products for update using (public.has_role(array['kitchen'])) with check (public.has_role(array['kitchen']));
 drop policy if exists "staff reads product ingredients" on public.product_ingredients;
@@ -505,6 +525,7 @@ grant execute on function public.has_role(text[]) to anon, authenticated;
 grant select on public.categories, public.products, public.promotions, public.hero_slides to anon, authenticated;
 grant select on public.profiles, public.inventory, public.orders, public.order_items, public.points_transactions to authenticated;
 grant insert, update, delete on public.categories, public.products, public.promotions, public.hero_slides, public.inventory to authenticated;
+grant select, insert, update, delete on public.ingredient_categories to authenticated;
 grant select, insert, update, delete on public.product_ingredients to authenticated;
 grant insert, update on public.profiles to authenticated;
 grant update on public.orders to authenticated;
@@ -543,8 +564,23 @@ select seed.* from (values
 ) as seed(eyebrow, title, description, button_label, button_link, image_url, background_color, sort_order)
 where not exists (select 1 from public.hero_slides slide where slide.title = seed.title);
 
-insert into public.inventory (ingredient_name, quantity, unit, low_stock_threshold) values
-    ('เนื้อไก่', 50, 'kg', 10), ('กุ้งสด', 10, 'kg', 10), ('ใบกะเพรา', 5, 'kg', 5)
+insert into public.ingredient_categories (name, name_en, slug, sort_order) values
+    ('เนื้อสัตว์', 'Meat & Seafood', 'meat-seafood', 1),
+    ('ผักและสมุนไพร', 'Vegetables & Herbs', 'vegetables-herbs', 2),
+    ('เครื่องปรุง', 'Seasonings', 'seasonings', 3),
+    ('ของแห้ง', 'Dry Goods', 'dry-goods', 4),
+    ('นมและเบเกอรี', 'Dairy & Bakery', 'dairy-bakery', 5),
+    ('เครื่องดื่มและผลไม้', 'Beverages & Fruit', 'beverages-fruit', 6)
+on conflict (name) do nothing;
+
+insert into public.inventory (ingredient_name, ingredient_name_en, quantity, unit, low_stock_threshold, category_id)
+select seed.name, seed.name_en, seed.quantity, seed.unit, seed.low_threshold, category.id
+from (values
+    ('เนื้อไก่', 'Chicken', 50000::numeric, 'g', 10000::numeric, 'meat-seafood'),
+    ('กุ้งสด', 'Fresh Shrimp', 10000::numeric, 'g', 2000::numeric, 'meat-seafood'),
+    ('ใบกะเพรา', 'Holy Basil', 5000::numeric, 'g', 500::numeric, 'vegetables-herbs')
+) as seed(name, name_en, quantity, unit, low_threshold, category_slug)
+join public.ingredient_categories category on category.slug = seed.category_slug
 on conflict (ingredient_name) do nothing;
 
 insert into public.profiles (id, name, email)

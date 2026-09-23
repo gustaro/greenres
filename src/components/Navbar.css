@@ -1,27 +1,38 @@
 .floating-header {
     position: fixed;
-    z-index: 30;
+    z-index: 1100;
     top: 0;
     left: 0;
     right: 0;
-    background: #0f9e1e;
+    background: var(--brand-primary);
     padding: 0;
-    transition: background 0.3s;
+    transition: background 0.25s ease;
+    pointer-events: none;
 }
 
-.floating-header.transparent {
-    background: transparent;
+.floating-header.transparent,
+.floating-header.is-scrolled {
+    background: transparent !important;
+}
+
+.floating-header .nav-shell,
+.floating-header .breadcrumb-bar {
+    pointer-events: auto;
+}
+
+.floating-header.is-scrolled .breadcrumb-bar {
+    display: none;
 }
 
 .nav-shell {
     height: 56px;
-    width: min(935px, calc(100% - 40px));
+    width: min(1200px, calc(100% - 48px));
     margin: 0 auto;
     background: #fff;
     display: grid;
-    grid-template-columns: 70px 1fr 66px 58px 62px;
+    grid-template-columns: 76px 1fr auto 58px 62px;
     align-items: center;
-    box-shadow: 0 8px 18px rgba(0, 0, 0, .22);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, .18);
     border-radius: 0 0 8px 8px;
     overflow: hidden;
     position: relative;
@@ -67,7 +78,7 @@
     right: 1px;
     bottom: 1px;
     transform: rotate(30deg) scale(.82);
-    background: #62d837;
+    background: var(--brand-primary);
 }
 
 .brand-name {
@@ -99,15 +110,18 @@
     height: 100%;
     border: 0;
     background: #fff;
-    padding: 0 7px;
-    font-size: 11px;
-    font-weight: 800;
+    padding: 0 16px;
+    font-size: 14px;
+    font-weight: 700;
     white-space: nowrap;
-    color: #171717;
+    color: var(--brand-text);
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
 }
 
 .main-nav button:hover {
-    background: #f4f4f1;
+    background: var(--brand-surface);
+    color: var(--brand-primary);
 }
 
 .menu-toggle,
@@ -119,10 +133,21 @@
 .lang {
     height: 100%;
     border: 0;
-    border-left: 1px solid #eee;
+    border-left: 1px solid var(--brand-border-soft);
     background: #fff;
-    font-size: 11px;
-    color: #7e921f;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--brand-primary-dark);
+    padding: 0 12px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    transition: background 0.15s;
+}
+
+.lang:hover {
+    background: var(--brand-surface);
 }
 
 /* Profile & Cart share the same dark-green background */
@@ -130,7 +155,7 @@
 .cart-head {
     height: 100%;
     border: 0;
-    background: #0f9e1e;
+    background: var(--brand-primary);
     color: var(--chart);
     position: relative;
     display: grid;
@@ -147,15 +172,34 @@
     font-size: 16px;
 }
 
-/* Make SVG icons white on dark-background buttons */
-.profile img,
+/* Profile avatar photo */
+.profile img.nav-avatar-img {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    object-fit: cover;
+    filter: none !important;
+    border: 2px solid var(--brand-accent);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+    transition: transform 0.15s, border-color 0.15s;
+    display: block;
+}
+
+.profile:hover img.nav-avatar-img {
+    filter: none !important;
+    border-color: #ffffff;
+    transform: scale(1.06);
+}
+
+/* Make SVG icons white on dark-background buttons (excluding avatar photo) */
+.profile img:not(.nav-avatar-img),
 .cart-head img {
     filter: brightness(0) invert(1);
     display: block;
 }
 
-/* Chartreuse tint on hover */
-.profile:hover img,
+/* Chartreuse tint on hover for icons */
+.profile:hover img:not(.nav-avatar-img),
 .cart-head:hover img {
     filter: brightness(0) saturate(100%) invert(93%) sepia(60%) saturate(500%) hue-rotate(40deg) brightness(105%);
 }
@@ -183,19 +227,21 @@
     width: 8px;
     height: 8px;
     border-radius: 50%;
-    background: #fff;
-    right: 11px;
-    top: 10px;
+    background: var(--brand-accent);
+    border: 1.5px solid var(--brand-primary);
+    right: 10px;
+    top: 9px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
 }
 
 @media(max-width:1150px) and (min-width:1025px) {
     .main-nav button {
-        padding: 0 4px;
-        font-size: 9px;
+        padding: 0 10px;
+        font-size: 12.5px;
     }
 
     .nav-shell {
-        grid-template-columns: 65px 1fr 58px 50px 55px;
+        grid-template-columns: 70px 1fr auto 54px 58px;
     }
 }
 
@@ -279,7 +325,7 @@
         border: 0;
         border-radius: 8px;
         background: transparent;
-        color: #171717;
+        color: var(--brand-text);
         font-size: 13px;
         font-weight: 800;
         text-align: left;
@@ -289,16 +335,16 @@
 
     .responsive-nav-links button:hover,
     .responsive-nav-links button:focus-visible {
-        background: #effbe9;
-        color: #0f861a;
+        background: var(--brand-accent-soft);
+        color: var(--brand-primary);
     }
 
     .responsive-lang {
         width: 100%;
         margin-top: 8px;
-        border-top: 1px solid #e8e8e3;
+        border-top: 1px solid var(--brand-border-soft);
         border-radius: 0;
-        color: #6d8019;
+        color: var(--brand-primary-dark);
     }
 
     .nav-backdrop {
@@ -381,7 +427,7 @@
     display: flex;
     align-items: center;
     gap: 4px;
-    width: min(935px, calc(100% - 40px));
+    width: min(1200px, calc(100% - 48px));
     margin: 0 auto;
     padding: 8px 4px;
     font-size: 13px;
@@ -410,7 +456,7 @@ button.breadcrumb-item,
 }
 
 .breadcrumb-item button:hover {
-    color: #b8ff35;
+    color: var(--brand-accent);
     text-decoration: underline;
 }
 
@@ -422,7 +468,7 @@ button.breadcrumb-item,
 }
 
 .breadcrumb-current {
-    color: #b8ff35;
+    color: var(--brand-accent);
     font-weight: 700;
 }
 
@@ -442,3 +488,12 @@ button.breadcrumb-item,
         width: calc(100% - 20px);
     }
 }
+
+.nav-avatar-img {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--brand-accent);
+    display: block;
+}

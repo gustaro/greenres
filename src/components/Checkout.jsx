@@ -1,15 +1,19 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from '../lib/AuthContext'
+import { useLanguage } from '../lib/LanguageContext'
 import { validatePromotion } from '../lib/database'
-import { MapLocationPicker } from './MapLocationPicker'
+import { CheckoutOrderSummary } from './checkout/CheckoutOrderSummary'
+import { CheckoutDeliverySection } from './checkout/CheckoutDeliverySection'
+import { CheckoutPaymentSection } from './checkout/CheckoutPaymentSection'
 
 export const SERVER_DELIVERY_FEE = Number(import.meta.env.VITE_DELIVERY_FEE || 35)
 export const SERVER_FREE_DELIVERY_THRESHOLD = Number(import.meta.env.VITE_FREE_DELIVERY_THRESHOLD || 300)
 
-export function CheckoutModal({ cart, products, itemNotes, onClose, onDone }) {
+export function CheckoutModal({ cart, products, itemNotes = {}, onClose, onDone }) {
     const { profile } = useAuth()
-    const [orderMode, setOrderMode] = useState('takeaway')
-    const [takeawayMethod, setTakeawayMethod] = useState('delivery')
+    const { isEn, t } = useLanguage()
+    const [orderMode, setOrderMode] = useState('takeaway') // 'takeaway' | 'dine-in'
+    const [takeawayMethod, setTakeawayMethod] = useState('delivery') // 'delivery' | 'pickup'
     const [scheduleType, setScheduleType] = useState('ทันที')
     const deliveryType = orderMode === 'dine-in' ? 'ทานที่ร้าน' : takeawayMethod === 'pickup' ? 'รับเองที่ร้าน' : 'ให้จัดส่ง'
     const [paymentMethod, setPaymentMethod] = useState('ชำระเงินปลายทาง')
@@ -26,22 +30,35 @@ export function CheckoutModal({ cart, products, itemNotes, onClose, onDone }) {
     const [recipientPhone, setRecipientPhone] = useState(profile?.phone || '')
     const [recipientEmail, setRecipientEmail] = useState(profile?.email || '')
     const [addressId, setAddressId] = useState(defaultAddress ? defaultAddress.id : 'new')
+
+    // New address structured fields
+    const [newStreet, setNewStreet] = useState('')
+    const [newState, setNewState] = useState('กรุงเทพมหานคร')
+    const [newZip, setNewZip] = useState('')
+    const [newLabel, setNewLabel] = useState('บ้าน')
     const [manualAddress, setManualAddress] = useState(profile?.address || '')
+
+    // Dine-in / Table Reservation states
+    const [reservationMode, setReservationMode] = useState('now') // 'now' | 'slot'
+    const [reservationSlot, setReservationSlot] = useState('11:00 - 12:30')
+    const [customReservationTime, setCustomReservationTime] = useState('')
+    const [reservationGuests, setReservationGuests] = useState('2')
     const [dineInTable, setDineInTable] = useState('')
 
-    // Update if profile loads slower than modal open
+    // Mixed Dine-in with takeaway items map (productId -> boolean)
+    const [takeawayItemMap, setTakeawayItemMap] = useState({})
+
     useEffect(() => {
         if (!recipientName && profile?.name) setRecipientName(profile.name)
         if (!recipientPhone && profile?.phone) setRecipientPhone(profile.phone)
         if (addressId === 'new' && !manualAddress && defaultAddress) setAddressId(defaultAddress.id)
     }, [profile])
 
-
     const items = products.filter(product => cart[product.id])
     const subtotal = items.reduce((sum, product) => sum + product.price * cart[product.id], 0)
-    const fee = subtotal >= SERVER_FREE_DELIVERY_THRESHOLD ? 0 : SERVER_DELIVERY_FEE
+    const fee = deliveryType === 'ให้จัดส่ง' ? (subtotal >= SERVER_FREE_DELIVERY_THRESHOLD ? 0 : SERVER_DELIVERY_FEE) : 0
     const discount = appliedPromotion?.discount || 0
-    const total = subtotal - discount + fee
+    const total = Math.max(0, subtotal - discount + fee)
 
     useEffect(() => {
         if (deliveryType === 'ทานที่ร้าน' && paymentMethod !== 'ชำระที่ร้าน') setPaymentMethod('ชำระที่ร้าน')
@@ -50,9 +67,14 @@ export function CheckoutModal({ cart, products, itemNotes, onClose, onDone }) {
     }, [deliveryType, paymentMethod])
 
     const applyPromotion = async () => {
-        setCheckingPromotion(true); setPromotionError('')
-        try { setAppliedPromotion(await validatePromotion(promotionCode, subtotal)) }
-        catch (error) { setAppliedPromotion(null); setPromotionError(error.message) }
+        setCheckingPromotion(true)
+        setPromotionError('')
+        try {
+            setAppliedPromotion(await validatePromotion(promotionCode, subtotal))
+        } catch (error) {
+            setAppliedPromotion(null)
+            setPromotionError(error.message)
+        }
         setCheckingPromotion(false)
     }
 
@@ -60,7 +82,7 @@ export function CheckoutModal({ cart, products, itemNotes, onClose, onDone }) {
     let isDeliveryValid = true
     if (deliveryType === 'ให้จัดส่ง') {
         if (addressId === 'new') {
-            isDeliveryValid = manualAddress.trim().length > 5
+            isDeliveryValid = (newStreet.trim().length > 3 || manualAddress.trim().length > 5)
         }
     }
     const isFormValid = isPersonalInfoValid && isDeliveryValid && paymentMethod
@@ -73,18 +95,49 @@ export function CheckoutModal({ cart, products, itemNotes, onClose, onDone }) {
         const scheduledValue = form.get('scheduledAt')
 
         const selectedAddress = addressId === 'new' ? null : savedAddresses.find(a => a.id === addressId)
-        const deliveryAddressText = addressId === 'new' ? manualAddress : `${selectedAddress?.street || ''} ${selectedAddress?.state || ''} ${selectedAddress?.zip || ''}`.trim()
+        const formattedNewAddress = [newStreet, newState, newZip].filter(Boolean).join(' ')
+        const deliveryAddressText = addressId === 'new'
+            ? (formattedNewAddress || manualAddress)
+            : `${selectedAddress?.street || ''} ${selectedAddress?.state || ''} ${selectedAddress?.zip || ''}`.trim()
+
+        const finalReservationTime = orderMode === 'dine-in'
+            ? (reservationMode === 'slot'
+                ? (reservationSlot === 'custom' ? customReservationTime : reservationSlot)
+                : 'ทันที (Walk-in)')
+            : null
+
+        const finalItemNotes = { ...(itemNotes || {}) }
+        items.forEach(product => {
+            const isItemTakeaway = orderMode === 'dine-in' && Boolean(takeawayItemMap[product.id])
+            const existingNote = (finalItemNotes[product.id] || '').replace(/\[กลับบ้าน\]\s*/, '').trim()
+            if (isItemTakeaway) {
+                finalItemNotes[product.id] = `[กลับบ้าน] ${existingNote}`.trim()
+            } else if (orderMode === 'dine-in') {
+                finalItemNotes[product.id] = existingNote
+            }
+        })
 
         onDone({
-            deliveryAddress: deliveryType === 'ให้จัดส่ง' ? deliveryAddressText : deliveryType === 'ทานที่ร้าน' ? dineInTable : '',
+            deliveryAddress: deliveryType === 'ให้จัดส่ง' ? deliveryAddressText : deliveryType === 'ทานที่ร้าน' ? (dineInTable ? `โต๊ะ ${dineInTable}` : 'ทานที่ร้าน') : '',
             deliveryAddressId: deliveryType === 'ให้จัดส่ง' && addressId !== 'new' ? addressId : null,
+            newAddressObj: addressId === 'new' ? {
+                label: newLabel || 'บ้าน',
+                street: newStreet || manualAddress,
+                city: newState || 'กรุงเทพมหานคร',
+                state: newState || 'กรุงเทพมหานคร',
+                zip: newZip || '10110',
+            } : null,
             paymentMethod,
             deliveryType,
             deliveryScheduleType: deliveryType === 'ให้จัดส่ง' ? scheduleType : null,
             scheduledAt: deliveryType === 'ให้จัดส่ง' && scheduleType === 'ระบุเวลา' && scheduledValue ? new Date(scheduledValue).toISOString() : null,
+            reservationTime: finalReservationTime,
+            reservationGuests: orderMode === 'dine-in' ? Number(reservationGuests || 2) : null,
+            tableNumber: dineInTable || '',
             promotionCode: appliedPromotion?.code || null,
             recipientName,
             recipientPhone,
+            itemNotes: finalItemNotes,
         })
     }
 
@@ -94,206 +147,135 @@ export function CheckoutModal({ cart, products, itemNotes, onClose, onDone }) {
                 <button className="checkout-modal-close" onClick={onClose} type="button">×</button>
                 <section>
                     <div style={{ marginBottom: 24, textAlign: 'center' }}>
-                        <h2 style={{ fontSize: 24, fontWeight: 800, margin: 0 }}>Check out</h2>
+                        <h2 style={{ fontSize: 24, fontWeight: 800, margin: 0, color: 'var(--brand-primary-dark)' }}>{t('checkoutTitle')}</h2>
                     </div>
                     <form onSubmit={submit} id="checkout-form">
-
                         {/* Personal Information */}
                         <div className="chk-card">
-                            <h3 className="chk-title">Personal Information</h3>
+                            <h3 className="chk-title">{isEn ? 'Personal Information' : 'ข้อมูลผู้สั่งซื้อ'}</h3>
                             <div className="chk-grid full">
                                 <div className="chk-input-wrap">
-                                    <label>ชื่อผู้รับ (First Name)</label>
-                                    <input name="recipientName" required value={recipientName} onChange={e => setRecipientName(e.target.value)} />
+                                    <label>{t('name')}</label>
+                                    <input name="recipientName" required value={recipientName} onChange={e => setRecipientName(e.target.value)} placeholder={isEn ? 'e.g. John Doe' : 'เช่น สมชาย ใจดี'} />
                                 </div>
                             </div>
                             <div className="chk-grid" style={{ marginTop: 20 }}>
                                 <div className="chk-input-wrap">
-                                    <label>เบอร์โทร (Mobile Number)</label>
+                                    <label>{t('phone')}</label>
                                     <input name="recipientPhone" required value={recipientPhone} onChange={e => setRecipientPhone(e.target.value)} placeholder="08x-xxx-xxxx" />
                                 </div>
                                 <div className="chk-input-wrap">
-                                    <label>อีเมล (Email)</label>
+                                    <label>{isEn ? 'Email' : 'อีเมล'}</label>
                                     <input name="recipientEmail" type="email" value={recipientEmail} onChange={e => setRecipientEmail(e.target.value)} placeholder="example@mail.com" />
                                 </div>
                             </div>
                         </div>
 
-                        {/* Delivery Options */}
-                        <div className="chk-card">
-                            <h3 className="chk-title">Delivery Options</h3>
-                            <div className="order-options" style={{ marginBottom: 20 }}>
-                                <label><input type="radio" name="orderMode" checked={orderMode === 'takeaway'} onChange={() => setOrderMode('takeaway')} /> สั่งกลับบ้าน / เดลิเวอรี</label>
-                                <label><input type="radio" name="orderMode" checked={orderMode === 'dine-in'} onChange={() => setOrderMode('dine-in')} /> ทานที่ร้าน</label>
-                            </div>
+                        {/* Delivery Options / Table Reservation */}
+                        <CheckoutDeliverySection
+                            orderMode={orderMode}
+                            setOrderMode={setOrderMode}
+                            takeawayMethod={takeawayMethod}
+                            setTakeawayMethod={setTakeawayMethod}
+                            savedAddresses={savedAddresses}
+                            addressId={addressId}
+                            setAddressId={setAddressId}
+                            newStreet={newStreet}
+                            setNewStreet={setNewStreet}
+                            newState={newState}
+                            setNewState={setNewState}
+                            newZip={newZip}
+                            setNewZip={setNewZip}
+                            newLabel={newLabel}
+                            setNewLabel={setNewLabel}
+                            manualAddress={manualAddress}
+                            setManualAddress={setManualAddress}
+                            scheduleType={scheduleType}
+                            setScheduleType={setScheduleType}
+                            reservationMode={reservationMode}
+                            setReservationMode={setReservationMode}
+                            reservationSlot={reservationSlot}
+                            setReservationSlot={setReservationSlot}
+                            customReservationTime={customReservationTime}
+                            setCustomReservationTime={setCustomReservationTime}
+                            reservationGuests={reservationGuests}
+                            setReservationGuests={setReservationGuests}
+                            dineInTable={dineInTable}
+                            setDineInTable={setDineInTable}
+                        />
 
-                            {orderMode === 'takeaway' ? (
-                                <>
-                                    <div className="order-options" style={{ marginBottom: 20 }}>
-                                        <label><input type="radio" name="takeawayMethod" checked={takeawayMethod === 'delivery'} onChange={() => setTakeawayMethod('delivery')} /> จัดส่งถึงบ้าน</label>
-                                        <label><input type="radio" name="takeawayMethod" checked={takeawayMethod === 'pickup'} onChange={() => setTakeawayMethod('pickup')} /> รับเองที่ร้าน</label>
-                                    </div>
-
-                                    {takeawayMethod === 'delivery' && (
-                                        <div className="chk-grid">
-                                            {savedAddresses.length > 0 && (
-                                                <div className="chk-input-wrap" style={{ gridColumn: '1 / -1' }}>
-                                                    <label>เลือกที่อยู่จัดส่ง (Saved Addresses)</label>
-                                                    <select value={addressId} onChange={e => setAddressId(e.target.value)} style={{ padding: '12px', borderRadius: '4px', border: '1px solid #ccc', fontSize: '14px', width: '100%', boxSizing: 'border-box' }}>
-                                                        {savedAddresses.map(a => (
-                                                            <option key={a.id} value={a.id}>{a.label || 'ที่อยู่'} - {a.street} {a.state} {a.zip}</option>
-                                                        ))}
-                                                        <option value="new">+ ระบุที่อยู่ใหม่</option>
-                                                    </select>
-                                                </div>
-                                            )}
-
-                                            {addressId === 'new' && (
-                                                <div className="chk-input-wrap" style={{ gridColumn: '1 / -1' }}>
-                                                    <label>ที่อยู่จัดส่ง ({savedAddresses.length > 0 ? 'ระบุที่อยู่ใหม่' : 'Delivery Address'})</label>
-                                                    <div style={{ marginBottom: 12 }}>
-                                                        <MapLocationPicker onLocationSelect={(obj) => {
-                                                            const parts = []
-                                                            if (obj.street) parts.push(obj.street)
-                                                            if (obj.province) parts.push(obj.province)
-                                                            if (obj.zip) parts.push(obj.zip)
-                                                            setManualAddress(parts.join(' '))
-                                                        }} />
-                                                    </div>
-                                                    <textarea required value={manualAddress} onChange={e => setManualAddress(e.target.value)} rows={3} placeholder="บ้านเลขที่, ซอย, ถ.ราษฎร์บำรุง..." />
-                                                </div>
-                                            )}
-
-                                            <div className="chk-input-wrap">
-                                                <label>เวลาจัดส่ง (Delivery Time)</label>
-                                                <select value={scheduleType} onChange={event => setScheduleType(event.target.value)} style={{ padding: '12px', borderRadius: '4px', border: '1px solid #ccc', fontSize: '14px', width: '100%', boxSizing: 'border-box' }}>
-                                                    <option value="ทันที">เร็วที่สุด (ASAP)</option>
-                                                    <option value="ระบุเวลา">ระบุเวลา (Schedule)</option>
-                                                </select>
+                        {/* Mixed Takeaway items when Dine-in */}
+                        {orderMode === 'dine-in' && (
+                            <div className="chk-card" style={{ borderLeft: '4px solid var(--brand-accent, #b8ff35)' }}>
+                                <h3 className="chk-title" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                    <span><i className="bi bi-bag-plus me-2 text-success" />{isEn ? 'Pack items for takeaway?' : 'สั่งอาหารกลับบ้านเพิ่มด้วยหรือไม่?'}</span>
+                                    <span style={{ fontSize: 11, fontWeight: 500, color: '#555' }}>{isEn ? 'Dine-in with boxed takeaway' : 'ทานที่ร้านแต่แพ็กกลับบ้านบางจาน'}</span>
+                                </h3>
+                                <p style={{ fontSize: 12, color: '#666', margin: '0 0 12px' }}>
+                                    {isEn ? 'If you wish to take any dish home, click "Takeaway" below and the kitchen will box it up for you.' : 'หากต้องการนำอาหารบางรายการกลับบ้าน ให้กดเลือก "สั่งกลับบ้าน" ที่เมนูด้านล่าง ครัวจะจัดแพ็กเกจใส่กล่องให้ทันที'}
+                                </p>
+                                <div style={{ display: 'grid', gap: 8 }}>
+                                    {items.map(product => {
+                                        const isTakeaway = Boolean(takeawayItemMap[product.id])
+                                        return (
+                                            <div key={product.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 12px', background: isTakeaway ? '#f0fdf0' : '#fff', border: isTakeaway ? '1px solid #b8ff35' : '1px solid #eee', borderRadius: 6 }}>
+                                                <span style={{ fontSize: 13, fontWeight: 600 }}>
+                                                    {(isEn && product.en) ? product.en : product.name} × {cart[product.id]}
+                                                </span>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setTakeawayItemMap(prev => ({ ...prev, [product.id]: !prev[product.id] }))}
+                                                    style={{
+                                                        border: 0,
+                                                        background: isTakeaway ? 'var(--brand-primary, #12852f)' : '#d8e7d2',
+                                                        color: isTakeaway ? '#fff' : '#17351f',
+                                                        padding: '6px 12px',
+                                                        borderRadius: 20,
+                                                        fontSize: 12,
+                                                        fontWeight: 700,
+                                                        cursor: 'pointer',
+                                                        display: 'inline-flex',
+                                                        alignItems: 'center',
+                                                        gap: 6
+                                                    }}
+                                                >
+                                                    {isTakeaway ? <><i className="bi bi-bag-check" /> {isEn ? 'Takeaway' : 'สั่งกลับบ้าน'}</> : <><i className="bi bi-shop" /> {isEn ? 'Dine-In' : 'ทานที่ร้าน'}</>}
+                                                </button>
                                             </div>
-
-                                            {scheduleType === 'ระบุเวลา' && (
-                                                <div className="chk-input-wrap">
-                                                    <label>วันที่และเวลา</label>
-                                                    <input name="scheduledAt" type="datetime-local" required />
-                                                </div>
-                                            )}
-                                        </div>
-                                    )}
-                                </>
-                            ) : (
-                                <div className="chk-input-wrap full">
-                                    <label>หมายเลขโต๊ะ (ถ้าทราบ)</label>
-                                    <input value={dineInTable} onChange={e => setDineInTable(e.target.value)} placeholder="เช่น โต๊ะ 12" />
+                                        )
+                                    })}
                                 </div>
-                            )}
-                        </div>
-
-                        {/* Promo Code */}
-                        <div className="chk-card">
-                            <h3 className="chk-title">Promo Code / e-Coupon</h3>
-                            <div className="chk-promo-row">
-                                <div className="chk-input-wrap" style={{ flex: 1 }}>
-                                    <input value={promotionCode} onChange={e => setPromotionCode(e.target.value.toUpperCase())} placeholder="COUPON CODE" />
-                                </div>
-                                <button type="button" onClick={applyPromotion} disabled={!promotionCode || checkingPromotion} className="primary" style={{ padding: '0 24px', borderRadius: 4 }}>
-                                    {checkingPromotion ? '...' : 'Redeem'}
-                                </button>
                             </div>
-                            {promotionError && <p style={{ color: 'var(--brand-primary)', margin: '8px 0 0', fontSize: 13, fontWeight: 600 }}>{promotionError}</p>}
-                            {appliedPromotion && <p style={{ color: 'var(--brand-primary)', margin: '8px 0 0', fontSize: 13, fontWeight: 600 }}>✓ ได้รับส่วนลด ฿{appliedPromotion.discount}</p>}
-                        </div>
+                        )}
 
-                        {/* Payment Method */}
-                        <div className="chk-card">
-                            <h3 className="chk-title">Payment method</h3>
-                            <div className="chk-payment-list">
-                                {deliveryType === 'ให้จัดส่ง' && (
-                                    <label className={`chk-payment-box ${paymentMethod === 'ชำระเงินปลายทาง' ? 'active' : ''}`}>
-                                        <input type="radio" value="ชำระเงินปลายทาง" checked={paymentMethod === 'ชำระเงินปลายทาง'} onChange={e => setPaymentMethod(e.target.value)} />
-                                        Cash On Delivery
-                                        <i className="bi bi-cash chk-payment-icon"></i>
-                                    </label>
-                                )}
-                                {(deliveryType === 'ให้จัดส่ง' || deliveryType === 'รับเองที่ร้าน') && (
-                                    <>
-                                        <label className={`chk-payment-box ${paymentMethod === 'พร้อมเพย์' ? 'active' : ''}`} style={{ borderColor: paymentMethod === 'พร้อมเพย์' ? '#1a56be' : '', background: paymentMethod === 'พร้อมเพย์' ? '#f0f5ff' : '' }}>
-                                            <input type="radio" value="พร้อมเพย์" checked={paymentMethod === 'พร้อมเพย์'} onChange={e => setPaymentMethod(e.target.value)} />
-                                            <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                                <span>PromptPay QR</span>
-                                                <small style={{ fontSize: 10, color: '#666' }}>แสกนจ่ายผ่านแอปธนาคาร</small>
-                                            </div>
-                                            <i className="bi bi-qr-code chk-payment-icon" style={{ color: '#1a56be' }}></i>
-                                        </label>
-                                        <label className={`chk-payment-box ${paymentMethod === 'บัตรเครดิต/เดบิต' ? 'active' : ''}`} style={{ borderColor: paymentMethod === 'บัตรเครดิต/เดบิต' ? '#6772e5' : '', background: paymentMethod === 'บัตรเครดิต/เดบิต' ? '#f5f6ff' : '' }}>
-                                            <input type="radio" value="บัตรเครดิต/เดบิต" checked={paymentMethod === 'บัตรเครดิต/เดบิต'} onChange={e => setPaymentMethod(e.target.value)} />
-                                            <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                                <span>Credit / Debit Card</span>
-                                                <small style={{ fontSize: 10, color: '#666' }}>powered by Stripe</small>
-                                            </div>
-                                            <i className="bi bi-credit-card chk-payment-icon" style={{ color: '#6772e5' }}></i>
-                                        </label>
-                                        <label className={`chk-payment-box ${paymentMethod === 'เงินสดตู้หมายเลขบัญชี' ? 'active' : ''}`}>
-                                            <input type="radio" value="โอนเงินผ่านระบบ / พร้อมเพย์" checked={paymentMethod === 'โอนเงินผ่านระบบ / พร้อมเพย์'} onChange={e => setPaymentMethod(e.target.value)} />
-                                            โอนเงิน (Manual)
-                                            <i className="bi bi-wallet2 chk-payment-icon"></i>
-                                        </label>
-                                    </>
-                                )}
-                                {deliveryType === 'ทานที่ร้าน' && (
-                                    <label className={`chk-payment-box active`}>
-                                        <input type="radio" checked readOnly />
-                                        ชำระเงินที่ร้าน (Pay at Store)
-                                        <i className="bi bi-shop chk-payment-icon"></i>
-                                    </label>
-                                )}
-                            </div>
-
-                            <div className="chk-actions" style={{ marginTop: 30 }}>
-                                <button type="button" className="secondary" onClick={onClose} style={{ borderRadius: 4, padding: '14px 24px', fontSize: 14 }}>BACK TO CART</button>
-                                <button type="submit" className="primary" disabled={!isFormValid} style={{ borderRadius: 4, padding: '14px 40px', fontSize: 14, opacity: isFormValid ? 1 : 0.5, cursor: isFormValid ? 'pointer' : 'not-allowed' }}>CHECK OUT</button>
-                            </div>
-                        </div>
-
+                        {/* Promo Code & Payment Methods */}
+                        <CheckoutPaymentSection
+                            promotionCode={promotionCode}
+                            setPromotionCode={setPromotionCode}
+                            applyPromotion={applyPromotion}
+                            checkingPromotion={checkingPromotion}
+                            promotionError={promotionError}
+                            appliedPromotion={appliedPromotion}
+                            deliveryType={deliveryType}
+                            paymentMethod={paymentMethod}
+                            setPaymentMethod={setPaymentMethod}
+                            onClose={onClose}
+                            isFormValid={isFormValid}
+                        />
                     </form>
                 </section>
-                <aside>
-                    <div className="chk-card" style={{ position: 'sticky', top: 30 }}>
-                        <h3 className="chk-title">Order Summary</h3>
-                        {items.map(product => (
-                            <div className="sum-row" key={product.id}>
-                                <span>
-                                    {product.name}
-                                    <small style={{ display: 'block', color: '#888', fontSize: 11, marginTop: 4 }}>
-                                        {cart[product.id]} × ฿{product.price}
-                                        {itemNotes[product.id] ? ` · ${itemNotes[product.id]}` : ''}
-                                    </small>
-                                </span>
-                                <b style={{ fontWeight: 600 }}>฿{product.price * cart[product.id]}</b>
-                            </div>
-                        ))}
 
-                        <hr style={{ border: 0, borderTop: '1px solid #f0f0f0', margin: '20px 0' }} />
-
-                        <div className="sum-row" style={{ fontSize: 12 }}>
-                            <span>Subtotal</span>
-                            <span>฿{subtotal}</span>
-                        </div>
-                        <div className="sum-row" style={{ fontSize: 12 }}>
-                            <span>Delivery Fee</span>
-                            <span>{fee ? `฿${fee}` : 'FREE'}</span>
-                        </div>
-                        <div className="sum-row" style={{ fontSize: 12 }}>
-                            <span>Discount</span>
-                            <span style={{ color: discount ? 'var(--brand-primary)' : 'inherit' }}>{discount ? `-฿${discount}` : '฿0'}</span>
-                        </div>
-
-                        <div className="sum-total" style={{ borderTop: 0, marginTop: 25, paddingTop: 0 }}>
-                            <span style={{ fontSize: 18, fontWeight: 900, color: '#000' }}>Total</span>
-                            <b style={{ color: '#000', fontSize: 22, fontWeight: 900 }}>฿{total}</b>
-                        </div>
-                    </div>
-                </aside>
+                <CheckoutOrderSummary
+                    items={items}
+                    cart={cart}
+                    orderMode={orderMode}
+                    takeawayItemMap={takeawayItemMap}
+                    itemNotes={itemNotes}
+                    subtotal={subtotal}
+                    fee={fee}
+                    discount={discount}
+                    total={total}
+                />
             </div>
         </div>
     )
