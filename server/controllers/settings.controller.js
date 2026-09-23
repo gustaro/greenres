@@ -57,6 +57,12 @@ export const updateSiteSettings = (req, res, next) => {
         if (payload.facebookUrl !== undefined) settings.facebookUrl = payload.facebookUrl;
         if (payload.instagramUrl !== undefined) settings.instagramUrl = payload.instagramUrl;
         if (payload.lineUrl !== undefined) settings.lineUrl = payload.lineUrl;
+        if (payload.footerDescription !== undefined) settings.footerDescription = payload.footerDescription;
+        if (payload.footerAbout !== undefined) settings.footerAbout = payload.footerAbout;
+        if (payload.footerCopyright !== undefined) settings.footerCopyright = payload.footerCopyright;
+        if (payload.footerLinks !== undefined) settings.footerLinks = payload.footerLinks;
+        if (payload.storeHours !== undefined) settings.storeHours = payload.storeHours;
+        if (payload.contactEmail !== undefined) settings.contactEmail = payload.contactEmail;
 
         if (!fs.existsSync(configDir)) fs.mkdirSync(configDir, { recursive: true });
         fs.writeFileSync(configPath, JSON.stringify(settings, null, 2));
@@ -132,4 +138,54 @@ export const deleteHeroSlide = (req, res, next) => {
         saveSettings(settings);
         res.json({ ok: true });
     } catch (err) { next(err); }
+};
+
+export const submitContactMessage = (req, res, next) => {
+    try {
+        const { name, contact, subject, message } = req.body || {};
+        if (!name || !contact || !message) {
+            return res.status(400).json({ message: "กรุณากรอกข้อมูลให้ครบถ้วน" });
+        }
+        const messagesPath = path.join(configDir, "contact_messages.json");
+        let messages = [];
+        if (fs.existsSync(messagesPath)) {
+            try {
+                messages = JSON.parse(fs.readFileSync(messagesPath, "utf8"));
+            } catch {
+                messages = [];
+            }
+        }
+        const newMessage = {
+            id: Date.now().toString(),
+            name: String(name).trim(),
+            contact: String(contact).trim(),
+            subject: String(subject || "General").trim(),
+            message: String(message).trim(),
+            createdAt: new Date().toISOString()
+        };
+        messages.unshift(newMessage);
+        if (messages.length > 200) messages = messages.slice(0, 200);
+        if (!fs.existsSync(configDir)) fs.mkdirSync(configDir, { recursive: true });
+        fs.writeFileSync(messagesPath, JSON.stringify(messages, null, 2));
+        res.status(201).json({ success: true, message: "บันทึกข้อความเรียบร้อยแล้ว", data: newMessage });
+    } catch (err) {
+        next(err);
+    }
+};
+
+export const getContactMessages = (req, res, next) => {
+    try {
+        const messagesPath = path.join(configDir, "contact_messages.json");
+        let messages = [];
+        if (fs.existsSync(messagesPath)) {
+            try {
+                messages = JSON.parse(fs.readFileSync(messagesPath, "utf8"));
+            } catch {
+                messages = [];
+            }
+        }
+        res.json(messages);
+    } catch (err) {
+        next(err);
+    }
 };

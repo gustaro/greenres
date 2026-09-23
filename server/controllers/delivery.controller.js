@@ -29,7 +29,7 @@ export const getDeliveries = async (req, res, next) => {
         orderBy: { createdAt: "desc" },
         include: {
           order: { include: { user: { select: { name: true, phone: true } } } },
-          rider: { include: { user: { select: { name: true, phone: true } } } },
+          rider: { include: { user: { select: { name: true, phone: true, avatarUrl: true } } } },
           trackingEvents: { orderBy: { createdAt: "asc" }, take: 1 },
         },
       }),
@@ -46,7 +46,7 @@ export const getDeliveryById = async (req, res, next) => {
       where: { id: req.params.id },
       include: {
         order: { include: { user: true, items: { include: { product: true } } } },
-        rider: { include: { user: { select: { name: true, phone: true } } } },
+        rider: { include: { user: { select: { name: true, phone: true, avatarUrl: true } } } },
         trackingEvents: { orderBy: { createdAt: "asc" } },
       },
     });
@@ -61,7 +61,7 @@ export const getDeliveryByOrder = async (req, res, next) => {
     const delivery = await prisma.delivery.findUnique({
       where: { orderId: req.params.orderId },
       include: {
-        rider: { include: { user: { select: { name: true, phone: true } } } },
+        rider: { include: { user: { select: { name: true, phone: true, avatarUrl: true } } } },
         trackingEvents: { orderBy: { createdAt: "asc" } },
       },
     });
@@ -223,9 +223,10 @@ export const lalamoveWebhook = async (req, res, next) => {
 // GET /riders/me — ดูข้อมูล rider ของตัวเอง
 export const getMyRiderProfile = async (req, res, next) => {
   try {
-    const rider = await prisma.rider.findUnique({
+    let rider = await prisma.rider.findUnique({
       where: { userId: req.user.id },
       include: {
+        user: { select: { id: true, name: true, phone: true, email: true, avatarUrl: true } },
         deliveries: {
           where: { status: { in: ["ASSIGNED", "PICKED_UP", "ON_THE_WAY"] } },
           include: { order: { include: { user: { select: { name: true, phone: true } } } } },
@@ -233,8 +234,68 @@ export const getMyRiderProfile = async (req, res, next) => {
         },
       },
     });
+
+    // Auto-create test rider profile for admin if testing
+    if (!rider && req.user.role === "ADMIN") {
+      rider = await prisma.rider.create({
+        data: {
+          userId: req.user.id,
+          vehicleType: "motorcycle",
+          licensePlate: "แอดมิน-9999",
+          isVerified: true,
+          status: "AVAILABLE",
+        },
+        include: {
+          user: { select: { id: true, name: true, phone: true, email: true, avatarUrl: true } },
+          deliveries: true,
+        },
+      });
+    }
+
     if (!rider) return res.status(404).json({ message: "Rider profile not found" });
     res.json(rider);
+  } catch (err) { next(err); }
+};
+
+// PUT /riders/me/profile — อัปเดตข้อมูลส่วนตัวของ rider
+export const updateRiderProfile = async (req, res, next) => {
+  try {
+    const { name, phone, vehicleType, licensePlate, emergencyContact, avatarUrl } = req.body;
+    let rider = await prisma.rider.findUnique({ where: { userId: req.user.id } });
+    if (!rider && req.user.role === "ADMIN") {
+      rider = await prisma.rider.create({
+        data: {
+          userId: req.user.id,
+          vehicleType: vehicleType || "motorcycle",
+          licensePlate: licensePlate || "แอดมิน-9999",
+          isVerified: true,
+          status: "AVAILABLE",
+        },
+      });
+    }
+    if (!rider) return res.status(404).json({ message: "Rider profile not found" });
+
+    if (name || phone || avatarUrl !== undefined) {
+      await prisma.user.update({
+        where: { id: req.user.id },
+        data: {
+          ...(name && { name: name.trim() }),
+          ...(phone && { phone: phone.trim() }),
+          ...(avatarUrl !== undefined && { avatarUrl: avatarUrl ? avatarUrl.trim() : null }),
+        },
+      });
+    }
+
+    const updated = await prisma.rider.update({
+      where: { id: rider.id },
+      data: {
+        ...(vehicleType && { vehicleType }),
+        ...(licensePlate !== undefined && { licensePlate: licensePlate.trim() }),
+      },
+      include: { user: { select: { id: true, name: true, phone: true, email: true, avatarUrl: true } } },
+    });
+
+    res.json({ ...updated, emergencyContact, avatarUrl });
   } catch (err) { next(err); }
 };
 
@@ -245,7 +306,18 @@ export const updateMyStatus = async (req, res, next) => {
     if (!["AVAILABLE", "OFFLINE"].includes(status)) {
       return res.status(400).json({ message: "Status must be AVAILABLE or OFFLINE" });
     }
-    const rider = await prisma.rider.findUnique({ where: { userId: req.user.id } });
+    let rider = await prisma.rider.findUnique({ where: { userId: req.user.id } });
+    if (!rider && req.user.role === "ADMIN") {
+      rider = await prisma.rider.create({
+        data: {
+          userId: req.user.id,
+          vehicleType: "motorcycle",
+          licensePlate: "แอดมิน-9999",
+          isVerified: true,
+          status: "AVAILABLE",
+        },
+      });
+    }
     if (!rider) return res.status(404).json({ message: "Rider profile not found" });
     const updated = await prisma.rider.update({ where: { id: rider.id }, data: { status } });
     res.json(updated);
@@ -269,15 +341,15 @@ export const getMyDeliveries = async (req, res, next) => {
   try {
     const { status } = req.query;
     const rider = await prisma.rider.findUnique({ where: { userId: req.user.id } });
-    if (!rider) return res.status(404).json({ message: "Rider not found" });
-
-    const where = { riderId: rider.id };
+    
+    // If admin testing without a dedicated rider row, return all deliveries
+    const where = rider && req.user.role !== "ADMIN" ? { riderId: rider.id } : {};
     if (status) where.status = status;
 
     const deliveries = await prisma.delivery.findMany({
       where,
       orderBy: { createdAt: "desc" },
-      take: 20,
+      take: 40,
       include: {
         order: { include: { user: { select: { name: true, phone: true } }, items: { include: { product: { select: { name: true } } } } } },
         trackingEvents: { orderBy: { createdAt: "desc" }, take: 1 },
@@ -296,9 +368,8 @@ export const riderUpdateStatus = async (req, res, next) => {
       return res.status(400).json({ message: `Status must be one of: ${allowed.join(", ")}` });
     }
     const rider = await prisma.rider.findUnique({ where: { userId: req.user.id } });
-    const delivery = await prisma.delivery.findFirst({
-      where: { id: req.params.id, riderId: rider?.id },
-    });
+    const where = req.user.role === "ADMIN" ? { id: req.params.id } : { id: req.params.id, riderId: rider?.id };
+    const delivery = await prisma.delivery.findFirst({ where });
     if (!delivery) return res.status(404).json({ message: "Delivery not found or not yours" });
 
     const updated = await updateDeliveryStatus(delivery.id, status, lat, lng, note);

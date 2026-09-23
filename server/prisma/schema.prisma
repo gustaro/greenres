@@ -20,6 +20,7 @@ model User {
   updatedAt    DateTime  @updatedAt
   isActive     Boolean   @default(true)
   points       Int       @default(0)
+  avatarUrl    String?
   addresses    Address[]
   cart         Cart?
   orders       Order[]
@@ -61,25 +62,76 @@ model Category {
 }
 
 model Product {
-  id          String      @id @default(cuid())
+  id          String             @id @default(cuid())
   categoryId  String
   name        String
-  slug        String      @unique
+  slug        String             @unique
   description String?
-  price       Decimal     @db.Decimal(10, 2)
+  price       Decimal            @db.Decimal(10, 2)
   imageUrl    String?
-  isActive    Boolean     @default(true)
-  isFeatured  Boolean     @default(false)
-  prepTime    Int         @default(15)
-  stock       Int         @default(999)
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
+  isActive    Boolean            @default(true)
+  isFeatured  Boolean            @default(false)
+  prepTime    Int                @default(15)
+  stock       Int                @default(999)
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
   cartItems   CartItem[]
   inventory   Inventory?
+  recipeItems RecipeIngredient[]
   orderItems  OrderItem[]
-  category    Category    @relation(fields: [categoryId], references: [id])
+  category    Category           @relation(fields: [categoryId], references: [id])
 
   @@map("products")
+}
+
+model IngredientCategory {
+  id          String       @id @default(cuid())
+  name        String       @unique
+  nameEn      String?
+  slug        String       @unique
+  sortOrder   Int          @default(0)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  ingredients Ingredient[]
+
+  @@map("ingredient_categories")
+}
+
+model Ingredient {
+  id           String             @id @default(cuid())
+  categoryId   String
+  name         String
+  nameEn       String?
+  quantity     Decimal            @default(0) @db.Decimal(12, 3)
+  unit         String             @default("g")
+  lowThreshold Decimal            @default(0) @db.Decimal(12, 3)
+  isActive     Boolean            @default(true)
+  expiresAt    DateTime?
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+  category     IngredientCategory @relation(fields: [categoryId], references: [id])
+  recipeItems  RecipeIngredient[]
+
+  @@unique([name, unit])
+  @@index([categoryId])
+  @@map("ingredients")
+}
+
+model RecipeIngredient {
+  id               String     @id @default(cuid())
+  productId        String
+  ingredientId     String
+  quantityRequired Decimal    @db.Decimal(12, 3)
+  unit             String
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+  product          Product    @relation(fields: [productId], references: [id], onDelete: Cascade)
+  ingredient       Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Restrict)
+
+  @@unique([productId, ingredientId])
+  @@index([productId])
+  @@index([ingredientId])
+  @@map("recipe_ingredients")
 }
 
 model Inventory {

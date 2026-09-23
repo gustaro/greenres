@@ -85,11 +85,11 @@ export const createCoupon = async (req, res, next) => {
 
 export const updateCoupon = async (req, res, next) => {
   try {
-    const { isActive, usageLimit, expiresAt, title, buttonLabel, buttonLink, imageUrl, ...rest } = req.body;
+    const { isActive, usageLimit, expiresAt, title, buttonLabel, buttonLink, imageUrl, history, ...rest } = req.body;
     const data = { ...rest };
     if (isActive !== undefined) data.isActive = isActive === "true" || isActive === true;
-    if (usageLimit !== undefined) data.usageLimit = parseInt(usageLimit);
-    if (expiresAt !== undefined) data.expiresAt = new Date(expiresAt);
+    if (usageLimit !== undefined) data.usageLimit = usageLimit ? parseInt(usageLimit) : null;
+    if (expiresAt !== undefined) data.expiresAt = expiresAt ? new Date(expiresAt) : null;
 
     const existing = await prisma.coupon.findUnique({ where: { id: req.params.id } });
     if (!existing) return res.status(404).json({ message: "Coupon not found" });
@@ -97,11 +97,21 @@ export const updateCoupon = async (req, res, next) => {
     const existingMetadata = (existing.metadata && typeof existing.metadata === 'object') ? existing.metadata : {};
     const finalImageUrl = req.file ? req.file.path : (imageUrl || existingMetadata.imageUrl || "/assets/basil-rice.png");
 
+    let parsedHistory = existingMetadata.history || [];
+    if (history) {
+      try {
+        parsedHistory = typeof history === 'string' ? JSON.parse(history) : history;
+      } catch {
+        parsedHistory = existingMetadata.history || [];
+      }
+    }
+
     data.metadata = {
       ...existingMetadata,
       ...(title !== undefined && { title }),
       ...(buttonLabel !== undefined && { buttonLabel }),
       ...(buttonLink !== undefined && { buttonLink }),
+      history: parsedHistory,
       imageUrl: finalImageUrl,
     };
 

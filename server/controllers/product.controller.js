@@ -1,6 +1,17 @@
 import { prisma } from "../config/prisma.js";
 import { deleteImage } from "../middleware/upload.js";
 
+const productInclude = {
+  category: { select: { id: true, name: true, slug: true } },
+  inventory: { select: { quantity: true, lowThreshold: true } },
+  recipeItems: {
+    select: {
+      quantityRequired: true,
+      ingredient: { select: { id: true, name: true, quantity: true, unit: true, isActive: true } },
+    },
+  },
+};
+
 export const getProducts = async (req, res, next) => {
   try {
     const {
@@ -27,7 +38,7 @@ export const getProducts = async (req, res, next) => {
     const [products, total] = await Promise.all([
       prisma.product.findMany({
         where, skip, take: parseInt(limit), orderBy,
-        include: { category: { select: { id: true, name: true, slug: true } }, inventory: { select: { quantity: true, lowThreshold: true } } },
+        include: productInclude,
       }),
       prisma.product.count({ where }),
     ]);
@@ -42,7 +53,7 @@ export const getProductBySlug = async (req, res, next) => {
   try {
     const product = await prisma.product.findUnique({
       where: { slug: req.params.slug },
-      include: { category: true },
+      include: productInclude,
     });
     if (!product || (!product.isActive && req.user?.role === "CUSTOMER")) {
       return res.status(404).json({ message: "Product not found" });
@@ -70,7 +81,7 @@ export const getTopProducts = async (req, res, next) => {
     if (productIds.length > 0) {
       products = await prisma.product.findMany({
         where: { id: { in: productIds }, isActive: true },
-        include: { category: { select: { id: true, name: true, slug: true } }, inventory: { select: { quantity: true, lowThreshold: true } } },
+        include: productInclude,
       });
       products = products.sort((a, b) => productIds.indexOf(a.id) - productIds.indexOf(b.id));
     }
@@ -80,7 +91,7 @@ export const getTopProducts = async (req, res, next) => {
         where: { isActive: true, id: { notIn: productIds } },
         orderBy: { createdAt: "desc" },
         take: parseInt(limit) - products.length,
-        include: { category: { select: { id: true, name: true, slug: true } }, inventory: { select: { quantity: true, lowThreshold: true } } },
+        include: productInclude,
       });
       products = [...products, ...moreProducts];
     }

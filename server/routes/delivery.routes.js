@@ -12,7 +12,7 @@ import {
   grabWebhook, lalamoveWebhook,
   // Rider
   getMyRiderProfile, updateMyStatus, updateMyLocation,
-  getMyDeliveries, riderUpdateStatus, uploadProof, registerAsRider,
+  getMyDeliveries, riderUpdateStatus, uploadProof, registerAsRider, updateRiderProfile,
 } from "../controllers/delivery.controller.js";
 
 const router = Router();
@@ -24,6 +24,7 @@ router.post("/webhooks/lalamove",  lalamoveWebhook);
 // ── Rider self-service ───────────────────────────────────────
 router.post("/rider/register",                   authenticate, registerAsRider);
 router.get ("/rider/me",                         authenticate, isRiderOrAdmin, getMyRiderProfile);
+router.put ("/rider/me/profile",                 authenticate, isRiderOrAdmin, updateRiderProfile);
 router.put ("/rider/me/status",                  authenticate, isRiderOrAdmin, updateMyStatus);
 router.put ("/rider/me/location",                authenticate, isRiderOrAdmin, updateMyLocation);
 router.get ("/rider/me/deliveries",              authenticate, isRiderOrAdmin, getMyDeliveries);

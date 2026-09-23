@@ -1,5 +1,15 @@
 import express from "express";
-import { getSiteSettings, updateLogo, updateSiteSettings, getHeroSlides, createHeroSlide, updateHeroSlide, deleteHeroSlide } from "../controllers/settings.controller.js";
+import {
+    getSiteSettings,
+    updateLogo,
+    updateSiteSettings,
+    getHeroSlides,
+    createHeroSlide,
+    updateHeroSlide,
+    deleteHeroSlide,
+    submitContactMessage,
+    getContactMessages
+} from "../controllers/settings.controller.js";
 import { authenticate } from "../middleware/auth.js";
 import { isAdmin } from "../middleware/role.js";
 import { upload } from "../middleware/upload.js";
@@ -9,6 +19,10 @@ const router = express.Router();
 router.get("/", getSiteSettings);
 router.post("/logo", authenticate, isAdmin, upload.single("image"), updateLogo);
 router.put("/", authenticate, isAdmin, updateSiteSettings);
+
+// Contact Messages
+router.post("/contact", submitContactMessage);
+router.get("/contact", authenticate, isAdmin, getContactMessages);
 
 // Hero Slides
 router.get("/hero", getHeroSlides);

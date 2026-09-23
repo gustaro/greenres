@@ -63,6 +63,65 @@ async function main() {
     });
   }
 
+  // ── Ingredient categories & recipe-based stock ───────────
+  const ingredientCategories = {};
+  for (const category of [
+    { name: "เนื้อสัตว์", nameEn: "Meat & Seafood", slug: "meat-seafood", sortOrder: 1 },
+    { name: "ผักและสมุนไพร", nameEn: "Vegetables & Herbs", slug: "vegetables-herbs", sortOrder: 2 },
+    { name: "เครื่องปรุง", nameEn: "Seasonings", slug: "seasonings", sortOrder: 3 },
+    { name: "ของแห้ง", nameEn: "Dry Goods", slug: "dry-goods", sortOrder: 4 },
+    { name: "นมและเบเกอรี", nameEn: "Dairy & Bakery", slug: "dairy-bakery", sortOrder: 5 },
+    { name: "เครื่องดื่มและผลไม้", nameEn: "Beverages & Fruit", slug: "beverages-fruit", sortOrder: 6 },
+  ]) {
+    ingredientCategories[category.slug] = await prisma.ingredientCategory.upsert({
+      where: { slug: category.slug }, update: category, create: category,
+    });
+  }
+
+  const ingredientSeeds = [
+    ["อกไก่", "Chicken Breast", "meat-seafood", 12000, "g", 2000],
+    ["กุ้งสด", "Fresh Shrimp", "meat-seafood", 7000, "g", 1200],
+    ["ผักสลัดรวม", "Mixed Salad Greens", "vegetables-herbs", 9000, "g", 1500],
+    ["ใบกะเพรา", "Holy Basil", "vegetables-herbs", 1800, "g", 300],
+    ["อโวคาโด", "Avocado", "vegetables-herbs", 3000, "g", 600],
+    ["รากผักรวม", "Mixed Root Vegetables", "vegetables-herbs", 8000, "g", 1200],
+    ["กะทิ", "Coconut Milk", "seasonings", 10000, "ml", 1800],
+    ["ซอสสมุนไพร", "Herb Sauce", "seasonings", 4000, "ml", 700],
+    ["ข้าวกล้อง", "Brown Rice", "dry-goods", 15000, "g", 2500],
+    ["แผ่นทาโก้", "Taco Shell", "dry-goods", 180, "ชิ้น", 30],
+    ["ผงมัทฉะ", "Matcha Powder", "dry-goods", 1600, "g", 250],
+    ["แป้งเค้ก", "Cake Flour", "dairy-bakery", 8000, "g", 1200],
+    ["ครีมสด", "Fresh Cream", "dairy-bakery", 6000, "ml", 1000],
+    ["ผักผลไม้คั้นน้ำ", "Juicing Fruit & Vegetables", "beverages-fruit", 14000, "g", 2500],
+  ] as const;
+  const ingredients = {};
+  for (const [name, nameEn, categorySlug, quantity, unit, lowThreshold] of ingredientSeeds) {
+    ingredients[name] = await prisma.ingredient.upsert({
+      where: { name_unit: { name, unit } },
+      update: { nameEn, categoryId: ingredientCategories[categorySlug].id, lowThreshold },
+      create: { name, nameEn, categoryId: ingredientCategories[categorySlug].id, quantity, unit, lowThreshold },
+    });
+  }
+
+  const recipes = {
+    "garden-bowl": [["ผักสลัดรวม", 180], ["ซอสสมุนไพร", 35]],
+    "green-taco": [["แผ่นทาโก้", 2], ["อโวคาโด", 80], ["ผักสลัดรวม", 60], ["ซอสสมุนไพร", 25]],
+    "roots-curry": [["รากผักรวม", 180], ["กะทิ", 160], ["ข้าวกล้อง", 120]],
+    "green-press": [["ผักผลไม้คั้นน้ำ", 300]],
+    "matcha-cake": [["ผงมัทฉะ", 12], ["แป้งเค้ก", 90], ["ครีมสด", 60]],
+  } as const;
+  for (const product of products) {
+    const items = recipes[product.slug] || [];
+    for (const [ingredientName, quantityRequired] of items) {
+      const ingredient = ingredients[ingredientName];
+      await prisma.recipeIngredient.upsert({
+        where: { productId_ingredientId: { productId: product.id, ingredientId: ingredient.id } },
+        update: { quantityRequired, unit: ingredient.unit },
+        create: { productId: product.id, ingredientId: ingredient.id, quantityRequired, unit: ingredient.unit },
+      });
+    }
+  }
+
   // ── Coupons ────────────────────────────────────────────────
   await prisma.coupon.upsert({ where: { code: "WELCOME10" }, update: {}, create: {
     code: "WELCOME10", description: "ลด 10% สำหรับออเดอร์แรก",

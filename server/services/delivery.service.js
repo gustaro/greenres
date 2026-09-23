@@ -127,12 +127,13 @@ export const updateDeliveryStatus = async (deliveryId, status, lat, lng, note) =
 
   await addTrackingEvent(deliveryId, status, lat, lng, note);
 
-  // ถ้าส่งแล้ว → คืน rider เป็น AVAILABLE + อัป order status
+  // ถ้าส่งแล้ว → คืน rider เป็น AVAILABLE (ถ้ามี) + อัป order status
   if (status === "DELIVERED") {
-    await prisma.$transaction([
-      prisma.rider.update({ where: { id: delivery.riderId }, data: { status: "AVAILABLE", totalDeliveries: { increment: 1 } } }),
-      prisma.order.update({ where: { id: delivery.orderId }, data: { status: "DELIVERED" } }),
-    ]);
+    const ops = [prisma.order.update({ where: { id: delivery.orderId }, data: { status: "DELIVERED" } })];
+    if (delivery.riderId) {
+      ops.push(prisma.rider.update({ where: { id: delivery.riderId }, data: { status: "AVAILABLE", totalDeliveries: { increment: 1 } } }));
+    }
+    await prisma.$transaction(ops);
   }
 
   if (status === "FAILED" || status === "CANCELLED") {

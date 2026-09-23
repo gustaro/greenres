@@ -32,7 +32,7 @@ export const register = async (req, res, next) => {
     const hashedPassword = await bcrypt.hash(password, 12);
     const user = await prisma.user.create({
       data: { email, password: hashedPassword, name, phone },
-      select: { id: true, email: true, name: true, phone: true, role: true, isActive: true, points: true },
+      select: { id: true, email: true, name: true, phone: true, role: true, isActive: true, points: true, avatarUrl: true },
     });
 
     const { accessToken, refreshToken } = generateTokens(user.id);
@@ -115,7 +115,7 @@ export const getMe = async (req, res, next) => {
     const user = await prisma.user.findUnique({
       where: { id: req.user.id },
       select: {
-        id: true, email: true, name: true, phone: true, role: true, isActive: true, points: true, createdAt: true,
+        id: true, email: true, name: true, phone: true, role: true, isActive: true, points: true, avatarUrl: true, createdAt: true,
         addresses: true,
       },
     });

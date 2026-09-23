@@ -2,9 +2,11 @@ import { Router } from "express";
 import {
   getAllUsers, getUserById, updateProfile, changePassword,
   updateUserRole, updateUserStatus, deleteUser, addAddress, updateAddress, deleteAddress, createUser,
+  getPointsHistory, uploadAvatar,
 } from "../controllers/user.controller.js";
 import { authenticate } from "../middleware/auth.js";
 import { isAdmin } from "../middleware/role.js";
+import { upload } from "../middleware/upload.js";
 
 const router = Router();
 
@@ -14,6 +16,8 @@ router.use(authenticate);
 // Profile
 router.put("/profile", updateProfile);
 router.put("/change-password", changePassword);
+router.post("/avatar", upload.single("avatar"), uploadAvatar);
+router.get("/points-history", getPointsHistory);
 
 // Addresses
 router.post("/addresses", addAddress);

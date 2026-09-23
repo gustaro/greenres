@@ -41,7 +41,7 @@ export const getAllUsers = async (req, res, next) => {
         skip,
         take: parseInt(limit),
         orderBy: { createdAt: "desc" },
-        select: { id: true, email: true, name: true, phone: true, role: true, isActive: true, points: true, createdAt: true },
+        select: { id: true, email: true, name: true, phone: true, role: true, isActive: true, points: true, avatarUrl: true, createdAt: true },
       }),
       prisma.user.count({ where }),
     ]);
@@ -57,7 +57,7 @@ export const getUserById = async (req, res, next) => {
     const user = await prisma.user.findUnique({
       where: { id: req.params.id },
       select: {
-        id: true, email: true, name: true, phone: true, role: true, isActive: true, points: true, createdAt: true,
+        id: true, email: true, name: true, phone: true, role: true, isActive: true, points: true, avatarUrl: true, createdAt: true,
         addresses: true,
         _count: { select: { orders: true } },
       },
@@ -71,13 +71,47 @@ export const getUserById = async (req, res, next) => {
 
 export const updateProfile = async (req, res, next) => {
   try {
-    const { name, phone } = req.body;
+    const { name, phone, avatarUrl } = req.body;
+    const data = {};
+    if (name !== undefined) data.name = name;
+    if (phone !== undefined) data.phone = phone;
+    if (avatarUrl !== undefined) data.avatarUrl = avatarUrl;
+
     const user = await prisma.user.update({
       where: { id: req.user.id },
-      data: { name, phone },
-      select: { id: true, email: true, name: true, phone: true, role: true },
+      data,
+      select: { id: true, email: true, name: true, phone: true, role: true, avatarUrl: true, points: true },
     });
     res.json(user);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const uploadAvatar = async (req, res, next) => {
+  try {
+    const avatarUrl = req.file ? req.file.path : req.body.avatarUrl;
+    if (!avatarUrl) {
+      return res.status(400).json({ message: "No image file provided" });
+    }
+
+    const user = await prisma.user.update({
+      where: { id: req.user.id },
+      data: { avatarUrl },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        phone: true,
+        role: true,
+        avatarUrl: true,
+        points: true,
+        isActive: true,
+        createdAt: true,
+      },
+    });
+
+    res.json({ avatarUrl, user });
   } catch (error) {
     next(error);
   }
@@ -211,3 +245,73 @@ export const deleteAddress = async (req, res, next) => {
     next(error);
   }
 };
+
+export const getPointsHistory = async (req, res, next) => {
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: req.user.id },
+      select: { id: true, points: true, createdAt: true },
+    });
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    const orders = await prisma.order.findMany({
+      where: { userId: req.user.id },
+      orderBy: { createdAt: "desc" },
+      select: {
+        id: true,
+        total: true,
+        status: true,
+        createdAt: true,
+      },
+    });
+
+    const history = [];
+    let totalFromOrders = 0;
+
+    for (const order of orders) {
+      const orderTotal = parseFloat(order.total) || 0;
+      const pts = Math.floor(orderTotal / 10);
+      if (pts > 0) {
+        const isDelivered = order.status === "DELIVERED";
+        if (isDelivered) totalFromOrders += pts;
+        history.push({
+          id: `order-${order.id}`,
+          type: "earned",
+          title: `สั่งซื้ออาหาร #${order.id.slice(-6).toUpperCase()}`,
+          titleEn: `Order #${order.id.slice(-6).toUpperCase()}`,
+          points: pts,
+          amount: orderTotal,
+          status: isDelivered ? "completed" : "pending",
+          date: order.createdAt,
+        });
+      }
+    }
+
+    const currentPoints = user.points || 0;
+    const diff = currentPoints - totalFromOrders;
+    if (diff > 0) {
+      history.push({
+        id: `bonus-${user.id}`,
+        type: "earned",
+        title: "โบนัสต้อนรับและแต้มพิเศษสมาชิก",
+        titleEn: "Welcome & Member Bonus",
+        points: diff,
+        amount: 0,
+        status: "completed",
+        date: user.createdAt,
+      });
+    }
+
+    history.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+    res.json({
+      currentPoints,
+      totalEarned: currentPoints,
+      totalSpent: 0,
+      history,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+

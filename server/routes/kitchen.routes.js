@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { getKitchenQueue, startPreparing, markReady, getKitchenStats } from "../controllers/kitchen.controller.js";
+import { getKitchenQueue, startPreparing, markReady, getKitchenStats, updateOrderItemStatus } from "../controllers/kitchen.controller.js";
 import { authenticate } from "../middleware/auth.js";
 import { isKitchenOrStaffOrAdmin } from "../middleware/role.js";
 
@@ -11,5 +11,6 @@ router.get("/queue", getKitchenQueue);
 router.get("/stats", getKitchenStats);
 router.put("/:id/prepare", startPreparing);
 router.put("/:id/ready", markReady);
+router.put("/:id/item-status", updateOrderItemStatus);
 
 export default router;
