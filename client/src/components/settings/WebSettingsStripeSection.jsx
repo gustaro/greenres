@@ -389,8 +389,8 @@ export function WebSettingsStripeSection({ settings, setSettings, notify, fail }
                             gap: 8
                         }}
                     >
-                        <i className="bi bi-check-lg" />
-                        {saving ? 'กำลังบันทึก...' : 'บันทึกการตั้งค่า Stripe'}
+                        <i className={`bi ${saving ? 'bi-arrow-repeat spin' : 'bi-check-lg'}`} />
+                        {saving ? 'กำลังบันทึกการตั้งค่า...' : 'บันทึกการตั้งค่า Stripe'}
                     </button>
                 </div>
             </div>

@@ -87,7 +87,7 @@ export function KitchenItemRow({
                                 cursor: 'pointer',
                             }}
                         >
-                            {isLoading ? '...' : <><i className="bi bi-fire"></i> ทำ</>}
+                            {isLoading ? <i className="bi bi-arrow-repeat spin" /> : <><i className="bi bi-fire"></i> ทำ</>}
                         </button>
                         <button
                             type="button"
@@ -105,7 +105,7 @@ export function KitchenItemRow({
                                 cursor: 'pointer',
                             }}
                         >
-                            {isLoading ? '...' : <><i className="bi bi-send-fill"></i> กดส่ง</>}
+                            {isLoading ? <i className="bi bi-arrow-repeat spin" /> : <><i className="bi bi-send-fill"></i> กดส่ง</>}
                         </button>
                     </div>
                 )}
@@ -130,7 +130,7 @@ export function KitchenItemRow({
                             gap: 4,
                         }}
                     >
-                        {isLoading ? '...' : <><i className="bi bi-send-fill"></i> กดส่งรายการนี้</>}
+                        {isLoading ? <><i className="bi bi-arrow-repeat spin" /> กำลังส่ง...</> : <><i className="bi bi-send-fill"></i> กดส่งรายการนี้</>}
                     </button>
                 )}
 
@@ -151,7 +151,7 @@ export function KitchenItemRow({
                             cursor: 'pointer',
                         }}
                     >
-                        ย้อนกลับ
+                        {isLoading ? <i className="bi bi-arrow-repeat spin" /> : 'ย้อนกลับ'}
                     </button>
                 )}
             </div>

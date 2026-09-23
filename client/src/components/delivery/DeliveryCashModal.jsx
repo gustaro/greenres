@@ -1,6 +1,6 @@
 import { money } from '../StaffShared'
 
-export function DeliveryCashModal({ cashConfirm, setCashConfirm, confirmCashPayment }) {
+export function DeliveryCashModal({ cashConfirm, setCashConfirm, cashConfirming, confirmCashPayment }) {
     if (!cashConfirm) return null
 
     return (
@@ -22,9 +22,13 @@ export function DeliveryCashModal({ cashConfirm, setCashConfirm, confirmCashPaym
                     </p>
                 </div>
                 <div className="receipt-payment" style={{ gap: 10, padding: '12px 0 0' }}>
-                    <button onClick={() => setCashConfirm(null)}>ยกเลิก</button>
-                    <button className="staff-primary" onClick={() => confirmCashPayment(cashConfirm)}>
-                        <i className="bi bi-check-circle-fill me-1" /> ยืนยันรับเงินสดแล้ว
+                    <button onClick={() => setCashConfirm(null)} disabled={cashConfirming}>ยกเลิก</button>
+                    <button className="staff-primary" disabled={cashConfirming} onClick={() => confirmCashPayment(cashConfirm)}>
+                        {cashConfirming ? (
+                            <><i className="bi bi-arrow-repeat spin me-1" /> กำลังบันทึก...</>
+                        ) : (
+                            <><i className="bi bi-check-circle-fill me-1" /> ยืนยันรับเงินสดแล้ว</>
+                        )}
                     </button>
                 </div>
             </article>

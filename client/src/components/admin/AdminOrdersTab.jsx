@@ -67,15 +67,22 @@ export function AdminOrdersTab({
                                     disabled={actionLoading === order.id}
                                     onClick={() => handleCancel(order.id)}
                                 >
-                                    {actionLoading === order.id ? 'กำลังดำเนินการ...' : 'ยกเลิกออเดอร์'}
+                                    {actionLoading === order.id ? (
+                                        <><i className="bi bi-arrow-repeat spin me-1" />กำลังยกเลิก...</>
+                                    ) : (
+                                        'ยกเลิกออเดอร์'
+                                    )}
                                 </button>
                                 <button
                                     className="admin-primary"
                                     disabled={actionLoading === order.id}
                                     onClick={() => handleApprove(order.id)}
                                 >
-                                    <i className="bi bi-check-circle-fill me-1" />
-                                    {actionLoading === order.id ? 'กำลังดำเนินการ...' : 'อนุมัติ → ส่งเข้าครัว'}
+                                    {actionLoading === order.id ? (
+                                        <><i className="bi bi-arrow-repeat spin me-1" />กำลังอนุมัติ...</>
+                                    ) : (
+                                        <><i className="bi bi-check-circle-fill me-1" />อนุมัติ → ส่งเข้าครัว</>
+                                    )}
                                 </button>
                             </footer>
                         </article>

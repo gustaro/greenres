@@ -20,6 +20,7 @@ export function ProfileOrdersTab({
     orderSteps,
     money,
     cancelOrder,
+    cancellingOrderId,
     onOrderMore,
 }) {
     const { isEn, t } = useLanguage()
@@ -89,8 +90,16 @@ export function ProfileOrdersTab({
                                 </div>
                             )}
                             {order.foodStatus === 'รอยืนยัน' && !order.isPaid && (
-                                <button className="pf-cancel-order" onClick={() => cancelOrder(order)}>
-                                    {t('profileCancelOrder')}
+                                <button
+                                    className="pf-cancel-order"
+                                    disabled={cancellingOrderId === order.id}
+                                    onClick={() => cancelOrder(order)}
+                                >
+                                    {cancellingOrderId === order.id ? (
+                                        <><i className="bi bi-arrow-repeat spin me-1" />{isEn ? 'Cancelling...' : 'กำลังยกเลิก...'}</>
+                                    ) : (
+                                        t('profileCancelOrder')
+                                    )}
                                 </button>
                             )}
                         </article>

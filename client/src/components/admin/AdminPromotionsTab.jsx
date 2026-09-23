@@ -17,11 +17,16 @@ const getPromotionStatus = promotion => {
 
 export function AdminPromotionsTab({ promotions, setPromotions, adminName, notify, fail }) {
     const [editingPromotion, setEditingPromotion] = useState(null)
+    const [isAdding, setIsAdding] = useState(false)
+    const [savingId, setSavingId] = useState(null)
+    const [togglingId, setTogglingId] = useState(null)
+    const [deletingId, setDeletingId] = useState(null)
 
     const addPromotion = async event => {
         event.preventDefault()
         const formElement = event.currentTarget
         const form = new FormData(formElement)
+        setIsAdding(true)
         try {
             const minAmt = Number(form.get('minOrderAmount') || 0)
             const usageLimitVal = form.get('usageLimit') ? Number(form.get('usageLimit')) : null
@@ -55,21 +60,27 @@ export function AdminPromotionsTab({ promotions, setPromotions, adminName, notif
             notify('สร้างโปรโมชั่นแล้ว')
         } catch (error) {
             fail(error)
+        } finally {
+            setIsAdding(false)
         }
     }
 
     const togglePromotion = async promotion => {
+        setTogglingId(promotion.id)
         try {
             await adminApi.updateCoupon(promotion.id, { isActive: !promotion.isActive })
             setPromotions(current => current.map(item => item.id === promotion.id ? { ...item, isActive: !item.isActive } : item))
         } catch (error) {
             fail(error)
+        } finally {
+            setTogglingId(null)
         }
     }
 
     const savePromotion = async (event, promotion) => {
         event.preventDefault()
         const form = new FormData(event.currentTarget)
+        setSavingId(promotion.id)
         try {
             const minAmt = Number(form.get('minOrderAmount') || 0)
             const usageLimitVal = form.get('usageLimit') ? Number(form.get('usageLimit')) : null
@@ -106,16 +117,22 @@ export function AdminPromotionsTab({ promotions, setPromotions, adminName, notif
             notify('บันทึกโปรโมชั่นแล้ว')
         } catch (error) {
             fail(error)
+        } finally {
+            setSavingId(null)
         }
     }
 
     const deletePromotion = async id => {
+        if (!window.confirm('คุณต้องการลบโปรโมชั่นนี้ใช่หรือไม่?')) return
+        setDeletingId(id)
         try {
             await adminApi.deleteCoupon(id)
             setPromotions(current => current.filter(item => item.id !== id))
             notify('ลบโปรโมชั่นแล้ว')
         } catch (error) {
             fail(error)
+        } finally {
+            setDeletingId(null)
         }
     }
 
@@ -144,7 +161,9 @@ export function AdminPromotionsTab({ promotions, setPromotions, adminName, notif
                 <label>วันหมดอายุ<input name="expiresAt" type="datetime-local" /></label>
                 <label>จำกัดจำนวนสิทธิ์ (ครั้ง)<input name="usageLimit" type="number" min="1" placeholder="ว่าง = ไม่จำกัด" /></label>
                 <label className="wide">อัปโหลดรูปภาพ (ไม่บังคับ)<input type="file" name="imageFile" accept="image/png, image/jpeg, image/webp" /></label>
-                <button className="admin-primary">+ สร้างโปรโมชั่น</button>
+                <button className="admin-primary" disabled={isAdding}>
+                    {isAdding ? <><i className="bi bi-arrow-repeat spin me-1" />กำลังสร้างโปรโมชั่น...</> : '+ สร้างโปรโมชั่น'}
+                </button>
             </form>
             <div className="admin-promo-grid">
                 {promotions.map(promotion => {
@@ -180,7 +199,9 @@ export function AdminPromotionsTab({ promotions, setPromotions, adminName, notif
                                 <label className="wide">อัปโหลดรูปภาพใหม่<input type="file" name="imageFile" accept="image/png, image/jpeg, image/webp" /></label>
                                 <div className="admin-form-actions">
                                     <button type="button" onClick={() => setEditingPromotion(null)}>ยกเลิก</button>
-                                    <button className="admin-primary">บันทึก</button>
+                                    <button className="admin-primary" disabled={savingId === promotion.id}>
+                                        {savingId === promotion.id ? <><i className="bi bi-arrow-repeat spin me-1" />กำลังบันทึก...</> : 'บันทึก'}
+                                    </button>
                                 </div>
                             </form>
                         ) : (
@@ -224,8 +245,12 @@ export function AdminPromotionsTab({ promotions, setPromotions, adminName, notif
                         {editingPromotion !== promotion.id && (
                             <footer>
                                 <button onClick={() => setEditingPromotion(promotion.id)}>แก้ไข</button>
-                                <button onClick={() => togglePromotion(promotion)}>{promotion.isActive ? 'ปิดใช้งาน' : 'เปิดใช้งาน'}</button>
-                                <button className="admin-text-danger" onClick={() => deletePromotion(promotion.id)}>ลบ</button>
+                                <button disabled={togglingId === promotion.id} onClick={() => togglePromotion(promotion)}>
+                                    {togglingId === promotion.id ? <><i className="bi bi-arrow-repeat spin me-1" />...</> : (promotion.isActive ? 'ปิดใช้งาน' : 'เปิดใช้งาน')}
+                                </button>
+                                <button className="admin-text-danger" disabled={deletingId === promotion.id} onClick={() => deletePromotion(promotion.id)}>
+                                    {deletingId === promotion.id ? <><i className="bi bi-arrow-repeat spin me-1" />ลบ...</> : 'ลบ'}
+                                </button>
                             </footer>
                         )}
                     </article>

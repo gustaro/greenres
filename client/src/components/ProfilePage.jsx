@@ -29,6 +29,7 @@ export function ProfilePage() {
     const [orders, setOrders] = useState([])
     const [activityLoading, setActivityLoading] = useState(false)
     const [uploadingAvatar, setUploadingAvatar] = useState(false)
+    const [cancellingOrderId, setCancellingOrderId] = useState(null)
 
     // Redirect if not logged in
     useEffect(() => {
@@ -116,12 +117,15 @@ export function ProfilePage() {
 
     const cancelOrder = async order => {
         if (!window.confirm(`ยืนยันยกเลิกออเดอร์ ${order.orderNumber || order.id}?`)) return
+        setCancellingOrderId(order.id)
         try {
             await cancelOwnOrder(order.id)
             setOrders(current => current.map(item => item.id === order.id ? { ...item, foodStatus: 'ยกเลิก' } : item))
             showToast('ยกเลิกออเดอร์และคืนสต๊อกแล้ว', 'success')
         } catch (error) {
             showToast(error.message, 'error')
+        } finally {
+            setCancellingOrderId(null)
         }
     }
 
@@ -255,6 +259,7 @@ export function ProfilePage() {
                             orderSteps={orderSteps}
                             money={money}
                             cancelOrder={cancelOrder}
+                            cancellingOrderId={cancellingOrderId}
                             onOrderMore={() => navigate('/order')}
                         />
                     )}

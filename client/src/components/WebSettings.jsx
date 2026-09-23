@@ -12,6 +12,8 @@ export function WebSettings({ notify, fail }) {
     const [tempPhone, setTempPhone] = useState('')
     const [tempFooterDesc, setTempFooterDesc] = useState('')
     const [tempFooterCopyright, setTempFooterCopyright] = useState('')
+    const [isUploadingLogo, setIsUploadingLogo] = useState(false)
+    const [isSavingGeneral, setIsSavingGeneral] = useState(false)
 
     useEffect(() => {
         if (!settings) return
@@ -25,6 +27,7 @@ export function WebSettings({ notify, fail }) {
     const uploadLogoFile = async e => {
         const file = e.target.files?.[0]
         if (!file) return
+        setIsUploadingLogo(true)
         try {
             notify('กำลังอัปโหลดโลโก้...')
             const result = await settingsApi.updateLogo(file)
@@ -32,10 +35,13 @@ export function WebSettings({ notify, fail }) {
             notify('อัปโหลดโลโก้สำเร็จ')
         } catch (error) {
             fail(error)
+        } finally {
+            setIsUploadingLogo(false)
         }
     }
 
     const handleSaveGeneral = async () => {
+        setIsSavingGeneral(true)
         try {
             const updatePayload = {
                 siteName: tempSiteName.trim(),
@@ -51,6 +57,8 @@ export function WebSettings({ notify, fail }) {
             notify('บันทึกข้อมูลเว็บไซต์สำเร็จ')
         } catch (error) {
             fail(error)
+        } finally {
+            setIsSavingGeneral(false)
         }
     }
 
@@ -80,9 +88,13 @@ export function WebSettings({ notify, fail }) {
                             <div className="admin-settings-logo-copy">
                                 <b>โลโก้เว็บไซต์</b>
                                 <span>แนะนำไฟล์ PNG หรือ JPG ขนาด 200 × 200 พิกเซล</span>
-                                <input type="file" accept="image/png, image/jpeg" id="logoUpload" onChange={uploadLogoFile} hidden />
-                                <label htmlFor="logoUpload" className="admin-secondary admin-upload-button">
-                                    <i className="bi bi-cloud-arrow-up" /> เปลี่ยนรูปโลโก้
+                                <input type="file" accept="image/png, image/jpeg" id="logoUpload" onChange={uploadLogoFile} disabled={isUploadingLogo} hidden />
+                                <label htmlFor="logoUpload" className={`admin-secondary admin-upload-button ${isUploadingLogo ? 'disabled' : ''}`} style={isUploadingLogo ? { opacity: 0.65, pointerEvents: 'none' } : {}}>
+                                    {isUploadingLogo ? (
+                                        <><i className="bi bi-arrow-repeat spin" /> กำลังอัปโหลดโลโก้...</>
+                                    ) : (
+                                        <><i className="bi bi-cloud-arrow-up" /> เปลี่ยนรูปโลโก้</>
+                                    )}
                                 </label>
                             </div>
                         </div>
@@ -129,8 +141,12 @@ export function WebSettings({ notify, fail }) {
 
                     <footer className="admin-settings-actions">
                         <span><i className="bi bi-info-circle" /> ช่องทางโซเชียลจัดการได้จากเมนู “โซเชียล”</span>
-                        <button type="button" className="admin-primary admin-settings-save" onClick={handleSaveGeneral}>
-                            <i className="bi bi-check2-circle" /> บันทึกข้อมูลเว็บไซต์
+                        <button type="button" className="admin-primary admin-settings-save" onClick={handleSaveGeneral} disabled={isSavingGeneral}>
+                            {isSavingGeneral ? (
+                                <><i className="bi bi-arrow-repeat spin" /> กำลังบันทึกข้อมูล...</>
+                            ) : (
+                                <><i className="bi bi-check2-circle" /> บันทึกข้อมูลเว็บไซต์</>
+                            )}
                         </button>
                     </footer>
                 </section>

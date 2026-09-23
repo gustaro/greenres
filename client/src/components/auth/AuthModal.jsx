@@ -82,7 +82,7 @@ export function AuthModal({ onClose, onSuccess }) {
           </label>
           {err && <p style={{ color: '#cc2222', fontSize: 12, margin: '6px 0' }}>{err}</p>}
           <button className="primary" disabled={loading}>
-            {loading ? t('authProcessing') : tab === 'login' ? t('authSignIn') : t('authSignUp')}
+            {loading ? <><i className="bi bi-arrow-repeat spin me-1" /> {t('authProcessing')}</> : tab === 'login' ? t('authSignIn') : t('authSignUp')}
           </button>
         </form>
       </div>

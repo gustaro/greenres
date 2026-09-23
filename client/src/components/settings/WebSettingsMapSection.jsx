@@ -12,6 +12,7 @@ export function WebSettingsMapSection({ settings, setSettings, notify, fail }) {
     const [tempAddress, setTempAddress] = useState('')
     const [tempPhone, setTempPhone] = useState('')
     const [tempStoreHours, setTempStoreHours] = useState('')
+    const [saving, setSaving] = useState(false)
 
     useEffect(() => {
         if (settings) {
@@ -49,6 +50,7 @@ export function WebSettingsMapSection({ settings, setSettings, notify, fail }) {
     }
 
     const handleSave = async () => {
+        setSaving(true)
         try {
             const mapProvider = tempMapProvider
             const googleMapsApiKey = tempApiKey.trim()
@@ -77,6 +79,8 @@ export function WebSettingsMapSection({ settings, setSettings, notify, fail }) {
             notify('บันทึกการตั้งค่าแผนที่และข้อมูลร้านสำเร็จ')
         } catch (e) {
             fail(e)
+        } finally {
+            setSaving(false)
         }
     }
 
@@ -226,8 +230,13 @@ export function WebSettingsMapSection({ settings, setSettings, notify, fail }) {
                         className="admin-primary admin-settings-save"
                         style={{ padding: '12px 24px', fontSize: 14 }}
                         onClick={handleSave}
+                        disabled={saving}
                     >
-                        <i className="bi bi-check2-circle" /> บันทึกแผนที่และการจัดส่ง
+                        {saving ? (
+                            <><i className="bi bi-arrow-repeat spin" /> กำลังบันทึกแผนที่...</>
+                        ) : (
+                            <><i className="bi bi-check2-circle" /> บันทึกแผนที่และการจัดส่ง</>
+                        )}
                     </button>
                 </div>
             </div>

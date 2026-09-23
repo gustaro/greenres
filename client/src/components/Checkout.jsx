@@ -90,6 +90,7 @@ export function CheckoutModal({ cart, products, itemNotes = {}, onClose, onDone 
     })
     const [isQrPaid, setIsQrPaid] = useState(false)
     const [qrData, setQrData] = useState(null)
+    const [isSubmitting, setIsSubmitting] = useState(false)
 
     const isPersonalInfoValid = recipientName.trim().length > 0 && recipientPhone.trim().length >= 9
     let isDeliveryValid = true
@@ -101,9 +102,9 @@ export function CheckoutModal({ cart, products, itemNotes = {}, onClose, onDone 
     const isPaymentValid = paymentMethod === 'บัตรเครดิต/เดบิต' ? cardData.isValid : Boolean(paymentMethod)
     const isFormValid = isPersonalInfoValid && isDeliveryValid && isPaymentValid
 
-    const submit = event => {
+    const submit = async event => {
         event.preventDefault()
-        if (!isFormValid) return
+        if (!isFormValid || isSubmitting) return
 
         const form = new FormData(event.currentTarget)
         const scheduledValue = form.get('scheduledAt')
@@ -137,33 +138,40 @@ export function CheckoutModal({ cart, products, itemNotes = {}, onClose, onDone 
                 ? (isQrPaid ? `สแกนคิวอาร์ (PromptPay จำลองสำเร็จ - REF: ${qrData?.refCode || ''})` : 'สแกนคิวอาร์ (PromptPay)')
                 : paymentMethod
 
-        onDone({
-            deliveryAddress: deliveryType === 'ให้จัดส่ง' ? deliveryAddressText : deliveryType === 'ทานที่ร้าน' ? (dineInTable ? `โต๊ะ ${dineInTable}` : 'ทานที่ร้าน') : '',
-            deliveryAddressId: deliveryType === 'ให้จัดส่ง' && addressId !== 'new' ? addressId : null,
-            newAddressObj: addressId === 'new' ? {
-                label: newLabel || 'บ้าน',
-                street: newStreet || manualAddress,
-                city: newState || 'กรุงเทพมหานคร',
-                state: newState || 'กรุงเทพมหานคร',
-                zip: newZip || '10110',
-            } : null,
-            paymentMethod,
-            paymentDetail,
-            cardData: paymentMethod === 'บัตรเครดิต/เดบิต' ? {
-                maskedCard: cardData.maskedCard,
-                cardType: cardData.cardType,
-            } : null,
-            deliveryType,
-            deliveryScheduleType: deliveryType === 'ให้จัดส่ง' ? scheduleType : null,
-            scheduledAt: deliveryType === 'ให้จัดส่ง' && scheduleType === 'ระบุเวลา' && scheduledValue ? new Date(scheduledValue).toISOString() : null,
-            reservationTime: finalReservationTime,
-            reservationGuests: orderMode === 'dine-in' ? Number(reservationGuests || 2) : null,
-            tableNumber: dineInTable || '',
-            promotionCode: appliedPromotion?.code || null,
-            recipientName,
-            recipientPhone,
-            itemNotes: finalItemNotes,
-        })
+        setIsSubmitting(true)
+        try {
+            await onDone({
+                deliveryAddress: deliveryType === 'ให้จัดส่ง' ? deliveryAddressText : deliveryType === 'ทานที่ร้าน' ? (dineInTable ? `โต๊ะ ${dineInTable}` : 'ทานที่ร้าน') : '',
+                deliveryAddressId: deliveryType === 'ให้จัดส่ง' && addressId !== 'new' ? addressId : null,
+                newAddressObj: addressId === 'new' ? {
+                    label: newLabel || 'บ้าน',
+                    street: newStreet || manualAddress,
+                    city: newState || 'กรุงเทพมหานคร',
+                    state: newState || 'กรุงเทพมหานคร',
+                    zip: newZip || '10110',
+                } : null,
+                paymentMethod,
+                paymentDetail,
+                cardData: paymentMethod === 'บัตรเครดิต/เดบิต' ? {
+                    maskedCard: cardData.maskedCard,
+                    cardType: cardData.cardType,
+                } : null,
+                deliveryType,
+                deliveryScheduleType: deliveryType === 'ให้จัดส่ง' ? scheduleType : null,
+                scheduledAt: deliveryType === 'ให้จัดส่ง' && scheduleType === 'ระบุเวลา' && scheduledValue ? new Date(scheduledValue).toISOString() : null,
+                reservationTime: finalReservationTime,
+                reservationGuests: orderMode === 'dine-in' ? Number(reservationGuests || 2) : null,
+                tableNumber: dineInTable || '',
+                promotionCode: appliedPromotion?.code || null,
+                recipientName,
+                recipientPhone,
+                itemNotes: finalItemNotes,
+            })
+        } catch (err) {
+            console.error(err)
+        } finally {
+            setIsSubmitting(false)
+        }
     }
 
     return (
@@ -294,6 +302,7 @@ export function CheckoutModal({ cart, products, itemNotes = {}, onClose, onDone 
                             setIsQrPaid={setIsQrPaid}
                             qrData={qrData}
                             setQrData={setQrData}
+                            isSubmitting={isSubmitting}
                         />
                     </form>
                 </section>

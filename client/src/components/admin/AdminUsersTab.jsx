@@ -1,24 +1,35 @@
+import { useState } from 'react'
 import { adminApi } from '../../lib/database'
 import { PageHead, roleNames } from './AdminShared'
 
 export function AdminUsersTab({ users, setUsers, notify, fail }) {
+    const [isAdding, setIsAdding] = useState(false)
+    const [updatingStatusId, setUpdatingStatusId] = useState(null)
+    const [updatingRoleId, setUpdatingRoleId] = useState(null)
+
     const updateUserRole = async (id, role) => {
+        setUpdatingRoleId(id)
         try {
             await adminApi.updateUserRole(id, role)
             setUsers(current => current.map(item => item.id === id ? { ...item, role } : item))
             notify('อัปเดตบทบาทผู้ใช้งานแล้ว')
         } catch (error) {
             fail(error)
+        } finally {
+            setUpdatingRoleId(null)
         }
     }
 
     const updateUserStatus = async (id, isActive) => {
+        setUpdatingStatusId(id)
         try {
             await adminApi.updateUserStatus(id, isActive)
             setUsers(current => current.map(item => item.id === id ? { ...item, isActive } : item))
             notify('อัปเดตสถานะผู้ใช้งานแล้ว')
         } catch (error) {
             fail(error)
+        } finally {
+            setUpdatingStatusId(null)
         }
     }
 
@@ -31,6 +42,7 @@ export function AdminUsersTab({ users, setUsers, notify, fail }) {
         const name = form.get('name').trim()
         const role = form.get('role')
         if (!email || !password) return notify('กรุณากรอกอีเมลและรหัสผ่าน')
+        setIsAdding(true)
         try {
             const data = await adminApi.createUser({ email, name, password, role })
             const serverRoleDisplayMap = { CUSTOMER: 'customer', STAFF: 'cashier', KITCHEN: 'kitchen', ADMIN: 'admin' }
@@ -39,6 +51,8 @@ export function AdminUsersTab({ users, setUsers, notify, fail }) {
             notify('เพิ่มผู้ใช้งานใหม่แล้ว')
         } catch (error) {
             fail(error)
+        } finally {
+            setIsAdding(false)
         }
     }
 
@@ -59,7 +73,9 @@ export function AdminUsersTab({ users, setUsers, notify, fail }) {
                         <option value="ADMIN">แอดมิน</option>
                     </select>
                 </label>
-                <button className="admin-primary" style={{ alignSelf: 'end' }}>+ เพิ่มผู้ใช้</button>
+                <button className="admin-primary" style={{ alignSelf: 'end' }} disabled={isAdding}>
+                    {isAdding ? <><i className="bi bi-arrow-repeat spin me-1" />กำลังเพิ่มผู้ใช้...</> : '+ เพิ่มผู้ใช้'}
+                </button>
             </form>
             <section className="admin-panel">
                 <div className="admin-table-wrap">
@@ -93,7 +109,11 @@ export function AdminUsersTab({ users, setUsers, notify, fail }) {
                                                     <i className="bi bi-shield-fill-check"></i> {roleNames[userRoleLower] || user.role}
                                                 </span>
                                             ) : (
-                                                <select value={userRoleLower} onChange={event => updateUserRole(user.id, event.target.value)}>
+                                                <select
+                                                    value={userRoleLower}
+                                                    disabled={updatingRoleId === user.id}
+                                                    onChange={event => updateUserRole(user.id, event.target.value)}
+                                                >
                                                     <option value="customer">ลูกค้า (Customer)</option>
                                                     <option value="delivery">ไรเดอร์ / จัดส่ง (Delivery)</option>
                                                 </select>
@@ -106,9 +126,14 @@ export function AdminUsersTab({ users, setUsers, notify, fail }) {
                                                 <button
                                                     className={user.isActive ? 'admin-primary' : 'admin-text-danger'}
                                                     style={{ fontSize: 12, padding: '4px 12px', borderRadius: 6 }}
+                                                    disabled={updatingStatusId === user.id}
                                                     onClick={() => updateUserStatus(user.id, !user.isActive)}
                                                 >
-                                                    {user.isActive ? 'เปิดใช้งานแล้ว' : 'ปิดใช้งาน'}
+                                                    {updatingStatusId === user.id ? (
+                                                        <><i className="bi bi-arrow-repeat spin me-1" />...</>
+                                                    ) : (
+                                                        user.isActive ? 'เปิดใช้งานแล้ว' : 'ปิดใช้งาน'
+                                                    )}
                                                 </button>
                                             )}
                                         </td>

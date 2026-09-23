@@ -1,7 +1,11 @@
+import { useState } from 'react'
 import { catalogApi, mapProduct } from '../../lib/database'
 import { PageHead } from './AdminShared'
 
 export function AdminProductsTab({ products, setProducts, categories, notify, fail }) {
+    const [isAdding, setIsAdding] = useState(false)
+    const [deletingId, setDeletingId] = useState(null)
+    const [updatingImageId, setUpdatingImageId] = useState(null)
     const serverCanCreateSlug = name => /[a-z0-9]/i.test(name)
 
     const addProduct = async event => {
@@ -27,6 +31,7 @@ export function AdminProductsTab({ products, setProducts, categories, notify, fa
             }
         }
 
+        setIsAdding(true)
         try {
             const payload = new FormData()
             payload.append('name', finalName)
@@ -43,6 +48,8 @@ export function AdminProductsTab({ products, setProducts, categories, notify, fa
             notify('เพิ่มสินค้าสำเร็จ (ทั้งชื่อไทยและอังกฤษ)')
         } catch (error) {
             fail(error)
+        } finally {
+            setIsAdding(false)
         }
     }
 
@@ -63,6 +70,7 @@ export function AdminProductsTab({ products, setProducts, categories, notify, fa
 
         let body = payload
         if (changes.imageFile instanceof File) {
+            setUpdatingImageId(id)
             body = new FormData()
             Object.entries(payload).forEach(([key, value]) => body.append(key, String(value)))
             body.append('image', changes.imageFile)
@@ -73,16 +81,24 @@ export function AdminProductsTab({ products, setProducts, categories, notify, fa
             notify('อัปเดตสินค้าแล้ว')
         } catch (error) {
             fail(error)
+        } finally {
+            if (changes.imageFile instanceof File) {
+                setUpdatingImageId(null)
+            }
         }
     }
 
     const deleteProduct = async id => {
+        if (!window.confirm('คุณต้องการลบสินค้านี้ใช่หรือไม่?')) return
+        setDeletingId(id)
         try {
             await catalogApi.deleteProduct(id)
             setProducts(current => current.filter(item => item.id !== id))
             notify('ลบสินค้าแล้ว')
         } catch (error) {
             fail(error)
+        } finally {
+            setDeletingId(null)
         }
     }
 
@@ -125,7 +141,9 @@ export function AdminProductsTab({ products, setProducts, categories, notify, fa
                         <span><i className="bi bi-folder-fill text-warning" style={{ marginRight: 4 }}></i>เลือกรูปภาพ</span>
                     </label>
                 </label>
-                <button className="admin-primary">+ เพิ่มสินค้า</button>
+                <button className="admin-primary" disabled={isAdding}>
+                    {isAdding ? <><i className="bi bi-arrow-repeat spin" /> กำลังเพิ่มสินค้า...</> : '+ เพิ่มสินค้า'}
+                </button>
             </form>
             <section className="admin-panel">
                 <div className="admin-table-wrap">
@@ -166,14 +184,21 @@ export function AdminProductsTab({ products, setProducts, categories, notify, fa
                                         </div>
                                     </td>
                                     <td>
-                                        <label className="admin-file-label">
+                                        <label className="admin-file-label" style={{ opacity: updatingImageId === product.id ? 0.6 : 1, pointerEvents: updatingImageId === product.id ? 'none' : 'auto' }}>
                                             <input
                                                 className="admin-file-input"
                                                 type="file"
                                                 accept="image/*"
+                                                disabled={updatingImageId === product.id}
                                                 onChange={event => event.target.files?.[0] && updateProduct(product.id, { imageFile: event.target.files[0] })}
                                             />
-                                            <span><i className="bi bi-folder-fill text-warning" style={{ marginRight: 4 }}></i>เปลี่ยนรูป</span>
+                                            <span>
+                                                {updatingImageId === product.id ? (
+                                                    <><i className="bi bi-arrow-repeat spin me-1" />อัปโหลด...</>
+                                                ) : (
+                                                    <><i className="bi bi-folder-fill text-warning" style={{ marginRight: 4 }}></i>เปลี่ยนรูป</>
+                                                )}
+                                            </span>
                                         </label>
                                     </td>
                                     <td>
@@ -211,7 +236,9 @@ export function AdminProductsTab({ products, setProducts, categories, notify, fa
                                         </i>
                                     </td>
                                     <td>
-                                        <button className="admin-text-danger" onClick={() => deleteProduct(product.id)}>ลบ</button>
+                                        <button className="admin-text-danger" disabled={deletingId === product.id} onClick={() => deleteProduct(product.id)}>
+                                            {deletingId === product.id ? <><i className="bi bi-arrow-repeat spin" /> ลบ...</> : 'ลบ'}
+                                        </button>
                                     </td>
                                 </tr>
                             ))}

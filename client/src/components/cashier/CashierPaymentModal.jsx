@@ -191,7 +191,7 @@ export function CashierPaymentModal({
                         }}
                     >
                         {loading ? (
-                            <><span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> กำลังบันทึก...</>
+                            <><i className="bi bi-arrow-repeat spin me-1" /> กำลังบันทึกการชำระเงิน...</>
                         ) : isCardManualInvalid ? (
                             <><i className="bi bi-exclamation-circle"></i> กรุณากรอกข้อมูลบัตรให้ครบถ้วน</>
                         ) : selectedPaymentMethod === 'QR' && isQrPaid ? (

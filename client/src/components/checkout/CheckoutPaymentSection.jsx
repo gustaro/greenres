@@ -22,6 +22,7 @@ export function CheckoutPaymentSection({
     setIsQrPaid,
     qrData,
     setQrData,
+    isSubmitting = false,
 }) {
     const { isEn, t } = useLanguage()
 
@@ -193,6 +194,7 @@ export function CheckoutPaymentSection({
                         type="button"
                         className="secondary"
                         onClick={onClose}
+                        disabled={isSubmitting}
                         style={{ borderRadius: 4, padding: '14px 24px', fontSize: 14 }}
                     >
                         {isEn ? 'BACK TO CART' : 'ย้อนกลับไปตะกร้า'}
@@ -200,19 +202,24 @@ export function CheckoutPaymentSection({
                     <button
                         type="submit"
                         className="primary"
-                        disabled={!isFormValid}
+                        disabled={!isFormValid || isSubmitting}
                         style={{
                             borderRadius: 4,
                             padding: '14px 40px',
                             fontSize: 14,
-                            opacity: isFormValid ? 1 : 0.5,
-                            cursor: isFormValid ? 'pointer' : 'not-allowed',
+                            opacity: isFormValid && !isSubmitting ? 1 : 0.5,
+                            cursor: isFormValid && !isSubmitting ? 'pointer' : 'not-allowed',
                             display: 'inline-flex',
                             alignItems: 'center',
                             gap: 8,
                         }}
                     >
-                        {paymentMethod === 'พร้อมเพย์' && isQrPaid ? (
+                        {isSubmitting ? (
+                            <>
+                                <i className="bi bi-arrow-repeat spin" />
+                                {isEn ? 'PROCESSING ORDER...' : 'กำลังบันทึกคำสั่งซื้อ...'}
+                            </>
+                        ) : paymentMethod === 'พร้อมเพย์' && isQrPaid ? (
                             <>
                                 <i className="bi bi-check-circle-fill" />
                                 {isEn ? 'CONFIRM ORDER (PAID VIA QR)' : 'ยืนยันการสั่งซื้อ (ชำระผ่าน QR แล้ว)'}

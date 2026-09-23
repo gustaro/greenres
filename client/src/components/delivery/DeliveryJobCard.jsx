@@ -1,10 +1,11 @@
 import { DELIVERY_FLOW, DELIVERY_STATUS_LABEL, DELIVERY_STATUS_CLASS } from './DeliveryShared'
 import { money } from '../StaffShared'
 
-export function DeliveryJobCard({ job, isAdmin, tab, isOpen, onToggle, advance, onConfirmCash }) {
+export function DeliveryJobCard({ job, isAdmin, tab, isOpen, onToggle, advance, advancingJobId, onConfirmCash }) {
     const flow = DELIVERY_FLOW[job.status]
     const isCash = ['ชำระเงินปลายทาง', 'CASH', 'เงินสด'].includes(job.paymentMethod)
     const needCash = isCash && !job.isPaid && job.status === 'DELIVERED'
+    const isAdvancing = advancingJobId === (job.deliveryId ?? job.id)
 
     return (
         <article
@@ -125,9 +126,11 @@ export function DeliveryJobCard({ job, isAdmin, tab, isOpen, onToggle, advance, 
                     <button
                         className="staff-primary"
                         onClick={() => advance(job)}
+                        disabled={isAdvancing}
                         style={{ fontWeight: 800, padding: '10px 18px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
                     >
-                        <i className={`bi ${flow[2]}`}></i> {flow[1]}
+                        <i className={`bi ${isAdvancing ? 'bi-arrow-repeat spin' : flow[2]}`}></i>
+                        {isAdvancing ? 'กำลังอัปเดต...' : flow[1]}
                     </button>
                 )}
                 {needCash && (

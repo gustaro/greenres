@@ -24,6 +24,9 @@ export function AdminInventoryTab({ inventory, setInventory, products = [], fail
     const [recipeProductId, setRecipeProductId] = useState('')
     const [recipeDraft, setRecipeDraft] = useState([])
     const [savingRecipe, setSavingRecipe] = useState(false)
+    const [isAddingCategory, setIsAddingCategory] = useState(false)
+    const [isAddingIngredient, setIsAddingIngredient] = useState(false)
+    const [deletingId, setDeletingId] = useState(null)
 
     const loadRecipeData = async () => {
         try {
@@ -63,12 +66,15 @@ export function AdminInventoryTab({ inventory, setInventory, products = [], fail
     const addCategory = async event => {
         event.preventDefault()
         const form = new FormData(event.currentTarget)
+        setIsAddingCategory(true)
         try {
             const created = await adminApi.createIngredientCategory({ name: form.get('categoryName'), nameEn: form.get('categoryNameEn') })
             setCategories(current => [...current, created])
             event.currentTarget.reset()
         } catch (error) {
             fail(error)
+        } finally {
+            setIsAddingCategory(false)
         }
     }
 
@@ -76,6 +82,7 @@ export function AdminInventoryTab({ inventory, setInventory, products = [], fail
         event.preventDefault()
         const formElement = event.currentTarget
         const form = new FormData(formElement)
+        setIsAddingIngredient(true)
         try {
             const created = await adminApi.createIngredient({
                 categoryId: form.get('categoryId'),
@@ -91,6 +98,8 @@ export function AdminInventoryTab({ inventory, setInventory, products = [], fail
             window.alert('เพิ่มวัตถุดิบเข้าคลังเรียบร้อยแล้ว')
         } catch (error) {
             fail(error)
+        } finally {
+            setIsAddingIngredient(false)
         }
     }
 
@@ -105,11 +114,14 @@ export function AdminInventoryTab({ inventory, setInventory, products = [], fail
 
     const deleteInventory = async item => {
         if (!window.confirm(`ต้องการลบวัตถุดิบ “${item.ingredientName}” หรือไม่?`)) return
+        setDeletingId(item.id)
         try {
             await adminApi.deleteIngredient(item.id)
             setInventory(current => current.filter(currentItem => currentItem.id !== item.id))
         } catch (error) {
             fail(error)
+        } finally {
+            setDeletingId(null)
         }
     }
 
@@ -159,7 +171,9 @@ export function AdminInventoryTab({ inventory, setInventory, products = [], fail
                     <b>เพิ่มหมวดวัตถุดิบ</b>
                     <input name="categoryName" required placeholder="เช่น เนื้อสัตว์" />
                     <input name="categoryNameEn" placeholder="Meat & Seafood" />
-                    <button className="admin-secondary">+ เพิ่มหมวด</button>
+                    <button className="admin-secondary" disabled={isAddingCategory}>
+                        {isAddingCategory ? <><i className="bi bi-arrow-repeat spin me-1" />เพิ่ม...</> : '+ เพิ่มหมวด'}
+                    </button>
                 </form>
 
                 <form className="admin-grid-form stock admin-ingredient-form" onSubmit={addInventory}>
@@ -177,7 +191,9 @@ export function AdminInventoryTab({ inventory, setInventory, products = [], fail
                     </label>
                     <label>แจ้งเตือนเมื่อเหลือต่ำกว่า<input name="lowThreshold" required type="number" min="0" step="0.001" defaultValue="10" /></label>
                     <label>วันหมดอายุ<input name="expiresAt" type="date" /></label>
-                    <button className="admin-primary">+ เพิ่มวัตถุดิบ</button>
+                    <button className="admin-primary" disabled={isAddingIngredient}>
+                        {isAddingIngredient ? <><i className="bi bi-arrow-repeat spin me-1" />กำลังเพิ่ม...</> : '+ เพิ่มวัตถุดิบ'}
+                    </button>
                 </form>
 
                 <section className="admin-panel">
@@ -202,7 +218,11 @@ export function AdminInventoryTab({ inventory, setInventory, products = [], fail
                                             <td>{item.lowThreshold.toLocaleString()} {item.unit}</td>
                                             <td>{item.recipeCount || 0} เมนู</td>
                                             <td><div className="admin-stepper"><button type="button" onClick={() => updateInventory(item.id, { quantity: Math.max(0, item.quantity - 1) })}>−</button><span>{item.quantity}</span><button type="button" onClick={() => updateInventory(item.id, { quantity: item.quantity + 1 })}>+</button></div></td>
-                                            <td><button type="button" className="admin-text-danger" onClick={() => deleteInventory(item)}>ลบ</button></td>
+                                            <td>
+                                                <button type="button" className="admin-text-danger" disabled={deletingId === item.id} onClick={() => deleteInventory(item)}>
+                                                    {deletingId === item.id ? <><i className="bi bi-arrow-repeat spin me-1" />ลบ...</> : 'ลบ'}
+                                                </button>
+                                            </td>
                                         </tr>
                                     }),
                                 ])}
@@ -235,7 +255,9 @@ export function AdminInventoryTab({ inventory, setInventory, products = [], fail
                 </div>
                 <div className="admin-recipe-actions">
                     <button type="button" className="admin-secondary" onClick={addRecipeRow}>+ เพิ่มวัตถุดิบในสูตร</button>
-                    <button type="button" className="admin-primary" onClick={saveRecipe} disabled={savingRecipe}>{savingRecipe ? 'กำลังบันทึก...' : 'บันทึกสูตรอาหาร'}</button>
+                    <button type="button" className="admin-primary" onClick={saveRecipe} disabled={savingRecipe}>
+                        {savingRecipe ? <><i className="bi bi-arrow-repeat spin me-1" />กำลังบันทึก...</> : 'บันทึกสูตรอาหาร'}
+                    </button>
                 </div>
             </section>}
         </>

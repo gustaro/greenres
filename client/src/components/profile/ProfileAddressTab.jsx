@@ -9,16 +9,32 @@ export function ProfileAddressTab({ addresses, removeAddress, onAddAddress }) {
     const [street, setStreet] = useState('')
     const [province, setProvince] = useState('')
     const [zip, setZip] = useState('')
+    const [isAddingAddress, setIsAddingAddress] = useState(false)
+    const [deletingId, setDeletingId] = useState(null)
 
     const handleAdd = async () => {
         if (!street.trim()) return
-        const success = await onAddAddress({ label, phone, street, province, zip })
-        if (success !== false) {
-            setLabel('')
-            setPhone('')
-            setStreet('')
-            setProvince('')
-            setZip('')
+        setIsAddingAddress(true)
+        try {
+            const success = await onAddAddress({ label, phone, street, province, zip })
+            if (success !== false) {
+                setLabel('')
+                setPhone('')
+                setStreet('')
+                setProvince('')
+                setZip('')
+            }
+        } finally {
+            setIsAddingAddress(false)
+        }
+    }
+
+    const handleDelete = async (id, i) => {
+        setDeletingId(id || i)
+        try {
+            await removeAddress(id, i)
+        } finally {
+            setDeletingId(null)
         }
     }
 
@@ -33,8 +49,12 @@ export function ProfileAddressTab({ addresses, removeAddress, onAddAddress }) {
                         <small>{[addr.street || addr, addr.city, addr.state, addr.zip].filter(Boolean).join(' ')}</small>
                         {addr.isDefault && <em>{isEn ? 'Default' : 'ค่าเริ่มต้น'}</em>}
                     </span>
-                    <button className="addr-del" onClick={() => removeAddress(addr.id, i)}>
-                        <i className="bi bi-trash me-1" />{t('profileDeleteAddress')}
+                    <button className="addr-del" disabled={deletingId === (addr.id || i)} onClick={() => handleDelete(addr.id, i)}>
+                        {deletingId === (addr.id || i) ? (
+                            <><i className="bi bi-arrow-repeat spin me-1" />{isEn ? 'Deleting...' : 'กำลังลบ...'}</>
+                        ) : (
+                            <><i className="bi bi-trash me-1" />{t('profileDeleteAddress')}</>
+                        )}
                     </button>
                 </div>
             ))}
@@ -68,7 +88,9 @@ export function ProfileAddressTab({ addresses, removeAddress, onAddAddress }) {
                         <input placeholder={t('profileProvincePlaceholder')} value={province} onChange={e => setProvince(e.target.value)} />
                         <input placeholder={t('profileZipPlaceholder')} value={zip} onChange={e => setZip(e.target.value)} />
                     </div>
-                    <button className="ad-address-submit" onClick={handleAdd}>{t('profileSaveAddressBtn')}</button>
+                    <button className="ad-address-submit" disabled={isAddingAddress || !street.trim()} onClick={handleAdd}>
+                        {isAddingAddress ? <><i className="bi bi-arrow-repeat spin me-1" /> {isEn ? 'Saving Address...' : 'กำลังบันทึกที่อยู่...'}</> : t('profileSaveAddressBtn')}
+                    </button>
                 </div>
             </div>
         </>

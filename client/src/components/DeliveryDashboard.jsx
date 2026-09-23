@@ -22,6 +22,8 @@ export function DeliveryDashboard({ setOrders }) {
     const [cashConfirm, setCashConfirm] = useState(null)
     const [notice, setNotice] = useState('')
     const [showProfileModal, setShowProfileModal] = useState(false)
+    const [advancingJobId, setAdvancingJobId] = useState(null)
+    const [cashConfirming, setCashConfirming] = useState(false)
 
     const loadRequestRef = useRef(null)
 
@@ -118,6 +120,8 @@ export function DeliveryDashboard({ setOrders }) {
         if (!flow) return
         const [nextStatus] = flow
 
+        const targetId = job.deliveryId ?? job.id
+        setAdvancingJobId(targetId)
         try {
             setJobs(current => current.map(j =>
                 (j.id === job.id || j.deliveryId === job.deliveryId)
@@ -139,12 +143,15 @@ export function DeliveryDashboard({ setOrders }) {
         } catch (err) {
             window.alert('Error updating status: ' + err.message)
             load(true)
+        } finally {
+            setAdvancingJobId(null)
         }
     }
 
     const confirmCashPayment = async job => {
         const orderId = job.orderId ?? job.order?.id
         if (!orderId) return window.alert('ไม่พบ Order ID')
+        setCashConfirming(true)
         try {
             if (setOrders) {
                 setOrders(current => current.map(o => o.id === orderId ? { ...o, isPaid: true, paymentStatus: 'PAID' } : o))
@@ -161,6 +168,8 @@ export function DeliveryDashboard({ setOrders }) {
         } catch (err) {
             window.alert('Error updating payment: ' + err.message)
             load(true)
+        } finally {
+            setCashConfirming(false)
         }
     }
 
@@ -219,6 +228,7 @@ export function DeliveryDashboard({ setOrders }) {
                                 isOpen={expanded === job.id}
                                 onToggle={() => setExpanded(expanded === job.id ? null : job.id)}
                                 advance={advance}
+                                advancingJobId={advancingJobId}
                                 onConfirmCash={setCashConfirm}
                             />
                         ))}
@@ -237,6 +247,7 @@ export function DeliveryDashboard({ setOrders }) {
             <DeliveryCashModal
                 cashConfirm={cashConfirm}
                 setCashConfirm={setCashConfirm}
+                cashConfirming={cashConfirming}
                 confirmCashPayment={confirmCashPayment}
             />
 

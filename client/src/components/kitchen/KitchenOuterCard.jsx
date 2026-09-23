@@ -164,8 +164,8 @@ export function KitchenOuterCard({
                         onClick={() => onDispatchAll(order)}
                         disabled={isActionLoading}
                     >
-                        <i className="bi bi-send-check-fill"></i>
-                        ส่งทุกรายการ ({activeItems.length})
+                        <i className={`bi ${isActionLoading ? 'bi-arrow-repeat spin' : 'bi-send-check-fill'}`}></i>
+                        {isActionLoading ? 'กำลังส่ง...' : `ส่งทุกรายการ (${activeItems.length})`}
                     </button>
                 )}
 
@@ -177,7 +177,8 @@ export function KitchenOuterCard({
                         disabled={isActionLoading}
                         style={{ padding: '8px 12px', fontSize: 12, fontWeight: 700 }}
                     >
-                        <i className="bi bi-fire me-1"></i> เริ่มทำ
+                        <i className={`bi ${isActionLoading ? 'bi-arrow-repeat spin me-1' : 'bi-fire me-1'}`}></i>
+                        {isActionLoading ? 'กำลังเริ่ม...' : 'เริ่มทำ'}
                     </button>
                 )}
 
@@ -189,7 +190,8 @@ export function KitchenOuterCard({
                         disabled={isActionLoading}
                         style={{ flex: 1, padding: '8px 12px', fontSize: 12, fontWeight: 800, background: 'var(--brand-primary, #12852f)' }}
                     >
-                        <i className="bi bi-check2-circle me-1"></i> พร้อมเสิร์ฟ
+                        <i className={`bi ${isActionLoading ? 'bi-arrow-repeat spin me-1' : 'bi-check2-circle me-1'}`}></i>
+                        {isActionLoading ? 'กำลังอัปเดต...' : 'พร้อมเสิร์ฟ'}
                     </button>
                 )}
 
@@ -201,7 +203,7 @@ export function KitchenOuterCard({
                     title="ยกเลิกออเดอร์"
                     style={{ padding: '8px 10px', fontSize: 12, background: '#fee2e2', color: '#b91c1c', border: '1px solid #fca5a5', borderRadius: 8, cursor: 'pointer', fontWeight: 700 }}
                 >
-                    <i className="bi bi-x-circle"></i>
+                    <i className={`bi ${isActionLoading ? 'bi-arrow-repeat spin' : 'bi-x-circle'}`}></i>
                 </button>
             </footer>
         </article>

@@ -166,7 +166,7 @@ export function CashierCounterTab({
                     <div className="counter-total"><span>ยอดรวม</span><b>฿{counterTotal}</b></div>
                     <textarea className="counter-note" value={counterNote} onChange={e => setCounterNote(e.target.value)} placeholder="หมายเหตุ (ถ้ามี)" rows={2} />
                     <button className="staff-primary counter-submit" onClick={submitCounterOrder} disabled={counterLoading || counterItems.length === 0}>
-                        {counterLoading ? 'กำลังส่ง...' : <><i className="bi bi-send-check me-1"></i> ส่งเข้าครัว</>}
+                        {counterLoading ? <><i className="bi bi-arrow-repeat spin me-1" /> กำลังส่งเข้าครัว...</> : <><i className="bi bi-send-check me-1"></i> ส่งเข้าครัว</>}
                     </button>
                 </aside>
             </div>

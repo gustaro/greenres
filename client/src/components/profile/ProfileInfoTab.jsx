@@ -84,7 +84,7 @@ export function ProfileInfoTab({
             </div>
 
             <button className="pf-save-btn" onClick={handleSave} disabled={saving} style={{ marginTop: 24 }}>
-                {saving ? t('profileSaving') : t('profileSaveBtn')}
+                {saving ? <><i className="bi bi-arrow-repeat spin me-1" /> {t('profileSaving')}</> : t('profileSaveBtn')}
             </button>
         </>
     )

@@ -4,6 +4,10 @@ import { PageHead, Empty, PAGE_LINK_OPTIONS } from './AdminShared'
 
 export function AdminHeroTab({ heroSlides, setHeroSlides, notify, fail }) {
     const [editingHero, setEditingHero] = useState(null)
+    const [isAdding, setIsAdding] = useState(false)
+    const [savingId, setSavingId] = useState(null)
+    const [togglingId, setTogglingId] = useState(null)
+    const [deletingId, setDeletingId] = useState(null)
 
     const addHero = async event => {
         event.preventDefault()
@@ -19,6 +23,7 @@ export function AdminHeroTab({ heroSlides, setHeroSlides, notify, fail }) {
             imageUrl: form.get('imageUrl')?.trim() || '/assets/hero-food.png',
         }
         if (!payload.title) return notify('กรุณาใส่หัวข้อหลัก')
+        setIsAdding(true)
         try {
             const data = await heroApi.create(payload)
             setHeroSlides(current => [...current, data].sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0)))
@@ -26,6 +31,8 @@ export function AdminHeroTab({ heroSlides, setHeroSlides, notify, fail }) {
             notify('เพิ่มแบนเนอร์หน้าแรกเรียบร้อยแล้ว')
         } catch (error) {
             fail(error)
+        } finally {
+            setIsAdding(false)
         }
     }
 
@@ -42,6 +49,7 @@ export function AdminHeroTab({ heroSlides, setHeroSlides, notify, fail }) {
             sortOrder: Number(form.get('sortOrder') || hero.sortOrder),
             imageUrl: form.get('imageUrl')?.trim() || hero.imageUrl,
         }
+        setSavingId(hero.id)
         try {
             const data = await heroApi.update(hero.id, payload)
             setHeroSlides(current => current.map(s => s.id === hero.id ? data : s).sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0)))
@@ -49,27 +57,35 @@ export function AdminHeroTab({ heroSlides, setHeroSlides, notify, fail }) {
             notify('บันทึกการแก้ไขแบนเนอร์แล้ว')
         } catch (error) {
             fail(error)
+        } finally {
+            setSavingId(null)
         }
     }
 
     const toggleHero = async hero => {
+        setTogglingId(hero.id)
         try {
             await heroApi.update(hero.id, { isActive: !hero.isActive })
             setHeroSlides(current => current.map(s => s.id === hero.id ? { ...s, isActive: !hero.isActive } : s))
             notify(hero.isActive ? 'ซ่อนแบนเนอร์แล้ว' : 'เปิดแสดงแบนเนอร์แล้ว')
         } catch (error) {
             fail(error)
+        } finally {
+            setTogglingId(null)
         }
     }
 
     const deleteHero = async id => {
         if (!window.confirm('ลบแบนเนอร์นี้ออกจากหน้าแรกใช่หรือไม่?')) return
+        setDeletingId(id)
         try {
             await heroApi.remove(id)
             setHeroSlides(current => current.filter(s => s.id !== id))
             notify('ลบแบนเนอร์เรียบร้อยแล้ว')
         } catch (error) {
             fail(error)
+        } finally {
+            setDeletingId(null)
         }
     }
 
@@ -119,7 +135,9 @@ export function AdminHeroTab({ heroSlides, setHeroSlides, notify, fail }) {
                     หรือเลือกไฟล์รูปจากเครื่อง (ไม่เกิน 5 MB)
                     <input name="image" type="file" accept="image/*" />
                 </label>
-                <button className="admin-primary">+ เพิ่มแบนเนอร์หน้าแรก</button>
+                <button className="admin-primary" disabled={isAdding}>
+                    {isAdding ? <><i className="bi bi-arrow-repeat spin" /> กำลังเพิ่มแบนเนอร์...</> : '+ เพิ่มแบนเนอร์หน้าแรก'}
+                </button>
             </form>
             <div className="admin-hero-list">
                 {heroSlides.length === 0 ? (
@@ -151,7 +169,9 @@ export function AdminHeroTab({ heroSlides, setHeroSlides, notify, fail }) {
                                     <label className="wide">เปลี่ยนรูปภาพใหม่<input name="image" type="file" accept="image/*" /></label>
                                     <div className="admin-form-actions">
                                         <button type="button" onClick={() => setEditingHero(null)}>ยกเลิก</button>
-                                        <button className="admin-primary">บันทึกการแก้ไข</button>
+                                        <button className="admin-primary" disabled={savingId === hero.id}>
+                                            {savingId === hero.id ? <><i className="bi bi-arrow-repeat spin" /> กำลังบันทึก...</> : 'บันทึกการแก้ไข'}
+                                        </button>
                                     </div>
                                 </form>
                             ) : (
@@ -165,8 +185,12 @@ export function AdminHeroTab({ heroSlides, setHeroSlides, notify, fail }) {
                             {editingHero !== hero.id && (
                                 <footer>
                                     <button onClick={() => setEditingHero(hero.id)}>แก้ไข</button>
-                                    <button onClick={() => toggleHero(hero)}>{hero.isActive ? 'ซ่อนจากหน้าแรก' : 'เปิดแสดงบนหน้าแรก'}</button>
-                                    <button className="admin-text-danger" onClick={() => deleteHero(hero.id)}>ลบแบนเนอร์</button>
+                                    <button disabled={togglingId === hero.id} onClick={() => toggleHero(hero)}>
+                                        {togglingId === hero.id ? <><i className="bi bi-arrow-repeat spin" /> กำลังเปลี่ยนสถานะ...</> : (hero.isActive ? 'ซ่อนจากหน้าแรก' : 'เปิดแสดงบนหน้าแรก')}
+                                    </button>
+                                    <button className="admin-text-danger" disabled={deletingId === hero.id} onClick={() => deleteHero(hero.id)}>
+                                        {deletingId === hero.id ? <><i className="bi bi-arrow-repeat spin" /> กำลังลบ...</> : 'ลบแบนเนอร์'}
+                                    </button>
                                 </footer>
                             )}
                         </article>

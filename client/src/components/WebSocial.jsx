@@ -12,6 +12,7 @@ const SOCIAL_FIELDS = [
 export const WebSocial = ({ notify, fail }) => {
     const { settings, setSettings } = useAuth()
     const [values, setValues] = useState({ facebook: '', instagram: '', line: '' })
+    const [saving, setSaving] = useState(false)
 
     useEffect(() => {
         if (!settings) return
@@ -25,6 +26,7 @@ export const WebSocial = ({ notify, fail }) => {
     const updateValue = (key, value) => setValues(current => ({ ...current, [key]: value }))
 
     const handleSave = async () => {
+        setSaving(true)
         try {
             const updatePayload = {
                 facebookUrl: values.facebook.trim(),
@@ -36,6 +38,8 @@ export const WebSocial = ({ notify, fail }) => {
             notify('บันทึกข้อมูลโซเชียลมีเดียสำเร็จ')
         } catch (error) {
             fail(error)
+        } finally {
+            setSaving(false)
         }
     }
 
@@ -73,8 +77,12 @@ export const WebSocial = ({ notify, fail }) => {
 
                 <footer className="admin-settings-actions">
                     <span><i className="bi bi-eye" /> ลิงก์ที่บันทึกจะแสดงในส่วนท้ายของหน้าเว็บ</span>
-                    <button type="button" className="admin-primary admin-settings-save" onClick={handleSave}>
-                        <i className="bi bi-check2-circle" /> บันทึกช่องทางโซเชียล
+                    <button type="button" className="admin-primary admin-settings-save" onClick={handleSave} disabled={saving}>
+                        {saving ? (
+                            <><i className="bi bi-arrow-repeat spin" /> กำลังบันทึก...</>
+                        ) : (
+                            <><i className="bi bi-check2-circle" /> บันทึกช่องทางโซเชียล</>
+                        )}
                     </button>
                 </footer>
             </section>

@@ -721,6 +721,11 @@ button {
     }
 }
 
+.spin {
+    display: inline-block;
+    animation: app-loading-spin .7s linear infinite;
+}
+
 @media(prefers-reduced-motion:reduce) {
     .app-loading-spinner {
         animation-duration: 1.5s

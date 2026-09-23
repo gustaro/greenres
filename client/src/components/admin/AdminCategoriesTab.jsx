@@ -1,7 +1,10 @@
+import { useState } from 'react'
 import { catalogApi, mapCategory } from '../../lib/database'
 import { PageHead } from './AdminShared'
 
 export function AdminCategoriesTab({ categories, setCategories, products, notify, fail }) {
+    const [isAdding, setIsAdding] = useState(false)
+    const [deletingId, setDeletingId] = useState(null)
     const serverCanCreateSlug = name => /[a-z0-9]/i.test(name)
 
     const addCategory = async event => {
@@ -12,6 +15,7 @@ export function AdminCategoriesTab({ categories, setCategories, products, notify
         if (!serverCanCreateSlug(name)) {
             return notify('Server สร้าง slug จาก A-Z/0-9 เท่านั้น กรุณาใส่ตัวอักษรอังกฤษในชื่อประเภทด้วย')
         }
+        setIsAdding(true)
         try {
             const data = await catalogApi.createCategory({ name, sortOrder: categories.length })
             setCategories(current => [...current, mapCategory(data)])
@@ -19,6 +23,8 @@ export function AdminCategoriesTab({ categories, setCategories, products, notify
             notify('เพิ่มประเภทสินค้าแล้ว')
         } catch (error) {
             fail(error)
+        } finally {
+            setIsAdding(false)
         }
     }
 
@@ -39,12 +45,16 @@ export function AdminCategoriesTab({ categories, setCategories, products, notify
         if (products.some(product => product.categoryId === id)) {
             return notify('ลบไม่ได้ เนื่องจากยังมีสินค้าในประเภทนี้')
         }
+        if (!window.confirm('คุณต้องการลบประเภทสินค้านี้ใช่หรือไม่?')) return
+        setDeletingId(id)
         try {
             await catalogApi.deleteCategory(id)
             setCategories(current => current.filter(category => category.id !== id))
             notify('ลบประเภทสินค้าแล้ว')
         } catch (error) {
             fail(error)
+        } finally {
+            setDeletingId(null)
         }
     }
 
@@ -56,7 +66,9 @@ export function AdminCategoriesTab({ categories, setCategories, products, notify
                     ชื่อประเภทสินค้า
                     <input name="name" required placeholder="เช่น อาหารทานเล่น" />
                 </label>
-                <button className="admin-primary">+ เพิ่มประเภท</button>
+                <button className="admin-primary" disabled={isAdding}>
+                    {isAdding ? <><i className="bi bi-arrow-repeat spin" /> กำลังเพิ่ม...</> : '+ เพิ่มประเภท'}
+                </button>
             </form>
             <section className="admin-panel">
                 <div className="admin-table-wrap">
@@ -92,7 +104,9 @@ export function AdminCategoriesTab({ categories, setCategories, products, notify
                                         {products.filter(product => product.categoryId === category.id).length} รายการ
                                     </td>
                                     <td>
-                                        <button className="admin-text-danger" onClick={() => deleteCategory(category.id)}>ลบ</button>
+                                        <button className="admin-text-danger" disabled={deletingId === category.id} onClick={() => deleteCategory(category.id)}>
+                                            {deletingId === category.id ? <><i className="bi bi-arrow-repeat spin" /> ลบ...</> : 'ลบ'}
+                                        </button>
                                     </td>
                                 </tr>
                             ))}
