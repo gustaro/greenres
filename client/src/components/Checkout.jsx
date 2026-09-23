@@ -109,11 +109,14 @@ export function CheckoutModal({ cart, products, itemNotes = {}, onClose, onDone 
         const form = new FormData(event.currentTarget)
         const scheduledValue = form.get('scheduledAt')
 
-        const selectedAddress = addressId === 'new' ? null : savedAddresses.find(a => a.id === addressId)
+        const selectedAddress = addressId === 'new' ? null : savedAddresses.find(a => String(a.id) === String(addressId))
         const formattedNewAddress = [newStreet, newState, newZip].filter(Boolean).join(' ')
+        const selectedAddressFormatted = selectedAddress
+            ? [selectedAddress.street, selectedAddress.city !== selectedAddress.state ? selectedAddress.city : null, selectedAddress.state, selectedAddress.zip].filter(Boolean).join(' ')
+            : ''
         const deliveryAddressText = addressId === 'new'
             ? (formattedNewAddress || manualAddress)
-            : `${selectedAddress?.street || ''} ${selectedAddress?.state || ''} ${selectedAddress?.zip || ''}`.trim()
+            : (selectedAddressFormatted || manualAddress || '')
 
         const finalReservationTime = orderMode === 'dine-in'
             ? (reservationMode === 'slot'

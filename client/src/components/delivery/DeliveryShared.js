@@ -29,7 +29,12 @@ export const DELIVERY_STATUS_CLASS = {
 }
 
 export const normalizeJob = raw => {
-    const order = raw.order || {}
+    const order = raw.order || raw || {}
+    const deliveryAddress = raw.deliveryAddress || raw.dropAddress || order.deliveryAddress || order.dropAddress || ''
+    const customerName = raw.customerName || order.customerName || order.user?.name || order.customerId || 'ลูกค้า'
+    const customerPhone = raw.customerPhone || order.customerPhone || order.user?.phone || ''
+    const rawItems = (raw.items && raw.items.length > 0) ? raw.items : (order.items && order.items.length > 0) ? order.items : []
+
     return {
         id: raw.id,
         deliveryId: raw.id,
@@ -38,22 +43,23 @@ export const normalizeJob = raw => {
         status: raw.status,
         serverDeliveryStatus: raw.status,
         foodStatus: DELIVERY_STATUS_LABEL[raw.status] ?? raw.status,
-        deliveryAddress: raw.dropAddress ?? order.deliveryAddress ?? '',
+        deliveryAddress,
+        dropAddress: deliveryAddress,
         provider: raw.provider ?? 'INTERNAL',
-        estimatedMinutes: raw.estimatedMinutes,
-        totalAmount: order.totalAmount ?? raw.totalAmount ?? 0,
-        paymentMethod: order.paymentMethod ?? raw.paymentMethod ?? '',
-        isPaid: order.isPaid ?? raw.isPaid ?? false,
-        customerName: order.user?.name ?? order.customerId ?? 'ลูกค้า',
-        customerPhone: order.user?.phone ?? order.customerPhone ?? '',
-        items: (order.items ?? []).map(item => ({
+        estimatedMinutes: raw.estimatedMinutes ?? order.estimatedMinutes,
+        totalAmount: raw.totalAmount ?? order.totalAmount ?? raw.total ?? 0,
+        paymentMethod: raw.paymentMethod ?? order.paymentMethod ?? '',
+        isPaid: raw.isPaid ?? order.isPaid ?? false,
+        customerName,
+        customerPhone,
+        items: rawItems.map(item => ({
             id: item.id,
-            productName: item.product?.name ?? item.productName ?? 'สินค้า',
+            productName: item.productName ?? item.product?.name ?? 'สินค้า',
             quantity: item.quantity,
             priceAtTime: item.priceAtTime ?? item.unitPrice ?? 0,
         })),
-        riderName: raw.rider?.user?.name ?? '',
-        riderPhone: raw.rider?.user?.phone ?? '',
-        order,
+        riderName: raw.rider?.user?.name ?? raw.riderName ?? '',
+        riderPhone: raw.rider?.user?.phone ?? raw.riderPhone ?? '',
+        order: raw.order ?? raw,
     }
 }

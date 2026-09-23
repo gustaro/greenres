@@ -212,6 +212,8 @@ export const mapDelivery = row => {
         address: order.address,
     })
 
+    const finalAddress = row.dropAddress || mappedOrder.deliveryAddress || ''
+
     return {
         ...mappedOrder,
         id: row.id,
@@ -219,13 +221,15 @@ export const mapDelivery = row => {
         deliveryId: row.id,
         orderId: row.orderId || order.id,
         orderNumber: order.id ? `#${String(order.id).slice(-8).toUpperCase()}` : `#${String(row.orderId || row.id).slice(-8).toUpperCase()}`,
-        deliveryAddress: row.dropAddress || mappedOrder.deliveryAddress,
+        deliveryAddress: finalAddress,
+        dropAddress: finalAddress,
         foodStatus: deliveryStatusLabel(row.status),
         serverDeliveryStatus: row.status,
         provider: row.provider,
         rider: row.rider,
         estimatedMinutes: row.estimatedMinutes,
         deliveryFee: Number(row.deliveryFee ?? mappedOrder.deliveryFee ?? 0),
+        order: { ...mappedOrder, ...order, deliveryAddress: finalAddress, dropAddress: finalAddress },
     }
 }
 

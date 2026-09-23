@@ -28,7 +28,13 @@ export const getDeliveries = async (req, res, next) => {
         where, skip, take: parseInt(limit),
         orderBy: { createdAt: "desc" },
         include: {
-          order: { include: { user: { select: { name: true, phone: true } } } },
+          order: {
+            include: {
+              user: { select: { name: true, phone: true } },
+              address: true,
+              items: { include: { product: { select: { id: true, name: true, imageUrl: true } } } },
+            },
+          },
           rider: { include: { user: { select: { name: true, phone: true, avatarUrl: true } } } },
           trackingEvents: { orderBy: { createdAt: "asc" }, take: 1 },
         },
@@ -351,7 +357,13 @@ export const getMyDeliveries = async (req, res, next) => {
       orderBy: { createdAt: "desc" },
       take: 40,
       include: {
-        order: { include: { user: { select: { name: true, phone: true } }, items: { include: { product: { select: { name: true } } } } } },
+        order: {
+          include: {
+            user: { select: { name: true, phone: true } },
+            address: true,
+            items: { include: { product: { select: { id: true, name: true, imageUrl: true } } } },
+          },
+        },
         trackingEvents: { orderBy: { createdAt: "desc" }, take: 1 },
       },
     });
