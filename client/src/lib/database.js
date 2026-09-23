@@ -304,6 +304,7 @@ export async function fetchOrderHistory() {
 export async function placeOrder({
     cart,
     paymentMethod,
+    paymentDetail,
     deliveryType,
     deliveryAddress,
     deliveryAddressId,
@@ -353,6 +354,7 @@ export async function placeOrder({
         tableNumber: tableNumber || '',
         reservationTime: reservationTime || scheduledAt || null,
         reservationGuests: reservationGuests || null,
+        paymentMethodDetail: paymentDetail || paymentMethod,
     })}`
 
     const serverPaymentMethod = paymentMethod === 'บัตรเครดิต/เดบิต' ? 'STRIPE' : 'CASH'
@@ -368,15 +370,16 @@ export async function placeOrder({
         }),
     })
 
-    let payment = null
-    if (serverPaymentMethod === 'STRIPE') {
-        payment = await api('/payments/create-intent', {
-            method: 'POST',
-            body: JSON.stringify({ orderId: order.id }),
-        })
+    // If customer paid via embedded card or PromptPay, mark order paid directly
+    if (paymentMethod === 'บัตรเครดิต/เดบิต' || paymentMethod === 'พร้อมเพย์') {
+        try {
+            await markOrderPaid(order.id, serverPaymentMethod === 'STRIPE' ? 'STRIPE' : 'QR', paymentDetail || paymentMethod)
+        } catch (e) {
+            console.warn('[placeOrder] markOrderPaid notice:', e.message)
+        }
     }
 
-    return { order: mapOrder(order), payment }
+    return { order: mapOrder(order), payment: null }
 }
 
 export const markOrderPaid = (id, paymentMethod = 'CASH', paymentDetail = '') => api(`/orders/${id}/payment`, {

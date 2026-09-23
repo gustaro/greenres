@@ -78,6 +78,17 @@ export function CheckoutModal({ cart, products, itemNotes = {}, onClose, onDone 
         setCheckingPromotion(false)
     }
 
+    const [cardData, setCardData] = useState({
+        cardNumber: '',
+        cleanNumber: '',
+        cardHolder: profile?.name || '',
+        expiry: '',
+        cvv: '',
+        cardType: 'GENERIC',
+        isValid: false,
+        maskedCard: '',
+    })
+
     const isPersonalInfoValid = recipientName.trim().length > 0 && recipientPhone.trim().length >= 9
     let isDeliveryValid = true
     if (deliveryType === 'ให้จัดส่ง') {
@@ -85,7 +96,8 @@ export function CheckoutModal({ cart, products, itemNotes = {}, onClose, onDone 
             isDeliveryValid = (newStreet.trim().length > 3 || manualAddress.trim().length > 5)
         }
     }
-    const isFormValid = isPersonalInfoValid && isDeliveryValid && paymentMethod
+    const isPaymentValid = paymentMethod === 'บัตรเครดิต/เดบิต' ? cardData.isValid : Boolean(paymentMethod)
+    const isFormValid = isPersonalInfoValid && isDeliveryValid && isPaymentValid
 
     const submit = event => {
         event.preventDefault()
@@ -117,6 +129,12 @@ export function CheckoutModal({ cart, products, itemNotes = {}, onClose, onDone 
             }
         })
 
+        const paymentDetail = paymentMethod === 'บัตรเครดิต/เดบิต'
+            ? (cardData.maskedCard || 'บัตรเครดิต')
+            : paymentMethod === 'พร้อมเพย์'
+                ? 'สแกนคิวอาร์ (PromptPay)'
+                : paymentMethod
+
         onDone({
             deliveryAddress: deliveryType === 'ให้จัดส่ง' ? deliveryAddressText : deliveryType === 'ทานที่ร้าน' ? (dineInTable ? `โต๊ะ ${dineInTable}` : 'ทานที่ร้าน') : '',
             deliveryAddressId: deliveryType === 'ให้จัดส่ง' && addressId !== 'new' ? addressId : null,
@@ -128,6 +146,11 @@ export function CheckoutModal({ cart, products, itemNotes = {}, onClose, onDone 
                 zip: newZip || '10110',
             } : null,
             paymentMethod,
+            paymentDetail,
+            cardData: paymentMethod === 'บัตรเครดิต/เดบิต' ? {
+                maskedCard: cardData.maskedCard,
+                cardType: cardData.cardType,
+            } : null,
             deliveryType,
             deliveryScheduleType: deliveryType === 'ให้จัดส่ง' ? scheduleType : null,
             scheduledAt: deliveryType === 'ให้จัดส่ง' && scheduleType === 'ระบุเวลา' && scheduledValue ? new Date(scheduledValue).toISOString() : null,
@@ -261,6 +284,10 @@ export function CheckoutModal({ cart, products, itemNotes = {}, onClose, onDone 
                             setPaymentMethod={setPaymentMethod}
                             onClose={onClose}
                             isFormValid={isFormValid}
+                            orderTotal={total}
+                            cardData={cardData}
+                            setCardData={setCardData}
+                            recipientName={recipientName}
                         />
                     </form>
                 </section>

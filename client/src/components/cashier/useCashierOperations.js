@@ -111,16 +111,20 @@ export function useCashierOperations({ setOrders, refreshOrders, addToast, count
         setCashReceived(String(Math.ceil(order.totalAmount || 0)))
     }
 
-    const handleConfirmPayment = async () => {
+    const handleConfirmPayment = async (details = {}) => {
         if (!paymentModalOrder) return
         const order = paymentModalOrder
         const total = Number(order.totalAmount) || 0
 
-        let paymentDetail = 'เงินสด'
+        let paymentDetail = details?.paymentDetail || 'เงินสด'
         if (selectedPaymentMethod === 'CARD') {
-            paymentDetail = 'บัตรเครดิต'
+            if (details?.cardMode === 'manual' && details?.cardData?.maskedCard) {
+                paymentDetail = `บัตรเครดิต (${details.cardData.maskedCard})`
+            } else {
+                paymentDetail = details?.paymentDetail || 'บัตรเครดิต (เครื่อง EDC)'
+            }
         } else if (selectedPaymentMethod === 'QR') {
-            paymentDetail = 'สแกนคิวอาร์'
+            paymentDetail = 'สแกนคิวอาร์ (PromptPay)'
         } else {
             paymentDetail = 'เงินสด'
             const cash = Number(cashReceived)

@@ -1,4 +1,6 @@
 import { useLanguage } from '../../lib/LanguageContext'
+import { PromptPayQR } from '../payment/PromptPayQR'
+import { CreditCardForm } from '../payment/CreditCardForm'
 
 export function CheckoutPaymentSection({
     promotionCode,
@@ -12,6 +14,10 @@ export function CheckoutPaymentSection({
     setPaymentMethod,
     onClose,
     isFormValid,
+    orderTotal = 0,
+    cardData = {},
+    setCardData,
+    recipientName = '',
 }) {
     const { isEn, t } = useLanguage()
 
@@ -63,32 +69,63 @@ export function CheckoutPaymentSection({
                     )}
                     {(deliveryType === 'ให้จัดส่ง' || deliveryType === 'รับเองที่ร้าน') && (
                         <>
-                            <label className={`chk-payment-box ${paymentMethod === 'พร้อมเพย์' ? 'active' : ''}`} style={{ borderColor: paymentMethod === 'พร้อมเพย์' ? '#1a56be' : '', background: paymentMethod === 'พร้อมเพย์' ? '#f0f5ff' : '' }}>
-                                <input
-                                    type="radio"
-                                    value="พร้อมเพย์"
-                                    checked={paymentMethod === 'พร้อมเพย์'}
-                                    onChange={e => setPaymentMethod(e.target.value)}
-                                />
-                                <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                    <span>PromptPay QR</span>
-                                    <small style={{ fontSize: 10, color: '#666' }}>{isEn ? 'Scan with any mobile banking app' : 'แสกนจ่ายผ่านแอปธนาคาร ฟรีค่าธรรมเนียม'}</small>
-                                </div>
-                                <i className="bi bi-qr-code chk-payment-icon" style={{ color: '#1a56be' }}></i>
-                            </label>
-                            <label className={`chk-payment-box ${paymentMethod === 'บัตรเครดิต/เดบิต' ? 'active' : ''}`} style={{ borderColor: paymentMethod === 'บัตรเครดิต/เดบิต' ? '#6772e5' : '', background: paymentMethod === 'บัตรเครดิต/เดบิต' ? '#f5f6ff' : '' }}>
-                                <input
-                                    type="radio"
-                                    value="บัตรเครดิต/เดบิต"
-                                    checked={paymentMethod === 'บัตรเครดิต/เดบิต'}
-                                    onChange={e => setPaymentMethod(e.target.value)}
-                                />
-                                <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                    <span>Credit / Debit Card</span>
-                                    <small style={{ fontSize: 10, color: '#666' }}>Visa, Mastercard, JCB (Secure)</small>
-                                </div>
-                                <i className="bi bi-credit-card chk-payment-icon" style={{ color: '#6772e5' }}></i>
-                            </label>
+                            {/* PromptPay QR Option */}
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                                <label className={`chk-payment-box ${paymentMethod === 'พร้อมเพย์' ? 'active' : ''}`} style={{ borderColor: paymentMethod === 'พร้อมเพย์' ? '#1a56be' : '', background: paymentMethod === 'พร้อมเพย์' ? '#f0f5ff' : '' }}>
+                                    <input
+                                        type="radio"
+                                        value="พร้อมเพย์"
+                                        checked={paymentMethod === 'พร้อมเพย์'}
+                                        onChange={e => setPaymentMethod(e.target.value)}
+                                    />
+                                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                        <span style={{ fontWeight: 700, color: paymentMethod === 'พร้อมเพย์' ? '#1a56be' : 'inherit' }}>
+                                            PromptPay QR (พร้อมเพย์)
+                                        </span>
+                                        <small style={{ fontSize: 11, color: '#4b5563' }}>
+                                            {isEn ? 'Scan with any mobile banking app (Free fee)' : 'สแกนจ่ายผ่านแอปธนาคาร ไม่มีค่าธรรมเนียม'}
+                                        </small>
+                                    </div>
+                                    <i className="bi bi-qr-code chk-payment-icon" style={{ color: '#1a56be' }}></i>
+                                </label>
+                                {paymentMethod === 'พร้อมเพย์' && (
+                                    <div style={{ padding: '4px 0 10px', animation: 'fadeIn 0.2s ease-in-out' }}>
+                                        <PromptPayQR total={orderTotal} />
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Credit / Debit Card Option */}
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                                <label className={`chk-payment-box ${paymentMethod === 'บัตรเครดิต/เดบิต' ? 'active' : ''}`} style={{ borderColor: paymentMethod === 'บัตรเครดิต/เดบิต' ? 'var(--brand-primary, #12852f)' : '', background: paymentMethod === 'บัตรเครดิต/เดบิต' ? '#f4fbf4' : '' }}>
+                                    <input
+                                        type="radio"
+                                        value="บัตรเครดิต/เดบิต"
+                                        checked={paymentMethod === 'บัตรเครดิต/เดบิต'}
+                                        onChange={e => setPaymentMethod(e.target.value)}
+                                    />
+                                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                        <span style={{ fontWeight: 700, color: paymentMethod === 'บัตรเครดิต/เดบิต' ? 'var(--brand-primary-dark, #075c1b)' : 'inherit' }}>
+                                            Credit / Debit Card (บัตรเครดิต/เดบิต)
+                                        </span>
+                                        <small style={{ fontSize: 11, color: '#4b5563' }}>
+                                            {isEn ? 'Visa, Mastercard, JCB (Secure 256-Bit SSL)' : 'Visa, Mastercard, JCB ปลอดภัยมาตรฐานสากล'}
+                                        </small>
+                                    </div>
+                                    <i className="bi bi-credit-card chk-payment-icon" style={{ color: 'var(--brand-primary, #12852f)' }}></i>
+                                </label>
+                                {paymentMethod === 'บัตรเครดิต/เดบิต' && (
+                                    <div style={{ padding: '4px 0 10px', animation: 'fadeIn 0.2s ease-in-out' }}>
+                                        <CreditCardForm
+                                            value={cardData}
+                                            onChange={setCardData}
+                                            defaultName={recipientName}
+                                        />
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Bank Transfer Slip Option */}
                             <label className={`chk-payment-box ${paymentMethod === 'โอนเงินผ่านระบบ / พร้อมเพย์' ? 'active' : ''}`}>
                                 <input
                                     type="radio"
@@ -97,8 +134,8 @@ export function CheckoutPaymentSection({
                                     onChange={e => setPaymentMethod(e.target.value)}
                                 />
                                 <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                    <span>{isEn ? 'Bank Transfer (Manual)' : 'โอนเงิน (Manual)'}</span>
-                                    <small style={{ fontSize: 10, color: '#666' }}>{isEn ? 'Upload payment slip' : 'แนบสลิปการโอน'}</small>
+                                    <span>{isEn ? 'Bank Transfer (Manual)' : 'โอนเงินผ่านระบบ / แนบสลิป'}</span>
+                                    <small style={{ fontSize: 10, color: '#666' }}>{isEn ? 'Upload payment slip' : 'โอนเงินเข้าบัญชีร้านค้าและแนบสลิป'}</small>
                                 </div>
                                 <i className="bi bi-wallet2 chk-payment-icon"></i>
                             </label>

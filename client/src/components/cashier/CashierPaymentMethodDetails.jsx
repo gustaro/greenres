@@ -1,4 +1,6 @@
 import { money } from '../StaffShared'
+import { PromptPayQR } from '../payment/PromptPayQR'
+import { CreditCardForm } from '../payment/CreditCardForm'
 
 export function CashierPaymentMethodDetails({
     selectedPaymentMethod,
@@ -9,8 +11,14 @@ export function CashierPaymentMethodDetails({
     change,
     onConfirm,
     orderId,
+    orderCode = '',
+    cardMode = 'edc',
+    setCardMode,
+    cardData = {},
+    setCardData,
 }) {
     if (selectedPaymentMethod === 'CASH') {
+        const cash = Number(cashReceived) || 0
         return (
             <div style={{ background: '#f6faf2', borderRadius: 12, padding: 16, border: '1px solid #d8e7d2', marginBottom: 20 }}>
                 <label style={{ display: 'grid', gap: 6, fontSize: 13, fontWeight: 700, color: '#17351f' }}>
@@ -83,50 +91,105 @@ export function CashierPaymentMethodDetails({
 
     if (selectedPaymentMethod === 'QR') {
         return (
-            <div style={{ background: '#f8fafc', borderRadius: 12, padding: 18, border: '1px solid #d8e7d2', marginBottom: 20, textAlign: 'center' }}>
-                <div style={{ background: '#003366', color: '#fff', borderRadius: 8, padding: '8px 12px', display: 'inline-flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-                    <i className="bi bi-qr-code" style={{ fontSize: 18 }}></i>
-                    <span style={{ fontSize: 13, fontWeight: 800, letterSpacing: '0.5px' }}>THAI QR PAYMENT / PROMPTPAY</span>
-                </div>
-                
-                <div style={{ display: 'inline-block', background: '#fff', padding: 12, borderRadius: 12, boxShadow: '0 4px 10px rgba(0,0,0,0.06)', border: '1px solid #d8e7d2' }}>
-                    <img
-                        src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=LimeLeaf-Payment-${orderId}-${total}`}
-                        alt="PromptPay QR"
-                        style={{ width: 170, height: 170, display: 'block' }}
-                    />
-                </div>
-
-                <div style={{ fontSize: 14, fontWeight: 800, color: '#17351f', marginTop: 10 }}>
-                    ยอดชำระ: <span style={{ color: '#075c1b', fontSize: 18 }}>{money(total)}</span>
-                </div>
-                <p style={{ fontSize: 12, color: '#6d7b6e', margin: '4px 0 0' }}>
-                    ให้ลูกค้าสแกนผ่าน Mobile Banking ได้ทุกธนาคาร เมื่อเงินเข้าเรียบร้อยให้กดยืนยัน
-                </p>
+            <div style={{ marginBottom: 16 }}>
+                <PromptPayQR
+                    total={total}
+                    reference={orderCode || `ORD-${orderId?.slice(-6) || '9999'}`}
+                    compact={true}
+                />
             </div>
         )
     }
 
     if (selectedPaymentMethod === 'CARD') {
         return (
-            <div style={{ background: '#f8fafc', borderRadius: 12, padding: 20, border: '1px solid #d8e7d2', marginBottom: 20, textAlign: 'center' }}>
-                <div style={{ display: 'flex', justifyContent: 'center', gap: 10, fontSize: 24, color: '#17351f', marginBottom: 10 }}>
-                    <i className="bi bi-credit-card"></i>
-                    <i className="bi bi-credit-card-2-front"></i>
+            <div style={{ marginBottom: 16 }}>
+                {/* Mode Selector Toggle: EDC Terminal vs Manual Entry */}
+                <div style={{
+                    display: 'flex',
+                    background: '#f1f5f9',
+                    borderRadius: 10,
+                    padding: 4,
+                    marginBottom: 14,
+                    gap: 4
+                }}>
+                    <button
+                        type="button"
+                        onClick={() => setCardMode?.('edc')}
+                        style={{
+                            flex: 1,
+                            padding: '8px 12px',
+                            borderRadius: 8,
+                            border: 0,
+                            background: cardMode === 'edc' ? '#fff' : 'transparent',
+                            color: cardMode === 'edc' ? 'var(--brand-primary-dark, #075c1b)' : '#64748b',
+                            fontWeight: cardMode === 'edc' ? 800 : 600,
+                            fontSize: 12,
+                            boxShadow: cardMode === 'edc' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+                            cursor: 'pointer',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: 6,
+                        }}
+                    >
+                        <i className="bi bi-credit-card-2-front" />
+                        เครื่อง EDC (แตะ/เสียบ)
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => setCardMode?.('manual')}
+                        style={{
+                            flex: 1,
+                            padding: '8px 12px',
+                            borderRadius: 8,
+                            border: 0,
+                            background: cardMode === 'manual' ? '#fff' : 'transparent',
+                            color: cardMode === 'manual' ? 'var(--brand-primary-dark, #075c1b)' : '#64748b',
+                            fontWeight: cardMode === 'manual' ? 800 : 600,
+                            fontSize: 12,
+                            boxShadow: cardMode === 'manual' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+                            cursor: 'pointer',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: 6,
+                        }}
+                    >
+                        <i className="bi bi-keyboard" />
+                        กรอกข้อมูลบัตร (Manual)
+                    </button>
                 </div>
-                <div style={{ fontSize: 15, fontWeight: 800, color: '#17351f' }}>
-                    แตะบัตร (Tap to Pay) หรือเสียบบัตรที่เครื่อง EDC
-                </div>
-                <div style={{ fontSize: 24, fontWeight: 900, color: '#075c1b', margin: '6px 0' }}>
-                    {money(total)}
-                </div>
-                <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#effbdc', color: '#075c1b', padding: '4px 12px', borderRadius: 20, fontSize: 12, fontWeight: 700 }}>
-                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#12852f', display: 'inline-block' }}></span>
-                    เครื่อง EDC พร้อมทำรายการ
-                </div>
-                <p style={{ fontSize: 12, color: '#6d7b6e', margin: '10px 0 0' }}>
-                    รองรับบัตรเครดิต และเดบิต Visa, Mastercard, JCB, UnionPay
-                </p>
+
+                {cardMode === 'edc' ? (
+                    <div style={{ background: '#f8fafc', borderRadius: 12, padding: 20, border: '1px solid #d8e7d2', textAlign: 'center' }}>
+                        <div style={{ display: 'flex', justifyContent: 'center', gap: 10, fontSize: 24, color: '#17351f', marginBottom: 10 }}>
+                            <i className="bi bi-credit-card"></i>
+                            <i className="bi bi-credit-card-2-front"></i>
+                        </div>
+                        <div style={{ fontSize: 15, fontWeight: 800, color: '#17351f' }}>
+                            แตะบัตร (Tap to Pay) หรือเสียบบัตรที่เครื่อง EDC
+                        </div>
+                        <div style={{ fontSize: 24, fontWeight: 900, color: '#075c1b', margin: '6px 0' }}>
+                            {money(total)}
+                        </div>
+                        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#effbdc', color: '#075c1b', padding: '4px 12px', borderRadius: 20, fontSize: 12, fontWeight: 700 }}>
+                            <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#12852f', display: 'inline-block' }}></span>
+                            เครื่อง EDC พร้อมทำรายการ
+                        </div>
+                        <p style={{ fontSize: 12, color: '#6d7b6e', margin: '10px 0 0' }}>
+                            รองรับบัตรเครดิต และเดบิต Visa, Mastercard, JCB, UnionPay
+                        </p>
+                    </div>
+                ) : (
+                    <div>
+                        <CreditCardForm
+                            compact={true}
+                            value={cardData}
+                            onChange={setCardData}
+                        />
+                    </div>
+                )}
             </div>
         )
     }

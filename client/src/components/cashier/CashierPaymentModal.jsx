@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { money, orderCode } from '../StaffShared'
 import { CashierPaymentMethodDetails } from './CashierPaymentMethodDetails'
 
@@ -18,6 +19,35 @@ export function CashierPaymentModal({
     const cash = Number(cashReceived) || 0
     const change = cash - total
     const isCashShort = selectedPaymentMethod === 'CASH' && cash < total
+
+    // Card mode & card form states
+    const [cardMode, setCardMode] = useState('edc') // 'edc' | 'manual'
+    const [cardData, setCardData] = useState({
+        cardNumber: '',
+        cleanNumber: '',
+        cardHolder: '',
+        expiry: '',
+        cvv: '',
+        cardType: 'GENERIC',
+        isValid: false,
+        maskedCard: '',
+    })
+
+    const isCardManualInvalid = selectedPaymentMethod === 'CARD' && cardMode === 'manual' && !cardData.isValid
+    const isConfirmDisabled = loading || isCashShort || isCardManualInvalid
+
+    const handleConfirm = () => {
+        if (isConfirmDisabled) return
+        onConfirm({
+            cardMode,
+            cardData,
+            paymentDetail: selectedPaymentMethod === 'CARD'
+                ? (cardMode === 'manual' ? (cardData.maskedCard || 'บัตรเครดิต (Manual)') : 'บัตรเครดิต (เครื่อง EDC)')
+                : selectedPaymentMethod === 'QR'
+                    ? 'สแกนคิวอาร์ (PromptPay)'
+                    : 'เงินสด',
+        })
+    }
 
     return (
         <div className="overlay" style={{ zIndex: 1200, display: 'grid', placeItems: 'center', background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(3px)' }}>
@@ -114,8 +144,13 @@ export function CashierPaymentModal({
                     setCashReceived={setCashReceived}
                     isCashShort={isCashShort}
                     change={change}
-                    onConfirm={onConfirm}
+                    onConfirm={handleConfirm}
                     orderId={order.id}
+                    orderCode={orderCode(order)}
+                    cardMode={cardMode}
+                    setCardMode={setCardMode}
+                    cardData={cardData}
+                    setCardData={setCardData}
                 />
 
                 {/* Action Buttons */}
@@ -132,17 +167,17 @@ export function CashierPaymentModal({
                     <button
                         type="button"
                         className="staff-primary"
-                        onClick={onConfirm}
-                        disabled={loading || isCashShort}
+                        onClick={handleConfirm}
+                        disabled={isConfirmDisabled}
                         style={{
                             flex: 1,
                             padding: '12px 24px',
                             borderRadius: 10,
                             fontWeight: 800,
                             fontSize: 15,
-                            background: isCashShort ? '#9ca3af' : 'var(--brand-primary, #12852f)',
-                            borderColor: isCashShort ? '#9ca3af' : 'var(--brand-primary-dark, #075c1b)',
-                            cursor: isCashShort ? 'not-allowed' : 'pointer',
+                            background: isConfirmDisabled ? '#9ca3af' : 'var(--brand-primary, #12852f)',
+                            borderColor: isConfirmDisabled ? '#9ca3af' : 'var(--brand-primary-dark, #075c1b)',
+                            cursor: isConfirmDisabled ? 'not-allowed' : 'pointer',
                             display: 'inline-flex',
                             alignItems: 'center',
                             justifyContent: 'center',
@@ -151,6 +186,8 @@ export function CashierPaymentModal({
                     >
                         {loading ? (
                             <><span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> กำลังบันทึก...</>
+                        ) : isCardManualInvalid ? (
+                            <><i className="bi bi-exclamation-circle"></i> กรุณากรอกข้อมูลบัตรให้ครบถ้วน</>
                         ) : (
                             <><i className="bi bi-check-circle-fill"></i> ยืนยันรับชำระเงิน ({money(total)})</>
                         )}
