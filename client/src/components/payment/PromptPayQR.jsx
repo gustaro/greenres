@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 
 export function PromptPayQR({
     total = 0,
@@ -12,8 +12,10 @@ export function PromptPayQR({
     const [timeLeft, setTimeLeft] = useState(900) // 15 minutes countdown
     const [imgLoaded, setImgLoaded] = useState(false)
 
-    // Generate stable ref if not provided
-    const refCode = reference || `LL-${Math.floor(100000 + Math.random() * 900000)}`
+    // Generate stable ref ONCE if not provided - prevents recalculation on 1-sec timer ticks
+    const [stableRef] = useState(() => `LL-${Math.floor(100000 + Math.random() * 900000)}`)
+    const refCode = reference || stableRef
+
     const formattedAmount = Number(total || 0).toLocaleString('th-TH', {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
@@ -31,8 +33,11 @@ export function PromptPayQR({
     const seconds = timeLeft % 60
     const timeDisplay = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
 
-    const qrData = encodeURIComponent(`PromptPay|${promptPayId}|${total}|${refCode}`)
-    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=280x280&margin=8&data=${qrData}`
+    // Stable QR code url based on promptPayId, total, and refCode only
+    const qrUrl = useMemo(() => {
+        const qrData = encodeURIComponent(`PromptPay|${promptPayId}|${total}|${refCode}`)
+        return `https://api.qrserver.com/v1/create-qr-code/?size=280x280&margin=8&data=${qrData}`
+    }, [promptPayId, total, refCode])
 
     const copyToClipboard = (text, type) => {
         navigator.clipboard?.writeText(text)

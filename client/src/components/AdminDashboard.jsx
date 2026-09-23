@@ -142,10 +142,26 @@ export function AdminDashboard({ orders = [], setOrders, products = [], setProdu
                 </button>
                 <nav>
                     {menuItems.map(([key, label, icon]) => (
-                        <button key={key} className={active === key ? 'active' : ''} onClick={() => setActive(key)}>
-                            <i className={`bi ${icon}`}></i>
-                            <span>{label}</span>
-                            {key === 'orders' && pendingOrders.length > 0 && <b>{pendingOrders.length}</b>}
+                        <button
+                            key={key}
+                            className={`admin-nav-btn ${active === key ? 'active' : ''}`}
+                            onClick={() => setActive(key)}
+                            title={label}
+                        >
+                            <span className="admin-nav-icon-wrap">
+                                <i className={`bi ${icon}`}></i>
+                                {key === 'orders' && pendingOrders.length > 0 && (
+                                    <span className="admin-nav-badge-dot" aria-label={`${pendingOrders.length} ออเดอร์รอยืนยัน`}>
+                                        {pendingOrders.length > 99 ? '99+' : pendingOrders.length}
+                                    </span>
+                                )}
+                            </span>
+                            <span className="admin-nav-label">{label}</span>
+                            {key === 'orders' && pendingOrders.length > 0 && (
+                                <span className="admin-nav-badge-pill" aria-label={`${pendingOrders.length} ออเดอร์รอยืนยัน`}>
+                                    {pendingOrders.length > 99 ? '99+' : pendingOrders.length}
+                                </span>
+                            )}
                         </button>
                     ))}
                 </nav>
@@ -171,7 +187,20 @@ export function AdminDashboard({ orders = [], setOrders, products = [], setProdu
                             <small>ADMIN</small>
                         </div>
                     </button>
-                    <strong>{menuItems.find(item => item[0] === active)?.[1]}</strong>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                        {pendingOrders.length > 0 && active !== 'orders' && (
+                            <button
+                                className="admin-top-pending-badge"
+                                onClick={() => setActive('orders')}
+                                title="มีออเดอร์ใหม่รอยืนยัน"
+                                aria-label={`${pendingOrders.length} ออเดอร์รอยืนยัน`}
+                            >
+                                <i className="bi bi-bell-fill"></i>
+                                <span>{pendingOrders.length > 99 ? '99+' : pendingOrders.length}</span>
+                            </button>
+                        )}
+                        <strong>{menuItems.find(item => item[0] === active)?.[1]}</strong>
+                    </div>
                 </div>
 
                 <div className="admin-content">
