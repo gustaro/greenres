@@ -88,6 +88,8 @@ export function CheckoutModal({ cart, products, itemNotes = {}, onClose, onDone 
         isValid: false,
         maskedCard: '',
     })
+    const [isQrPaid, setIsQrPaid] = useState(false)
+    const [qrData, setQrData] = useState(null)
 
     const isPersonalInfoValid = recipientName.trim().length > 0 && recipientPhone.trim().length >= 9
     let isDeliveryValid = true
@@ -132,7 +134,7 @@ export function CheckoutModal({ cart, products, itemNotes = {}, onClose, onDone 
         const paymentDetail = paymentMethod === 'บัตรเครดิต/เดบิต'
             ? (cardData.maskedCard || 'บัตรเครดิต')
             : paymentMethod === 'พร้อมเพย์'
-                ? 'สแกนคิวอาร์ (PromptPay)'
+                ? (isQrPaid ? `สแกนคิวอาร์ (PromptPay จำลองสำเร็จ - REF: ${qrData?.refCode || ''})` : 'สแกนคิวอาร์ (PromptPay)')
                 : paymentMethod
 
         onDone({
@@ -288,6 +290,10 @@ export function CheckoutModal({ cart, products, itemNotes = {}, onClose, onDone 
                             cardData={cardData}
                             setCardData={setCardData}
                             recipientName={recipientName}
+                            isQrPaid={isQrPaid}
+                            setIsQrPaid={setIsQrPaid}
+                            qrData={qrData}
+                            setQrData={setQrData}
                         />
                     </form>
                 </section>

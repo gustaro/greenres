@@ -16,6 +16,10 @@ export function CashierPaymentMethodDetails({
     setCardMode,
     cardData = {},
     setCardData,
+    isQrPaid = false,
+    setIsQrPaid,
+    qrData,
+    setQrData,
 }) {
     if (selectedPaymentMethod === 'CASH') {
         const cash = Number(cashReceived) || 0
@@ -96,7 +100,36 @@ export function CashierPaymentMethodDetails({
                     total={total}
                     reference={orderCode || `ORD-${orderId?.slice(-6) || '9999'}`}
                     compact={true}
+                    onSimulateSuccess={(data) => {
+                        setIsQrPaid?.(true)
+                        setQrData?.(data)
+                    }}
+                    isPaid={isQrPaid}
                 />
+                {isQrPaid && (
+                    <div style={{
+                        marginTop: 10,
+                        background: '#ecfdf5',
+                        border: '1.5px solid #a7f3d0',
+                        borderRadius: 12,
+                        padding: '10px 14px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 10,
+                        color: '#065f46',
+                        fontSize: 13,
+                        fontWeight: 700,
+                        animation: 'fadeIn 0.2s ease-in-out',
+                    }}>
+                        <i className="bi bi-patch-check-fill" style={{ fontSize: 20, color: '#059669' }} />
+                        <div style={{ flex: 1 }}>
+                            <div>บันทึกการจำลองชำระเงิน QR เรียบร้อย</div>
+                            <div style={{ fontSize: 11, fontWeight: 500, color: '#047857' }}>
+                                กดยืนยันรับชำระเงินด้านล่างเพื่อปิดบิลออเดอร์นี้
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
         )
     }

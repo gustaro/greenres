@@ -127,7 +127,7 @@ export function WebSettingsStripeSection({ settings, setSettings, notify, fail }
                             </div>
                             <b style={{ display: 'block', fontSize: 14, color: '#1e293b' }}>Sandbox Mode (ทดสอบ)</b>
                             <small style={{ color: '#64748b', fontSize: 12, lineHeight: 1.4, display: 'block', marginTop: 4 }}>
-                                ใช้ทดสอบระบบและการจ่ายเงินด้วยบัตรทดสอบ ไม่มีการตัดเงินจริง
+                                ใช้ทดสอบระบบ รองรับทั้งการจำลองสแกนจ่าย PromptPay QR และบัตรทดสอบ ไม่มีการตัดเงินจริง
                             </small>
                         </div>
 

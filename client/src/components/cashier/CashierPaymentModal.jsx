@@ -32,6 +32,8 @@ export function CashierPaymentModal({
         isValid: false,
         maskedCard: '',
     })
+    const [isQrPaid, setIsQrPaid] = useState(false)
+    const [qrData, setQrData] = useState(null)
 
     const isCardManualInvalid = selectedPaymentMethod === 'CARD' && cardMode === 'manual' && !cardData.isValid
     const isConfirmDisabled = loading || isCashShort || isCardManualInvalid
@@ -44,7 +46,7 @@ export function CashierPaymentModal({
             paymentDetail: selectedPaymentMethod === 'CARD'
                 ? (cardMode === 'manual' ? (cardData.maskedCard || 'บัตรเครดิต (Manual)') : 'บัตรเครดิต (เครื่อง EDC)')
                 : selectedPaymentMethod === 'QR'
-                    ? 'สแกนคิวอาร์ (PromptPay)'
+                    ? (isQrPaid ? `สแกนคิวอาร์ (PromptPay จำลองสำเร็จ - REF: ${qrData?.refCode || ''})` : 'สแกนคิวอาร์ (PromptPay)')
                     : 'เงินสด',
         })
     }
@@ -151,6 +153,10 @@ export function CashierPaymentModal({
                     setCardMode={setCardMode}
                     cardData={cardData}
                     setCardData={setCardData}
+                    isQrPaid={isQrPaid}
+                    setIsQrPaid={setIsQrPaid}
+                    qrData={qrData}
+                    setQrData={setQrData}
                 />
 
                 {/* Action Buttons */}
@@ -188,6 +194,8 @@ export function CashierPaymentModal({
                             <><span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> กำลังบันทึก...</>
                         ) : isCardManualInvalid ? (
                             <><i className="bi bi-exclamation-circle"></i> กรุณากรอกข้อมูลบัตรให้ครบถ้วน</>
+                        ) : selectedPaymentMethod === 'QR' && isQrPaid ? (
+                            <><i className="bi bi-check-circle-fill"></i> ยืนยันรับชำระเงิน QR ({money(total)})</>
                         ) : (
                             <><i className="bi bi-check-circle-fill"></i> ยืนยันรับชำระเงิน ({money(total)})</>
                         )}

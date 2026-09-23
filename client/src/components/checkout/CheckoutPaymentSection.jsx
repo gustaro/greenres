@@ -18,6 +18,10 @@ export function CheckoutPaymentSection({
     cardData = {},
     setCardData,
     recipientName = '',
+    isQrPaid = false,
+    setIsQrPaid,
+    qrData,
+    setQrData,
 }) {
     const { isEn, t } = useLanguage()
 
@@ -90,7 +94,38 @@ export function CheckoutPaymentSection({
                                 </label>
                                 {paymentMethod === 'พร้อมเพย์' && (
                                     <div style={{ padding: '4px 0 10px', animation: 'fadeIn 0.2s ease-in-out' }}>
-                                        <PromptPayQR total={orderTotal} />
+                                        <PromptPayQR
+                                            total={orderTotal}
+                                            onSimulateSuccess={(data) => {
+                                                setIsQrPaid?.(true)
+                                                setQrData?.(data)
+                                            }}
+                                            isPaid={isQrPaid}
+                                        />
+                                        {isQrPaid && (
+                                            <div style={{
+                                                marginTop: 8,
+                                                background: '#ecfdf5',
+                                                border: '1.5px solid #a7f3d0',
+                                                borderRadius: 12,
+                                                padding: '10px 14px',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: 10,
+                                                color: '#065f46',
+                                                fontSize: 13,
+                                                fontWeight: 700,
+                                                animation: 'fadeIn 0.2s ease-in-out',
+                                            }}>
+                                                <i className="bi bi-patch-check-fill" style={{ fontSize: 20, color: '#059669' }} />
+                                                <div style={{ flex: 1 }}>
+                                                    <div>ระบบจำลองการชำระเงินผ่าน QR สำเร็จแล้ว</div>
+                                                    <div style={{ fontSize: 11, fontWeight: 500, color: '#047857' }}>
+                                                        {isEn ? 'You can proceed to confirm your order now.' : 'สามารถกดปุ่ม "ยืนยันการสั่งซื้อ" ด้านล่างเพื่อส่งออเดอร์เข้าครัวได้ทันที'}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
                                 )}
                             </div>
@@ -171,10 +206,20 @@ export function CheckoutPaymentSection({
                             padding: '14px 40px',
                             fontSize: 14,
                             opacity: isFormValid ? 1 : 0.5,
-                            cursor: isFormValid ? 'pointer' : 'not-allowed'
+                            cursor: isFormValid ? 'pointer' : 'not-allowed',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: 8,
                         }}
                     >
-                        {isEn ? 'CONFIRM ORDER' : 'ยืนยันการสั่งซื้อ'}
+                        {paymentMethod === 'พร้อมเพย์' && isQrPaid ? (
+                            <>
+                                <i className="bi bi-check-circle-fill" />
+                                {isEn ? 'CONFIRM ORDER (PAID VIA QR)' : 'ยืนยันการสั่งซื้อ (ชำระผ่าน QR แล้ว)'}
+                            </>
+                        ) : (
+                            isEn ? 'CONFIRM ORDER' : 'ยืนยันการสั่งซื้อ'
+                        )}
                     </button>
                 </div>
             </div>
