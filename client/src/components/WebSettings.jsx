@@ -3,6 +3,7 @@ import { useAuth } from '../lib/AuthContext'
 import { settingsApi } from '../lib/database'
 import { PageHead } from './AdminDashboard'
 import { WebSettingsMapSection } from './settings/WebSettingsMapSection'
+import { WebSettingsStripeSection } from './settings/WebSettingsStripeSection'
 
 export function WebSettings({ notify, fail }) {
     const { settings, setSettings } = useAuth()
@@ -135,6 +136,7 @@ export function WebSettings({ notify, fail }) {
                 </section>
 
                 <WebSettingsMapSection settings={settings} setSettings={setSettings} notify={notify} fail={fail} />
+                <WebSettingsStripeSection settings={settings} setSettings={setSettings} notify={notify} fail={fail} />
             </div>
         </>
     )

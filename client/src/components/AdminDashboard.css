@@ -56,23 +56,40 @@
 }
 
 .admin-sidebar nav {
-    display: grid;
-    gap: 5px;
-    margin-top: 15px
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 15px;
 }
 
-.admin-sidebar nav button {
-    min-height: 46px;
-    border: 0;
-    border-radius: 9px;
-    background: transparent;
-    color: #b8ccbd;
-    padding: 0 12px;
+.admin-nav-group {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.admin-nav-group-title {
+    font-size: 10.5px;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.42);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    padding: 6px 14px 2px;
     display: flex;
     align-items: center;
-    gap: 12px;
-    text-align: left;
-    font-weight: 700
+    gap: 7px;
+    user-select: none;
+}
+
+.admin-nav-group-title i {
+    font-size: 11px;
+    opacity: 0.75;
+}
+
+.admin-nav-group-items {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
 }
 
 .admin-sidebar nav button {
@@ -958,8 +975,9 @@
 
     .admin-sidebar .admin-brand div,
     .admin-sidebar nav button .admin-nav-label,
+    .admin-nav-group-title,
     .admin-sidebar .admin-admin-card div {
-        display: none
+        display: none !important;
     }
 
     .admin-nav-badge-pill {
@@ -1049,11 +1067,28 @@
 
     .admin-sidebar nav {
         display: flex;
-        gap: 3px;
+        flex-direction: row;
+        align-items: center;
+        gap: 4px;
         margin: 0;
         min-width: max-content;
         width: 100%;
-        justify-content: space-around
+        justify-content: space-around;
+    }
+
+    .admin-nav-group {
+        display: contents;
+    }
+
+    .admin-nav-group-title {
+        display: none !important;
+    }
+
+    .admin-nav-group-items {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: 4px;
     }
 
     .admin-sidebar nav button {

@@ -620,7 +620,11 @@ export const settingsApi = {
             method: 'POST',
             body: formData,
         })
-    }
+    },
+    testStripeConnection: payload => api('/settings/stripe/test-connection', {
+        method: 'POST',
+        body: JSON.stringify(payload || {}),
+    }),
 }
 
 export const heroApi = {

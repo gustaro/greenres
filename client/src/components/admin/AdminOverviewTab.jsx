@@ -81,16 +81,26 @@ export function AdminOverviewTab({
                 </section>
                 <section className="admin-panel">
                     <div className="admin-panel-head"><div><h2>เมนูขายดี</h2><p>เรียงตามจำนวนที่ขาย</p></div></div>
-                    <div className="admin-top-products">
-                        {productSales.slice(0, 5).map((product, index) => (
-                            <div key={product.id}>
-                                <b>{index + 1}</b>
-                                <img src={product.img} alt="" />
-                                <span>{product.name}<small>{product.sold} ชิ้น</small></span>
-                                <strong>{money(product.price * product.sold)}</strong>
-                            </div>
-                        ))}
-                    </div>
+                    {productSales.filter(p => (p.sold || 0) > 0).length === 0 ? (
+                        <div style={{ padding: '36px 16px', textAlign: 'center', color: 'var(--brand-muted)' }}>
+                            <i className="bi bi-bar-chart" style={{ fontSize: 32, opacity: 0.35, display: 'block', marginBottom: 8 }} />
+                            <span style={{ fontSize: 13, fontWeight: 600 }}>ยังไม่มีข้อมูลยอดขายเมนูในระบบ</span>
+                            <small style={{ display: 'block', fontSize: 11, opacity: 0.7, marginTop: 4 }}>
+                                เมื่อมีออเดอร์ที่ชำระเงินแล้ว ระบบจะจัดอันดับเมนูขายดีให้อัตโนมัติ
+                            </small>
+                        </div>
+                    ) : (
+                        <div className="admin-top-products">
+                            {productSales.filter(p => (p.sold || 0) > 0).slice(0, 5).map((product, index) => (
+                                <div key={product.id}>
+                                    <b>{index + 1}</b>
+                                    <img src={product.img} alt="" />
+                                    <span>{product.name}<small>{product.sold} ชิ้น</small></span>
+                                    <strong>{money(product.price * product.sold)}</strong>
+                                </div>
+                            ))}
+                        </div>
+                    )}
                 </section>
             </div>
         </>

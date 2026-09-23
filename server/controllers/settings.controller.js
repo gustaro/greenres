@@ -27,6 +27,12 @@ export const getActiveSettings = () => {
         freeDeliveryThreshold: settings.freeDeliveryThreshold !== undefined ? parseFloat(settings.freeDeliveryThreshold) : env.FREE_DELIVERY_THRESHOLD,
         restaurantLat: settings.restaurantLat !== undefined ? parseFloat(settings.restaurantLat) : env.RESTAURANT_LAT,
         restaurantLng: settings.restaurantLng !== undefined ? parseFloat(settings.restaurantLng) : env.RESTAURANT_LNG,
+        stripeMode: settings.stripeMode || "test",
+        stripeCaptureMethod: settings.stripeCaptureMethod || "automatic",
+        stripeTestPublishableKey: settings.stripeTestPublishableKey || process.env.VITE_STRIPE_PUBLISHABLE_KEY || "",
+        stripeTestSecretKey: settings.stripeTestSecretKey || env.STRIPE_SECRET_KEY || "",
+        stripeLivePublishableKey: settings.stripeLivePublishableKey || "",
+        stripeLiveSecretKey: settings.stripeLiveSecretKey || "",
         ...settings
     };
 };
@@ -63,6 +69,12 @@ export const updateSiteSettings = (req, res, next) => {
         if (payload.footerLinks !== undefined) settings.footerLinks = payload.footerLinks;
         if (payload.storeHours !== undefined) settings.storeHours = payload.storeHours;
         if (payload.contactEmail !== undefined) settings.contactEmail = payload.contactEmail;
+        if (payload.stripeMode !== undefined) settings.stripeMode = payload.stripeMode;
+        if (payload.stripeCaptureMethod !== undefined) settings.stripeCaptureMethod = payload.stripeCaptureMethod;
+        if (payload.stripeTestPublishableKey !== undefined) settings.stripeTestPublishableKey = payload.stripeTestPublishableKey;
+        if (payload.stripeTestSecretKey !== undefined) settings.stripeTestSecretKey = payload.stripeTestSecretKey;
+        if (payload.stripeLivePublishableKey !== undefined) settings.stripeLivePublishableKey = payload.stripeLivePublishableKey;
+        if (payload.stripeLiveSecretKey !== undefined) settings.stripeLiveSecretKey = payload.stripeLiveSecretKey;
 
         if (!fs.existsSync(configDir)) fs.mkdirSync(configDir, { recursive: true });
         fs.writeFileSync(configPath, JSON.stringify(settings, null, 2));
@@ -187,5 +199,48 @@ export const getContactMessages = (req, res, next) => {
         res.json(messages);
     } catch (err) {
         next(err);
+    }
+};
+
+export const testStripeConnection = async (req, res, next) => {
+    try {
+        const { mode, secretKey } = req.body || {};
+        const settings = getActiveSettings();
+        const targetMode = mode || settings.stripeMode || "test";
+
+        let keyToTest = (secretKey || "").trim();
+        if (!keyToTest) {
+            keyToTest = targetMode === "live"
+                ? (settings.stripeLiveSecretKey || "")
+                : (settings.stripeTestSecretKey || env.STRIPE_SECRET_KEY);
+        }
+
+        if (!keyToTest) {
+            return res.status(400).json({
+                ok: false,
+                message: `ไม่พบคีย์ Stripe Secret Key สำหรับโหมด ${targetMode === "live" ? "Live (รับเงินจริง)" : "Sandbox (ทดสอบ)"}`
+            });
+        }
+
+        const { default: Stripe } = await import("stripe");
+        const stripe = new Stripe(keyToTest);
+        const account = await stripe.accounts.retrieve();
+
+        res.json({
+            ok: true,
+            mode: targetMode,
+            accountId: account.id,
+            chargesEnabled: account.charges_enabled,
+            detailsSubmitted: account.details_submitted,
+            country: account.country || "TH",
+            defaultCurrency: account.default_currency || "thb",
+            businessName: account.business_profile?.name || account.settings?.dashboard?.display_name || account.id,
+            message: `เชื่อมต่อกับ Stripe ${targetMode === "live" ? "Live Mode" : "Sandbox Mode"} สำเร็จ (${account.id})`
+        });
+    } catch (err) {
+        res.status(400).json({
+            ok: false,
+            message: `เกิดข้อผิดพลาดในการเชื่อมต่อ Stripe: ${err.message}`
+        });
     }
 };

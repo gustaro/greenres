@@ -16,19 +16,45 @@ import './AdminDashboard.css'
 
 export { PageHead, Empty, PAGE_LINK_OPTIONS, roleNames, money } from './admin/AdminShared'
 
-const menuItems = [
-    ['overview', 'ภาพรวม', 'bi-grid-1x2'],
-    ['orders', 'ยืนยันคำสั่งซื้อ', 'bi-check-circle'],
-    ['hero', 'แบนเนอร์หน้าแรก (Hero)', 'bi-image'],
-    ['categories', 'ประเภทสินค้า', 'bi-tags'],
-    ['products', 'สินค้า', 'bi-box-seam'],
-    ['promotions', 'โปรโมชั่น', 'bi-percent'],
-    ['users', 'ผู้ใช้งาน', 'bi-people'],
-    ['inventory', 'วัตถุดิบและสูตร', 'bi-boxes'],
-    ['reports', 'รีพอร์ตและยอดขาย', 'bi-graph-up'],
-    ['settings', 'ตั้งค่าเว็บไซต์', 'bi-gear'],
-    ['social', 'โซเชียล', 'bi-share'],
+const navSections = [
+    {
+        title: 'การดำเนินงาน',
+        icon: 'bi-activity',
+        items: [
+            ['overview', 'ภาพรวม', 'bi-speedometer2'],
+            ['orders', 'ยืนยันคำสั่งซื้อ', 'bi-clipboard-check'],
+            ['reports', 'รีพอร์ตและยอดขาย', 'bi-bar-chart-line'],
+        ]
+    },
+    {
+        title: 'เมนูและคลังสินค้า',
+        icon: 'bi-archive',
+        items: [
+            ['products', 'สินค้า', 'bi-box-seam'],
+            ['categories', 'หมวดหมู่สินค้า', 'bi-collection'],
+            ['inventory', 'วัตถุดิบและสูตร', 'bi-boxes'],
+        ]
+    },
+    {
+        title: 'การตลาด',
+        icon: 'bi-megaphone',
+        items: [
+            ['hero', 'แบนเนอร์หน้าแรก', 'bi-images'],
+            ['promotions', 'โปรโมชั่นและส่วนลด', 'bi-ticket-perforated'],
+        ]
+    },
+    {
+        title: 'ระบบและตั้งค่า',
+        icon: 'bi-sliders',
+        items: [
+            ['users', 'ผู้ใช้งาน', 'bi-people'],
+            ['settings', 'ตั้งค่าเว็บไซต์', 'bi-gear'],
+            ['social', 'ช่องทางโซเชียล', 'bi-share'],
+        ]
+    }
 ]
+
+const menuItems = navSections.flatMap(section => section.items)
 
 export function AdminDashboard({ orders = [], setOrders, products = [], setProducts, categories = [], setCategories }) {
     const { profile, settings } = useAuth()
@@ -140,29 +166,39 @@ export function AdminDashboard({ orders = [], setOrders, products = [], setProdu
                         <small>ADMIN CONSOLE</small>
                     </div>
                 </button>
-                <nav>
-                    {menuItems.map(([key, label, icon]) => (
-                        <button
-                            key={key}
-                            className={`admin-nav-btn ${active === key ? 'active' : ''}`}
-                            onClick={() => setActive(key)}
-                            title={label}
-                        >
-                            <span className="admin-nav-icon-wrap">
-                                <i className={`bi ${icon}`}></i>
-                                {key === 'orders' && pendingOrders.length > 0 && (
-                                    <span className="admin-nav-badge-dot" aria-label={`${pendingOrders.length} ออเดอร์รอยืนยัน`}>
-                                        {pendingOrders.length > 99 ? '99+' : pendingOrders.length}
-                                    </span>
-                                )}
-                            </span>
-                            <span className="admin-nav-label">{label}</span>
-                            {key === 'orders' && pendingOrders.length > 0 && (
-                                <span className="admin-nav-badge-pill" aria-label={`${pendingOrders.length} ออเดอร์รอยืนยัน`}>
-                                    {pendingOrders.length > 99 ? '99+' : pendingOrders.length}
-                                </span>
-                            )}
-                        </button>
+                <nav className="admin-nav-container">
+                    {navSections.map(section => (
+                        <div key={section.title} className="admin-nav-group">
+                            <div className="admin-nav-group-title">
+                                <i className={`bi ${section.icon}`}></i>
+                                <span>{section.title}</span>
+                            </div>
+                            <div className="admin-nav-group-items">
+                                {section.items.map(([key, label, icon]) => (
+                                    <button
+                                        key={key}
+                                        className={`admin-nav-btn ${active === key ? 'active' : ''}`}
+                                        onClick={() => setActive(key)}
+                                        title={label}
+                                    >
+                                        <span className="admin-nav-icon-wrap">
+                                            <i className={`bi ${icon}`}></i>
+                                            {key === 'orders' && pendingOrders.length > 0 && (
+                                                <span className="admin-nav-badge-dot" aria-label={`${pendingOrders.length} ออเดอร์รอยืนยัน`}>
+                                                    {pendingOrders.length > 99 ? '99+' : pendingOrders.length}
+                                                </span>
+                                            )}
+                                        </span>
+                                        <span className="admin-nav-label">{label}</span>
+                                        {key === 'orders' && pendingOrders.length > 0 && (
+                                            <span className="admin-nav-badge-pill" aria-label={`${pendingOrders.length} ออเดอร์รอยืนยัน`}>
+                                                {pendingOrders.length > 99 ? '99+' : pendingOrders.length}
+                                            </span>
+                                        )}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
                     ))}
                 </nav>
                 <div className="admin-admin-card">
