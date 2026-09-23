@@ -4,23 +4,15 @@
   "version": "3.0.0",
   "type": "module",
   "workspaces": [
+    "client",
     "server"
   ],
   "scripts": {
-    "dev": "vite",
-    "build": "npm --prefix server run db:generate && vite build",
-    "preview": "vite preview"
-  },
-  "dependencies": {
-    "@react-google-maps/api": "^2.20.8",
-    "@supabase/supabase-js": "^2.116.0",
-    "@vitejs/plugin-react": "latest",
-    "bootstrap-icons": "^1.13.1",
-    "leaflet": "^1.9.4",
-    "react": "latest",
-    "react-dom": "latest",
-    "react-leaflet": "^5.0.0",
-    "react-router-dom": "^7.18.3",
-    "vite": "latest"
+    "dev": "npm --prefix client run dev",
+    "dev:client": "npm --prefix client run dev",
+    "dev:server": "npm --prefix server run dev",
+    "build": "npm --prefix server run db:generate && npm --prefix client run build",
+    "build:client": "npm --prefix client run build",
+    "preview": "npm --prefix client run preview"
   }
 }

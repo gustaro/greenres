@@ -71,7 +71,6 @@ export function OrderPage({ onHome, user, onAuth, onLogout, products, categories
                                     placeholder={t('searchPlaceholder')}
                                 />
                             </div>
-                            <button className="op-fav-btn"><i className="bi bi-heart"></i> {isEn ? 'Favorites' : 'เมนูโปรด'}</button>
                         </div>
                     </div>
 
