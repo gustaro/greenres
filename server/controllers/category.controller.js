@@ -1,8 +1,23 @@
 import { prisma } from "../config/prisma.js";
 import { deleteImage } from "../middleware/upload.js";
+import { clearProductsCache } from "./product.controller.js";
+
+const categoryCache = new Map();
+const CATEGORY_CACHE_TTL = 60 * 1000;
+
+export const clearCategoriesCache = () => {
+  categoryCache.clear();
+};
 
 export const getCategories = async (req, res, next) => {
   try {
+    const cacheKey = req.originalUrl || req.url;
+    const cached = categoryCache.get(cacheKey);
+    if (cached && Date.now() - cached.timestamp < CATEGORY_CACHE_TTL) {
+      res.set("Cache-Control", "public, max-age=30, s-maxage=60, stale-while-revalidate=120");
+      return res.json(cached.data);
+    }
+
     const { includeInactive } = req.query;
     const where = includeInactive === "true" ? {} : { isActive: true };
     const categories = await prisma.category.findMany({
@@ -10,6 +25,9 @@ export const getCategories = async (req, res, next) => {
       orderBy: { sortOrder: "asc" },
       include: { _count: { select: { products: { where: { isActive: true } } } } },
     });
+
+    categoryCache.set(cacheKey, { timestamp: Date.now(), data: categories });
+    res.set("Cache-Control", "public, max-age=30, s-maxage=60, stale-while-revalidate=120");
     res.json(categories);
   } catch (error) {
     next(error);
@@ -45,6 +63,8 @@ export const createCategory = async (req, res, next) => {
     const category = await prisma.category.create({
       data: { name, slug, description, imageUrl, sortOrder: parseInt(sortOrder) || 0 },
     });
+    clearCategoriesCache();
+    clearProductsCache();
     res.status(201).json(category);
   } catch (error) {
     next(error);
@@ -75,6 +95,8 @@ export const updateCategory = async (req, res, next) => {
     if (req.file) data.imageUrl = req.file.path;
 
     const category = await prisma.category.update({ where: { id: req.params.id }, data });
+    clearCategoriesCache();
+    clearProductsCache();
     res.json(category);
   } catch (error) {
     next(error);
@@ -98,6 +120,8 @@ export const deleteCategory = async (req, res, next) => {
     }
 
     await prisma.category.delete({ where: { id: req.params.id } });
+    clearCategoriesCache();
+    clearProductsCache();
     res.json({ message: "Category deleted" });
   } catch (error) {
     next(error);

@@ -12,8 +12,22 @@ const productInclude = {
   },
 };
 
+const productCache = new Map();
+const PRODUCT_CACHE_TTL = 60 * 1000;
+
+export const clearProductsCache = () => {
+  productCache.clear();
+};
+
 export const getProducts = async (req, res, next) => {
   try {
+    const cacheKey = req.originalUrl || req.url;
+    const cached = productCache.get(cacheKey);
+    if (cached && Date.now() - cached.timestamp < PRODUCT_CACHE_TTL) {
+      res.set("Cache-Control", "public, max-age=15, s-maxage=30, stale-while-revalidate=60");
+      return res.json(cached.data);
+    }
+
     const {
       page = 1, limit = 20, categoryId, categorySlug,
       search, isFeatured, isActive = "true", sortBy = "name", sortOrder = "asc",
@@ -43,7 +57,11 @@ export const getProducts = async (req, res, next) => {
       prisma.product.count({ where }),
     ]);
 
-    res.json({ products, total, page: parseInt(page), totalPages: Math.ceil(total / parseInt(limit)) });
+    const result = { products, total, page: parseInt(page), totalPages: Math.ceil(total / parseInt(limit)) };
+    productCache.set(cacheKey, { timestamp: Date.now(), data: result });
+
+    res.set("Cache-Control", "public, max-age=15, s-maxage=30, stale-while-revalidate=60");
+    res.json(result);
   } catch (error) {
     next(error);
   }
@@ -66,6 +84,13 @@ export const getProductBySlug = async (req, res, next) => {
 
 export const getTopProducts = async (req, res, next) => {
   try {
+    const cacheKey = req.originalUrl || req.url;
+    const cached = productCache.get(cacheKey);
+    if (cached && Date.now() - cached.timestamp < PRODUCT_CACHE_TTL) {
+      res.set("Cache-Control", "public, max-age=15, s-maxage=30, stale-while-revalidate=60");
+      return res.json(cached.data);
+    }
+
     const { limit = 8 } = req.query;
 
     const topItems = await prisma.orderItem.groupBy({
@@ -96,7 +121,11 @@ export const getTopProducts = async (req, res, next) => {
       products = [...products, ...moreProducts];
     }
 
-    res.json({ products });
+    const result = { products };
+    productCache.set(cacheKey, { timestamp: Date.now(), data: result });
+
+    res.set("Cache-Control", "public, max-age=15, s-maxage=30, stale-while-revalidate=60");
+    res.json(result);
   } catch (error) {
     next(error);
   }
@@ -129,6 +158,7 @@ export const createProduct = async (req, res, next) => {
       data: { productId: product.id, quantity: parseInt(stock) || 999 },
     });
 
+    clearProductsCache();
     res.status(201).json(product);
   } catch (error) {
     next(error);
@@ -177,6 +207,7 @@ export const updateProduct = async (req, res, next) => {
       });
     }
 
+    clearProductsCache();
     res.json(product);
   } catch (error) {
     next(error);
@@ -194,6 +225,7 @@ export const deleteProduct = async (req, res, next) => {
     }
 
     await prisma.product.delete({ where: { id: req.params.id } });
+    clearProductsCache();
     res.json({ message: "Product deleted" });
   } catch (error) {
     next(error);

@@ -39,6 +39,7 @@ export const getActiveSettings = () => {
 
 export const getSiteSettings = (req, res, next) => {
     try {
+        res.set("Cache-Control", "public, max-age=30, s-maxage=60, stale-while-revalidate=120");
         res.json(getActiveSettings());
     } catch (err) {
         next(err);
@@ -110,6 +111,7 @@ const saveSettings = (settings) => {
 export const getHeroSlides = (req, res, next) => {
     try {
         const settings = getSettings();
+        res.set("Cache-Control", "public, max-age=30, s-maxage=60, stale-while-revalidate=120");
         res.json(Array.isArray(settings.heroSlides) ? settings.heroSlides : []);
     } catch (err) { next(err); }
 };

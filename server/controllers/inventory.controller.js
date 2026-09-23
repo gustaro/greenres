@@ -1,4 +1,5 @@
 import { prisma } from "../config/prisma.js";
+import { clearProductsCache } from "./product.controller.js";
 
 const ingredientInclude = {
   category: { select: { id: true, name: true, nameEn: true, slug: true, sortOrder: true } },
@@ -57,6 +58,7 @@ export const createIngredient = async (req, res, next) => {
       },
       include: ingredientInclude,
     });
+    clearProductsCache();
     res.status(201).json(ingredient);
   } catch (error) {
     next(error);
@@ -82,6 +84,7 @@ export const updateInventory = async (req, res, next) => {
       data,
       include: ingredientInclude,
     });
+    clearProductsCache();
     res.json(updated);
   } catch (error) {
     next(error);
@@ -103,6 +106,7 @@ export const adjustInventory = async (req, res, next) => {
       data: { quantity },
       include: ingredientInclude,
     });
+    clearProductsCache();
     res.json({ ...updated, previousQuantity, adjustment: Number(adjustment), reason });
   } catch (error) {
     next(error);
@@ -114,6 +118,7 @@ export const deleteIngredient = async (req, res, next) => {
     const recipeCount = await prisma.recipeIngredient.count({ where: { ingredientId: req.params.ingredientId } });
     if (recipeCount > 0) return res.status(409).json({ message: "Ingredient is used by one or more recipes" });
     await prisma.ingredient.delete({ where: { id: req.params.ingredientId } });
+    clearProductsCache();
     res.json({ message: "Ingredient deleted" });
   } catch (error) {
     next(error);
@@ -207,6 +212,7 @@ export const replaceRecipe = async (req, res, next) => {
       where: { id: req.params.productId },
       select: { id: true, name: true, recipeItems: { include: { ingredient: true }, orderBy: { ingredient: { name: "asc" } } } },
     });
+    clearProductsCache();
     res.json(recipe);
   } catch (error) {
     next(error);
