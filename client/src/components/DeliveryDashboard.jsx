@@ -173,10 +173,21 @@ export function DeliveryDashboard({ setOrders }) {
         }
     }
 
+    const openCardRef = useRef(null)
+
+    useEffect(() => {
+        if (expanded && openCardRef.current) {
+            openCardRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+        }
+    }, [expanded])
+
     const normalizedJobs = jobs.map(normalizeJob)
     const activeJobs = normalizedJobs.filter(j => !['DELIVERED', 'FAILED', 'CANCELLED'].includes(j.status))
     const completedJobs = normalizedJobs.filter(j => j.status === 'DELIVERED')
     const cards = tab === 'active' ? activeJobs : completedJobs
+
+    const closedCards = expanded ? cards.filter(j => j.id !== expanded) : cards
+    const activeOpenCard = expanded ? cards.find(j => j.id === expanded) : null
 
     return (
         <StaffShell
@@ -184,7 +195,10 @@ export function DeliveryDashboard({ setOrders }) {
             title="ศูนย์จัดส่ง (Rider Hub)"
             subtitle={isAdmin ? 'จัดการงานส่งทั้งหมดและทดสอบการวิ่งงาน (Admin)' : 'งานจัดส่งและโปรไฟล์ของคุณ'}
             active={tab}
-            onTab={setTab}
+            onTab={t => {
+                setTab(t)
+                setExpanded(null)
+            }}
             tabs={[
                 { key: 'active', label: 'งานจัดส่ง', icon: 'bi-bicycle', count: activeJobs.length },
                 { key: 'completed', label: 'จัดส่งสำเร็จ', icon: 'bi-check-circle' },
@@ -218,20 +232,53 @@ export function DeliveryDashboard({ setOrders }) {
                 ) : cards.length === 0 ? (
                     <Empty text={tab === 'active' ? 'ไม่มีงานจัดส่งที่รออยู่' : 'ยังไม่มีประวัติการจัดส่งสำเร็จ'} />
                 ) : (
-                    <div className="delivery-grid">
-                        {cards.map(job => (
-                            <DeliveryJobCard
-                                key={job.id}
-                                job={job}
-                                isAdmin={isAdmin}
-                                tab={tab}
-                                isOpen={expanded === job.id}
-                                onToggle={() => setExpanded(expanded === job.id ? null : job.id)}
-                                advance={advance}
-                                advancingJobId={advancingJobId}
-                                onConfirmCash={setCashConfirm}
-                            />
-                        ))}
+                    <div className="delivery-cards-container">
+                        {/* การ์ดที่ไม่ได้ถูกเปิด ให้เรียงอยู่ข้างบน */}
+                        <div className="delivery-grid" style={activeOpenCard ? { paddingBottom: 24 } : {}}>
+                            {closedCards.map(job => (
+                                <DeliveryJobCard
+                                    key={job.id}
+                                    job={job}
+                                    isAdmin={isAdmin}
+                                    tab={tab}
+                                    isOpen={false}
+                                    onToggle={() => setExpanded(job.id)}
+                                    advance={advance}
+                                    advancingJobId={advancingJobId}
+                                    onConfirmCash={setCashConfirm}
+                                />
+                            ))}
+                        </div>
+
+                        {/* การ์ดที่ถูกเปิด เลื่อนลงมาข้างล่างตรงกลาง */}
+                        {activeOpenCard && (
+                            <div
+                                ref={openCardRef}
+                                className="delivery-active-focus-section"
+                                style={{
+                                    width: '100%',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    paddingBottom: 50,
+                                }}
+                            >
+                                <div style={{ width: '100%', maxWidth: 820 }}>
+                                    <DeliveryJobCard
+                                        key={activeOpenCard.id}
+                                        job={activeOpenCard}
+                                        isAdmin={isAdmin}
+                                        tab={tab}
+                                        isOpen={true}
+                                        onToggle={() => setExpanded(null)}
+                                        advance={advance}
+                                        advancingJobId={advancingJobId}
+                                        onConfirmCash={setCashConfirm}
+                                    />
+                                </div>
+                            </div>
+                        )}
                     </div>
                 )}
             </section>
