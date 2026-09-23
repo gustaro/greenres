@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useAuth } from '../lib/AuthContext'
-import { adminApi, heroApi } from '../lib/database'
+import { adminApi, heroApi, confirmOrder, updateOrderStatus } from '../lib/database'
 import { WebSettings } from './WebSettings'
 import { WebSocial } from './WebSocial'
 import { AdminOverviewTab } from './admin/AdminOverviewTab'
@@ -67,6 +67,37 @@ export function AdminDashboard({ orders = [], setOrders, products = [], setProdu
     const fail = error => {
         console.error('[API Admin]', error)
         notify(`เกิดข้อผิดพลาด: ${error.message}`)
+    }
+
+    const handleApproveOrder = async orderId => {
+        try {
+            await confirmOrder(orderId)
+            setOrders?.(prev => (prev || []).map(o => o.id === orderId ? {
+                ...o,
+                status: 'CONFIRMED',
+                serverStatus: 'CONFIRMED',
+                foodStatus: 'กำลังปรุง',
+            } : o))
+            notify('อนุมัติออเดอร์ส่งเข้าครัวเรียบร้อยแล้ว')
+        } catch (error) {
+            fail(error)
+        }
+    }
+
+    const handleCancelOrder = async orderId => {
+        if (!window.confirm('คุณต้องการยกเลิกคำสั่งซื้อนี้ใช่หรือไม่?')) return
+        try {
+            await updateOrderStatus(orderId, 'CANCELLED')
+            setOrders?.(prev => (prev || []).map(o => o.id === orderId ? {
+                ...o,
+                status: 'CANCELLED',
+                serverStatus: 'CANCELLED',
+                foodStatus: 'ยกเลิก',
+            } : o))
+            notify('ยกเลิกออเดอร์เรียบร้อยแล้ว')
+        } catch (error) {
+            fail(error)
+        }
     }
 
     useEffect(() => {
@@ -163,6 +194,8 @@ export function AdminDashboard({ orders = [], setOrders, products = [], setProdu
                             setOrders={setOrders}
                             pendingOrders={pendingOrders}
                             products={products}
+                            approveOrder={handleApproveOrder}
+                            cancelOrder={handleCancelOrder}
                             notify={notify}
                             fail={fail}
                         />

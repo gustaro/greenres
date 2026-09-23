@@ -389,8 +389,13 @@ export const markOrderPaid = (id, paymentMethod = 'CASH', paymentDetail = '') =>
 
 export const cancelOwnOrder = id => api(`/orders/${id}/cancel`, { method: 'PUT', body: JSON.stringify({}) })
 
+export const cancelOrder = id => api(`/orders/${id}/cancel`, { method: 'PUT', body: JSON.stringify({}) })
+
 export const confirmOrder = id =>
     api(`/orders/${id}/status`, { method: 'PUT', body: JSON.stringify({ status: 'CONFIRMED' }) })
+
+export const updateOrderStatus = (id, status) =>
+    api(`/orders/${id}/status`, { method: 'PUT', body: JSON.stringify({ status }) })
 
 // Cashier places walk-in or takeaway order directly from counter
 export async function placeCounterOrder({

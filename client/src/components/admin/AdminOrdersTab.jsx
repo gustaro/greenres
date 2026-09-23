@@ -1,12 +1,35 @@
+import { useState } from 'react'
 import { PageHead, Empty, money } from './AdminShared'
 
 export function AdminOrdersTab({
-    pendingOrders,
-    orders,
-    products,
+    pendingOrders = [],
+    orders = [],
+    products = [],
     approveOrder,
     cancelOrder,
 }) {
+    const [actionLoading, setActionLoading] = useState(null)
+
+    const handleCancel = async (orderId) => {
+        if (!cancelOrder) return
+        setActionLoading(orderId)
+        try {
+            await cancelOrder(orderId)
+        } finally {
+            setActionLoading(null)
+        }
+    }
+
+    const handleApprove = async (orderId) => {
+        if (!approveOrder) return
+        setActionLoading(orderId)
+        try {
+            await approveOrder(orderId)
+        } finally {
+            setActionLoading(null)
+        }
+    }
+
     return (
         <>
             <PageHead eyebrow="ORDER APPROVAL" title="อนุมัติออเดอร์ออนไลน์" description="ออเดอร์ออนไลน์จากลูกค้า — ต้องอนุมัติก่อนส่งเข้าครัว (ออเดอร์หน้าร้านไม่ต้องอนุมัติ)" />
@@ -39,8 +62,21 @@ export function AdminOrdersTab({
                                 ))}
                             </ul>
                             <footer>
-                                <button className="admin-danger" onClick={() => cancelOrder(order.id)}>ยกเลิกออเดอร์</button>
-                                <button className="admin-primary" onClick={() => approveOrder(order.id)}><i className="bi bi-check-circle-fill me-1" />อนุมัติ → ส่งเข้าครัว</button>
+                                <button
+                                    className="admin-danger"
+                                    disabled={actionLoading === order.id}
+                                    onClick={() => handleCancel(order.id)}
+                                >
+                                    {actionLoading === order.id ? 'กำลังดำเนินการ...' : 'ยกเลิกออเดอร์'}
+                                </button>
+                                <button
+                                    className="admin-primary"
+                                    disabled={actionLoading === order.id}
+                                    onClick={() => handleApprove(order.id)}
+                                >
+                                    <i className="bi bi-check-circle-fill me-1" />
+                                    {actionLoading === order.id ? 'กำลังดำเนินการ...' : 'อนุมัติ → ส่งเข้าครัว'}
+                                </button>
                             </footer>
                         </article>
                     ))

@@ -288,14 +288,16 @@ export const updateOrderStatus = async (req, res, next) => {
 
 export const cancelOrder = async (req, res, next) => {
   try {
+    const isStaff = req.user.role === "ADMIN" || req.user.role === "STAFF" || req.user.role === "CASHIER";
+    const where = isStaff ? { id: req.params.id } : { id: req.params.id, userId: req.user.id };
     const order = await prisma.order.findFirst({
-      where: { id: req.params.id, userId: req.user.id },
+      where,
       include: { items: true },
     });
     if (!order) return res.status(404).json({ message: "Order not found" });
 
     const cancellableStatuses = ["PENDING", "CONFIRMED"];
-    if (!cancellableStatuses.includes(order.status)) {
+    if (!cancellableStatuses.includes(order.status) && !isStaff) {
       return res.status(400).json({ message: "Order cannot be cancelled at this stage" });
     }
 
