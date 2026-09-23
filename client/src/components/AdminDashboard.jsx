@@ -19,7 +19,7 @@ export { PageHead, Empty, PAGE_LINK_OPTIONS, roleNames, money } from './admin/Ad
 const menuItems = [
     ['overview', 'ภาพรวม', 'bi-grid-1x2'],
     ['orders', 'ยืนยันคำสั่งซื้อ', 'bi-check-circle'],
-    ['hero', 'หน้าแรก (Hero)', 'bi-image'],
+    ['hero', 'แบนเนอร์หน้าแรก (Hero)', 'bi-image'],
     ['categories', 'ประเภทสินค้า', 'bi-tags'],
     ['products', 'สินค้า', 'bi-box-seam'],
     ['promotions', 'โปรโมชั่น', 'bi-percent'],

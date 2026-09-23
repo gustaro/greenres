@@ -23,7 +23,7 @@ export function AdminHeroTab({ heroSlides, setHeroSlides, notify, fail }) {
             const data = await heroApi.create(payload)
             setHeroSlides(current => [...current, data].sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0)))
             event.currentTarget.reset()
-            notify('เพิ่ม Hero Slide แล้ว')
+            notify('เพิ่มแบนเนอร์หน้าแรกเรียบร้อยแล้ว')
         } catch (error) {
             fail(error)
         }
@@ -46,7 +46,7 @@ export function AdminHeroTab({ heroSlides, setHeroSlides, notify, fail }) {
             const data = await heroApi.update(hero.id, payload)
             setHeroSlides(current => current.map(s => s.id === hero.id ? data : s).sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0)))
             setEditingHero(null)
-            notify('บันทึก Hero Slide แล้ว')
+            notify('บันทึกการแก้ไขแบนเนอร์แล้ว')
         } catch (error) {
             fail(error)
         }
@@ -56,17 +56,18 @@ export function AdminHeroTab({ heroSlides, setHeroSlides, notify, fail }) {
         try {
             await heroApi.update(hero.id, { isActive: !hero.isActive })
             setHeroSlides(current => current.map(s => s.id === hero.id ? { ...s, isActive: !hero.isActive } : s))
+            notify(hero.isActive ? 'ซ่อนแบนเนอร์แล้ว' : 'เปิดแสดงแบนเนอร์แล้ว')
         } catch (error) {
             fail(error)
         }
     }
 
     const deleteHero = async id => {
-        if (!window.confirm('ลบ Hero Slide นี้?')) return
+        if (!window.confirm('ลบแบนเนอร์นี้ออกจากหน้าแรกใช่หรือไม่?')) return
         try {
             await heroApi.remove(id)
             setHeroSlides(current => current.filter(s => s.id !== id))
-            notify('ลบ Hero Slide แล้ว')
+            notify('ลบแบนเนอร์เรียบร้อยแล้ว')
         } catch (error) {
             fail(error)
         }
@@ -74,40 +75,69 @@ export function AdminHeroTab({ heroSlides, setHeroSlides, notify, fail }) {
 
     return (
         <>
-            <PageHead eyebrow="HOMEPAGE HERO" title="จัดการ Hero หน้าแรก" description="เพิ่ม แก้ไข เรียงลำดับ และเลือกสไลด์ที่แสดงบนหน้าเว็บ" />
+            <PageHead
+                eyebrow="HOMEPAGE BANNER"
+                title="จัดการแบนเนอร์หน้าแรก (Hero Section)"
+                description="จัดการป้ายสไลด์โปรโมทสินค้า ดีลพิเศษ หรือภาพไฮไลท์เด่นที่จะแสดงด้านบนสุดของหน้าแรก"
+            />
             <form className="admin-marketing-form" onSubmit={addHero}>
-                <label>ข้อความกำกับ<input name="eyebrow" required placeholder="LIMELEAF CATERING" /></label>
-                <label>หัวข้อหลัก<input name="title" required placeholder="สดใหม่ทุกโอกาส" /></label>
-                <label className="wide">รายละเอียด<textarea name="description" required placeholder="รายละเอียดสั้น ๆ ของแคมเปญ" /></label>
-                <label>ข้อความบนปุ่ม<input name="buttonLabel" required defaultValue="สั่งเลย" /></label>
-                <label>ลิงก์ปุ่ม
+                <label>
+                    หัวข้อย่อยด้านบน (Eyebrow)
+                    <input name="eyebrow" required placeholder="เช่น LIMELEAF CATERING หรือ โปรโมชั่นพิเศษ" />
+                </label>
+                <label>
+                    หัวข้อหลัก (Title)
+                    <input name="title" required placeholder="เช่น สดใหม่ทุกโอกาส หรือ เมนูแนะนำประจำสัปดาห์" />
+                </label>
+                <label className="wide">
+                    รายละเอียด (Description)
+                    <textarea name="description" required placeholder="คำอธิบายสั้นๆ ดึงดูดลูกค้า เช่น บริการจัดเลี้ยงอาหารไทยรสชาติต้นตำรับ..." />
+                </label>
+                <label>
+                    ข้อความบนปุ่มกด (Button Label)
+                    <input name="buttonLabel" required defaultValue="สั่งเลย" placeholder="เช่น สั่งเลย, ดูเมนู, จองโต๊ะ" />
+                </label>
+                <label>
+                    ปลายทางเมื่อกดปุ่ม (Button Link)
                     <select name="buttonLink" defaultValue="/order">
                         {PAGE_LINK_OPTIONS.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
                     </select>
                 </label>
-                <label>สีพื้นหลัง<input name="backgroundColor" type="color" defaultValue="#b8ff35" /></label>
-                <label>ลำดับ<input name="sortOrder" type="number" min="0" defaultValue={heroSlides.length + 1} /></label>
-                <label className="wide">URL รูปภาพ<input name="imageUrl" placeholder="/assets/hero-food.png หรือ https://..." /></label>
-                <label className="wide">หรืออัปโหลดรูป (ไม่เกิน 5 MB)<input name="image" type="file" accept="image/*" /></label>
-                <button className="admin-primary">+ เพิ่ม Hero slide</button>
+                <label>
+                    สีพื้นหลังแบนเนอร์ (Background)
+                    <input name="backgroundColor" type="color" defaultValue="#b8ff35" />
+                </label>
+                <label>
+                    ลำดับการแสดงผล (Sort Order)
+                    <input name="sortOrder" type="number" min="0" defaultValue={heroSlides.length + 1} title="เลขน้อยจะแสดงก่อน" />
+                </label>
+                <label className="wide">
+                    ลิงก์รูปภาพ (Image URL)
+                    <input name="imageUrl" placeholder="/assets/hero-food.png หรือ https://..." />
+                </label>
+                <label className="wide">
+                    หรือเลือกไฟล์รูปจากเครื่อง (ไม่เกิน 5 MB)
+                    <input name="image" type="file" accept="image/*" />
+                </label>
+                <button className="admin-primary">+ เพิ่มแบนเนอร์หน้าแรก</button>
             </form>
             <div className="admin-hero-list">
                 {heroSlides.length === 0 ? (
-                    <Empty>Server ปัจจุบันไม่มี endpoint สำหรับ Hero slide</Empty>
+                    <Empty>ยังไม่มีแบนเนอร์สไลด์หน้าแรก กรุณากรอกแบบฟอร์มด้านบนเพื่อเพิ่มแบนเนอร์</Empty>
                 ) : (
                     heroSlides.map(hero => (
                         <article key={hero.id} className={!hero.isActive ? 'inactive' : ''}>
                             <div className="admin-hero-preview" style={{ background: hero.backgroundColor }}>
                                 <img src={hero.imageUrl} alt="" />
-                                <span>ลำดับ {hero.sortOrder}</span>
+                                <span>ลำดับที่ {hero.sortOrder}</span>
                             </div>
                             {editingHero === hero.id ? (
                                 <form className="admin-edit-form" onSubmit={event => saveHero(event, hero)}>
-                                    <label>ข้อความกำกับ<input name="eyebrow" required defaultValue={hero.eyebrow} /></label>
-                                    <label>หัวข้อ<input name="title" required defaultValue={hero.title} /></label>
+                                    <label>หัวข้อย่อยด้านบน<input name="eyebrow" required defaultValue={hero.eyebrow} /></label>
+                                    <label>หัวข้อหลัก<input name="title" required defaultValue={hero.title} /></label>
                                     <label className="wide">รายละเอียด<textarea name="description" required defaultValue={hero.description} /></label>
-                                    <label>ข้อความบนปุ่ม<input name="buttonLabel" required defaultValue={hero.buttonLabel} /></label>
-                                    <label>ลิงก์ปุ่ม
+                                    <label>ข้อความบนปุ่มกด<input name="buttonLabel" required defaultValue={hero.buttonLabel} /></label>
+                                    <label>ปลายทางเมื่อกดปุ่ม
                                         <select name="buttonLink" defaultValue={hero.buttonLink || '/order'}>
                                             {PAGE_LINK_OPTIONS.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
                                             {!PAGE_LINK_OPTIONS.some(opt => opt.value === hero.buttonLink) && (
@@ -115,13 +145,13 @@ export function AdminHeroTab({ heroSlides, setHeroSlides, notify, fail }) {
                                             )}
                                         </select>
                                     </label>
-                                    <label>สีพื้นหลัง<input name="backgroundColor" type="color" defaultValue={hero.backgroundColor} /></label>
-                                    <label>ลำดับ<input name="sortOrder" type="number" min="0" defaultValue={hero.sortOrder} /></label>
-                                    <label className="wide">URL รูปภาพ<input name="imageUrl" defaultValue={hero.imageUrl} /></label>
-                                    <label className="wide">เปลี่ยนรูป<input name="image" type="file" accept="image/*" /></label>
+                                    <label>สีพื้นหลังแบนเนอร์<input name="backgroundColor" type="color" defaultValue={hero.backgroundColor} /></label>
+                                    <label>ลำดับการแสดงผล<input name="sortOrder" type="number" min="0" defaultValue={hero.sortOrder} /></label>
+                                    <label className="wide">ลิงก์รูปภาพ<input name="imageUrl" defaultValue={hero.imageUrl} /></label>
+                                    <label className="wide">เปลี่ยนรูปภาพใหม่<input name="image" type="file" accept="image/*" /></label>
                                     <div className="admin-form-actions">
                                         <button type="button" onClick={() => setEditingHero(null)}>ยกเลิก</button>
-                                        <button className="admin-primary">บันทึก</button>
+                                        <button className="admin-primary">บันทึกการแก้ไข</button>
                                     </div>
                                 </form>
                             ) : (
@@ -135,8 +165,8 @@ export function AdminHeroTab({ heroSlides, setHeroSlides, notify, fail }) {
                             {editingHero !== hero.id && (
                                 <footer>
                                     <button onClick={() => setEditingHero(hero.id)}>แก้ไข</button>
-                                    <button onClick={() => toggleHero(hero)}>{hero.isActive ? 'ปิดการแสดง' : 'เปิดการแสดง'}</button>
-                                    <button className="admin-text-danger" onClick={() => deleteHero(hero.id)}>ลบ</button>
+                                    <button onClick={() => toggleHero(hero)}>{hero.isActive ? 'ซ่อนจากหน้าแรก' : 'เปิดแสดงบนหน้าแรก'}</button>
+                                    <button className="admin-text-danger" onClick={() => deleteHero(hero.id)}>ลบแบนเนอร์</button>
                                 </footer>
                             )}
                         </article>
