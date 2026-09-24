@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../lib/AuthContext'
 import { useLanguage } from '../lib/LanguageContext'
 import { validatePromotion } from '../lib/database'
+import { cleanAddressText } from '../lib/geo'
 import { CartPointsWidget } from './cart/CartPointsWidget'
 
 export const SERVER_DELIVERY_FEE = Number(import.meta.env.VITE_DELIVERY_FEE || 35)
@@ -12,11 +13,16 @@ const money = value => new Intl.NumberFormat('th-TH', { style: 'currency', curre
 
 const formatSavedAddress = address => {
     if (!address) return ''
-    const street = String(address.street || '').trim()
-    const extraParts = [address.city, address.state, address.zip]
+    const street = cleanAddressText(String(address.street || ''))
+    const extraParts = [
+        cleanAddressText(String(address.city || '')),
+        cleanAddressText(String(address.state || '')),
+        cleanAddressText(String(address.zip || ''))
+    ]
         .map(value => String(value || '').trim())
         .filter(value => value && !street.includes(value))
-    return [street, ...extraParts].filter(Boolean).join(' ')
+    const formatted = [street, ...extraParts].filter(Boolean).join(' ')
+    return cleanAddressText(formatted)
 }
 
 // ─── Cart Drawer (Global Header Cart) ───────────────────────────────────────
@@ -165,9 +171,11 @@ export function CartSidebar({ cart, setCart, products, itemNotes, setItemNotes, 
                     </button>
                 </div>
                 <p className={`op-addr-text ${defaultAddress ? 'has-address' : ''}`}>
-                    {defaultAddress
-                        ? <><b>{defaultAddress.label || (isEn ? 'Address' : 'ที่อยู่')}</b> — {formatSavedAddress(defaultAddress)}</>
-                        : (isEn ? 'Enter your delivery address' : 'กรอกที่อยู่จัดส่งของคุณ')}
+                    {defaultAddress ? (() => {
+                        const label = cleanAddressText(defaultAddress.label) || (isEn ? 'Address' : 'ที่อยู่')
+                        const addrText = formatSavedAddress(defaultAddress)
+                        return addrText ? <><b>{label}</b> — {addrText}</> : <b>{label}</b>
+                    })() : (isEn ? 'Enter your delivery address' : 'กรอกที่อยู่จัดส่งของคุณ')}
                 </p>
                 {session && savedAddresses.length > 0 && (
                     <button type="button" className="op-address-manage" onClick={() => navigate('/profile?tab=address')}>

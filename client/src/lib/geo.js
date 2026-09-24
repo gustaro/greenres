@@ -58,15 +58,21 @@ export function extractCoordinates(addressStr, meta = {}) {
 }
 
 /**
- * Strips hidden geo metadata from user-facing address text
+ * Strips hidden geo metadata and coordinate strings from user-facing address text
  * @param {string} addressStr
  * @returns {string}
  */
 export function cleanAddressText(addressStr) {
     if (!addressStr || typeof addressStr !== 'string') return ''
     return addressStr
-        .replace(/<!--geo:[^>]+-->/g, '')
-        .replace(/\[geo:[^\]]+\]/g, '')
+        .replace(/<!--geo:[^>]+-->/gi, '')
+        .replace(/\[geo:[^\]]+\]/gi, '')
+        .replace(/<!--[^>]*-->/g, '')
+        .replace(/\(?(?:พิกัด(?:แผนที่| GPS)?|GPS|lat|latitude)\s*:?\s*[+-]?\d+(?:\.\d+)?[,\s]+(?:lng|longitude|lon)?\s*[+-]?\d+(?:\.\d+)?\)?/gi, '')
+        .replace(/\([+-]?\d{1,3}\.\d{2,}[,\s]+[+-]?\d{1,3}\.\d{2,}\)/g, '')
+        .replace(/(?:^|\s)[+-]?\d{1,3}\.\d{3,}[,\s]+[+-]?\d{1,3}\.\d{3,}(?:\s|$)/g, ' ')
+        .replace(/\(?พิกัด(?:แผนที่| GPS)?\)?/gi, '')
+        .replace(/\s{2,}/g, ' ')
         .trim()
 }
 
