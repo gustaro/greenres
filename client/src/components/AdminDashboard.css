@@ -1447,6 +1447,40 @@
     box-shadow: 0 0 0 3px rgba(21, 149, 43, .1)
 }
 
+.admin-hero-theme-tip {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 16px 20px;
+    margin-bottom: 22px;
+    border-radius: 12px;
+    background: var(--brand-accent-soft);
+    border: 1.5px solid var(--brand-border);
+    color: var(--brand-primary-dark);
+}
+
+.admin-hero-theme-tip i {
+    font-size: 22px;
+    color: var(--brand-primary);
+    line-height: 1.2;
+    flex-shrink: 0;
+}
+
+.admin-hero-theme-tip strong {
+    display: block;
+    font-size: 14px;
+    font-weight: 800;
+    margin-bottom: 4px;
+    color: var(--brand-primary-dark);
+}
+
+.admin-hero-theme-tip p {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--brand-text);
+}
+
 .admin-hero-list {
     display: grid;
     gap: 18px

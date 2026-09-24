@@ -27,10 +27,6 @@ const fallbackPromotions = [
     { id: 'promo-3', code: 'MEMBER', title: 'สะสมแต้ม แลกความอร่อย', description: 'ทุกยอดสั่งซื้อรับคะแนนสมาชิกสำหรับครั้งถัดไป', discountValue: 10, imageUrl: '/assets/mango-sticky-rice.png', buttonLabel: 'เริ่มสะสมแต้ม', buttonLink: '/order' },
 ]
 
-const getHeroColor = color => {
-    const legacyColors = ['#b8ff35', '#0e971c', '#0f9e1e', '#15952b']
-    return legacyColors.includes(String(color || '').toLowerCase()) ? 'var(--brand-accent)' : (color || 'var(--brand-accent)')
-}
 
 export function HomePage({ onOrder, user, onAuth, onLogout, cartCount, onCart }) {
     const navigate = useNavigate()
@@ -116,12 +112,27 @@ export function HomePage({ onOrder, user, onAuth, onLogout, cartCount, onCart })
         )
     }
     const currentSlide = heroSlides[slide] || fallbackSlides[0]
+    const isAltTone = slide % 2 === 1
     const changeSlide = direction => setSlide(current => (current + direction + heroSlides.length) % heroSlides.length)
 
     return <>
         <Navbar onOrder={onOrder} user={user} onAuth={onAuth} onLogout={onLogout} cartCount={cartCount} onCart={onCart} transparent />
         <main className="home-page">
-            <section className="hero-home" style={{ '--slide-color': getHeroColor(currentSlide.backgroundColor) }} aria-roledescription="carousel" aria-label={t('promotionsTitle')}>
+            <section
+                className={`hero-home ${isAltTone ? 'hero-tone-primary' : 'hero-tone-accent'}`}
+                aria-roledescription="carousel"
+                aria-label={t('promotionsTitle')}
+            >
+                {heroSlides.length > 1 && (
+                    <>
+                        <button className="hero-arrow previous" onClick={() => changeSlide(-1)} aria-label="Previous slide">
+                            <i className="bi bi-chevron-left" />
+                        </button>
+                        <button className="hero-arrow next" onClick={() => changeSlide(1)} aria-label="Next slide">
+                            <i className="bi bi-chevron-right" />
+                        </button>
+                    </>
+                )}
                 <div className="hero-slide" key={currentSlide.id}>
                     <div className="hero-copy">
                         <span>{currentSlide.eyebrow}</span>
@@ -134,11 +145,19 @@ export function HomePage({ onOrder, user, onAuth, onLogout, cartCount, onCart })
                         <img src={currentSlide.imageUrl || '/assets/hero-food.png'} alt={currentSlide.title} />
                     </div>
                 </div>
-                {heroSlides.length > 1 && <>
+                {heroSlides.length > 1 && (
                     <div className="hero-dots">
-                        {heroSlides.map((item, index) => <button key={item.id} className={slide === index ? 'active' : ''} onClick={() => setSlide(index)} aria-label={`Slide ${index + 1}`} aria-current={slide === index} />)}
+                        {heroSlides.map((item, index) => (
+                            <button
+                                key={item.id}
+                                className={slide === index ? 'active' : ''}
+                                onClick={() => setSlide(index)}
+                                aria-label={`Slide ${index + 1}`}
+                                aria-current={slide === index}
+                            />
+                        ))}
                     </div>
-                </>}
+                )}
             </section>
 
             <section className="promotion-section" id="promotions">

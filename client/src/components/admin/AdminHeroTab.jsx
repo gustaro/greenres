@@ -18,7 +18,6 @@ export function AdminHeroTab({ heroSlides, setHeroSlides, notify, fail }) {
             description: form.get('description')?.trim() || '',
             buttonLabel: form.get('buttonLabel')?.trim() || 'สั่งเลย',
             buttonLink: form.get('buttonLink')?.trim() || '/order',
-            backgroundColor: form.get('backgroundColor') || '#b8ff35',
             sortOrder: Number(form.get('sortOrder') || heroSlides.length + 1),
             imageUrl: form.get('imageUrl')?.trim() || '/assets/hero-food.png',
         }
@@ -45,7 +44,6 @@ export function AdminHeroTab({ heroSlides, setHeroSlides, notify, fail }) {
             description: form.get('description')?.trim() || '',
             buttonLabel: form.get('buttonLabel')?.trim() || 'สั่งเลย',
             buttonLink: form.get('buttonLink')?.trim() || '/order',
-            backgroundColor: form.get('backgroundColor') || '#b8ff35',
             sortOrder: Number(form.get('sortOrder') || hero.sortOrder),
             imageUrl: form.get('imageUrl')?.trim() || hero.imageUrl,
         }
@@ -96,6 +94,15 @@ export function AdminHeroTab({ heroSlides, setHeroSlides, notify, fail }) {
                 title="จัดการแบนเนอร์หน้าแรก (Hero Section)"
                 description="จัดการป้ายสไลด์โปรโมทสินค้า ดีลพิเศษ หรือภาพไฮไลท์เด่นที่จะแสดงด้านบนสุดของหน้าแรก"
             />
+            <div className="admin-hero-theme-tip">
+                <i className="bi bi-palette-fill" />
+                <div>
+                    <strong>ระบบสลับสีพื้นหลังแบนเนอร์อัตโนมัติตามธีม (2 สี)</strong>
+                    <p>
+                        พื้นหลังของแบนเนอร์แต่ละสไลด์จะสลับ 2 โทนสีระหว่าง <b>โทนไฮไลท์สดใส (Accent)</b> และ <b>โทนสีหลักเข้ม (Primary)</b> ให้โดยอัตโนมัติตามธีมสีของเว็บไซต์ที่เลือก เพื่อความสวยงาม กลมกลืน และอ่านง่ายในทุกธีม
+                    </p>
+                </div>
+            </div>
             <form className="admin-marketing-form" onSubmit={addHero}>
                 <label>
                     หัวข้อย่อยด้านบน (Eyebrow)
@@ -120,10 +127,6 @@ export function AdminHeroTab({ heroSlides, setHeroSlides, notify, fail }) {
                     </select>
                 </label>
                 <label>
-                    สีพื้นหลังแบนเนอร์ (Background)
-                    <input name="backgroundColor" type="color" defaultValue="#b8ff35" />
-                </label>
-                <label>
                     ลำดับการแสดงผล (Sort Order)
                     <input name="sortOrder" type="number" min="0" defaultValue={heroSlides.length + 1} title="เลขน้อยจะแสดงก่อน" />
                 </label>
@@ -143,58 +146,63 @@ export function AdminHeroTab({ heroSlides, setHeroSlides, notify, fail }) {
                 {heroSlides.length === 0 ? (
                     <Empty>ยังไม่มีแบนเนอร์สไลด์หน้าแรก กรุณากรอกแบบฟอร์มด้านบนเพื่อเพิ่มแบนเนอร์</Empty>
                 ) : (
-                    heroSlides.map(hero => (
-                        <article key={hero.id} className={!hero.isActive ? 'inactive' : ''}>
-                            <div className="admin-hero-preview" style={{ background: hero.backgroundColor }}>
-                                <img src={hero.imageUrl} alt="" />
-                                <span>ลำดับที่ {hero.sortOrder}</span>
-                            </div>
-                            {editingHero === hero.id ? (
-                                <form className="admin-edit-form" onSubmit={event => saveHero(event, hero)}>
-                                    <label>หัวข้อย่อยด้านบน<input name="eyebrow" required defaultValue={hero.eyebrow} /></label>
-                                    <label>หัวข้อหลัก<input name="title" required defaultValue={hero.title} /></label>
-                                    <label className="wide">รายละเอียด<textarea name="description" required defaultValue={hero.description} /></label>
-                                    <label>ข้อความบนปุ่มกด<input name="buttonLabel" required defaultValue={hero.buttonLabel} /></label>
-                                    <label>ปลายทางเมื่อกดปุ่ม
-                                        <select name="buttonLink" defaultValue={hero.buttonLink || '/order'}>
-                                            {PAGE_LINK_OPTIONS.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
-                                            {!PAGE_LINK_OPTIONS.some(opt => opt.value === hero.buttonLink) && (
-                                                <option value={hero.buttonLink}>{hero.buttonLink} (กำหนดเอง)</option>
-                                            )}
-                                        </select>
-                                    </label>
-                                    <label>สีพื้นหลังแบนเนอร์<input name="backgroundColor" type="color" defaultValue={hero.backgroundColor} /></label>
-                                    <label>ลำดับการแสดงผล<input name="sortOrder" type="number" min="0" defaultValue={hero.sortOrder} /></label>
-                                    <label className="wide">ลิงก์รูปภาพ<input name="imageUrl" defaultValue={hero.imageUrl} /></label>
-                                    <label className="wide">เปลี่ยนรูปภาพใหม่<input name="image" type="file" accept="image/*" /></label>
-                                    <div className="admin-form-actions">
-                                        <button type="button" onClick={() => setEditingHero(null)}>ยกเลิก</button>
-                                        <button className="admin-primary" disabled={savingId === hero.id}>
-                                            {savingId === hero.id ? <><i className="bi bi-arrow-repeat spin" /> กำลังบันทึก...</> : 'บันทึกการแก้ไข'}
-                                        </button>
-                                    </div>
-                                </form>
-                            ) : (
-                                <div className="admin-hero-info">
-                                    <small>{hero.eyebrow}</small>
-                                    <h2>{hero.title}</h2>
-                                    <p>{hero.description}</p>
-                                    <b>{hero.buttonLabel} → {hero.buttonLink}</b>
+                    heroSlides.map((hero, index) => {
+                        const isAltTone = index % 2 === 1
+                        const previewBg = isAltTone
+                            ? 'linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-primary-dark) 100%)'
+                            : 'linear-gradient(135deg, var(--brand-accent) 0%, var(--brand-accent-strong, var(--brand-accent)) 100%)'
+                        return (
+                            <article key={hero.id} className={!hero.isActive ? 'inactive' : ''}>
+                                <div className="admin-hero-preview" style={{ background: previewBg }}>
+                                    <img src={hero.imageUrl} alt="" />
+                                    <span>ลำดับที่ {hero.sortOrder} • {isAltTone ? 'โทน 2 (สีหลัก)' : 'โทน 1 (ไฮไลท์)'}</span>
                                 </div>
-                            )}
-                            {editingHero !== hero.id && (
-                                <footer>
-                                    <button onClick={() => setEditingHero(hero.id)}>แก้ไข</button>
-                                    <button disabled={togglingId === hero.id} onClick={() => toggleHero(hero)}>
-                                        {togglingId === hero.id ? <><i className="bi bi-arrow-repeat spin" /> กำลังเปลี่ยนสถานะ...</> : (hero.isActive ? 'ซ่อนจากหน้าแรก' : 'เปิดแสดงบนหน้าแรก')}
-                                    </button>
-                                    <button className="admin-text-danger" disabled={deletingId === hero.id} onClick={() => deleteHero(hero.id)}>
-                                        {deletingId === hero.id ? <><i className="bi bi-arrow-repeat spin" /> กำลังลบ...</> : 'ลบแบนเนอร์'}
-                                    </button>
-                                </footer>
-                            )}
-                        </article>
-                    ))
+                                {editingHero === hero.id ? (
+                                    <form className="admin-edit-form" onSubmit={event => saveHero(event, hero)}>
+                                        <label>หัวข้อย่อยด้านบน<input name="eyebrow" required defaultValue={hero.eyebrow} /></label>
+                                        <label>หัวข้อหลัก<input name="title" required defaultValue={hero.title} /></label>
+                                        <label className="wide">รายละเอียด<textarea name="description" required defaultValue={hero.description} /></label>
+                                        <label>ข้อความบนปุ่มกด<input name="buttonLabel" required defaultValue={hero.buttonLabel} /></label>
+                                        <label>ปลายทางเมื่อกดปุ่ม
+                                            <select name="buttonLink" defaultValue={hero.buttonLink || '/order'}>
+                                                {PAGE_LINK_OPTIONS.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+                                                {!PAGE_LINK_OPTIONS.some(opt => opt.value === hero.buttonLink) && (
+                                                    <option value={hero.buttonLink}>{hero.buttonLink} (กำหนดเอง)</option>
+                                                )}
+                                            </select>
+                                        </label>
+                                        <label>ลำดับการแสดงผล<input name="sortOrder" type="number" min="0" defaultValue={hero.sortOrder} /></label>
+                                        <label className="wide">ลิงก์รูปภาพ<input name="imageUrl" defaultValue={hero.imageUrl} /></label>
+                                        <label className="wide">เปลี่ยนรูปภาพใหม่<input name="image" type="file" accept="image/*" /></label>
+                                        <div className="admin-form-actions">
+                                            <button type="button" onClick={() => setEditingHero(null)}>ยกเลิก</button>
+                                            <button className="admin-primary" disabled={savingId === hero.id}>
+                                                {savingId === hero.id ? <><i className="bi bi-arrow-repeat spin" /> กำลังบันทึก...</> : 'บันทึกการแก้ไข'}
+                                            </button>
+                                        </div>
+                                    </form>
+                                ) : (
+                                    <div className="admin-hero-info">
+                                        <small>{hero.eyebrow}</small>
+                                        <h2>{hero.title}</h2>
+                                        <p>{hero.description}</p>
+                                        <b>{hero.buttonLabel} → {hero.buttonLink}</b>
+                                    </div>
+                                )}
+                                {editingHero !== hero.id && (
+                                    <footer>
+                                        <button onClick={() => setEditingHero(hero.id)}>แก้ไข</button>
+                                        <button disabled={togglingId === hero.id} onClick={() => toggleHero(hero)}>
+                                            {togglingId === hero.id ? <><i className="bi bi-arrow-repeat spin" /> กำลังเปลี่ยนสถานะ...</> : (hero.isActive ? 'ซ่อนจากหน้าแรก' : 'เปิดแสดงบนหน้าแรก')}
+                                        </button>
+                                        <button className="admin-text-danger" disabled={deletingId === hero.id} onClick={() => deleteHero(hero.id)}>
+                                            {deletingId === hero.id ? <><i className="bi bi-arrow-repeat spin" /> กำลังลบ...</> : 'ลบแบนเนอร์'}
+                                        </button>
+                                    </footer>
+                                )}
+                            </article>
+                        )
+                    })
                 )}
             </div>
         </>
