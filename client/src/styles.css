@@ -22,7 +22,137 @@
     --brand-muted: #6d7b6e;
     --brand-border: #72aa6e;
     --brand-border-soft: #d8e7d2;
-    --brand-highlight: #edf38b
+    --brand-highlight: #edf38b;
+}
+
+/* ─── 2. Sage Herb Garden (ตามภาพเมนูผัดผัก สดชื่น ออร์แกนิก) ─── */
+html[data-theme="sage-herb"] {
+    --brand-primary: #2a7260;
+    --brand-primary-hover: #215f50;
+    --brand-primary-dark: #164e40;
+    --brand-accent: #76e2a2;
+    --brand-accent-strong: #54cf85;
+    --brand-accent-soft: #e7f7ee;
+    --brand-surface: #f3f9f5;
+    --brand-panel: #ffffff;
+    --brand-text: #14382e;
+    --brand-muted: #638579;
+    --brand-border: #69b59b;
+    --brand-border-soft: #c3e7d9;
+    --brand-highlight: #daf5c6;
+    --lime: #76e2a2;
+    --chart: #76e2a2;
+    --fern: #2e8b6b;
+    --juniper: #245a4a;
+    --pine: #349977;
+    --deep: #2a7260;
+    --sage: #e7f7ee;
+    --ink: #14382e;
+    --cream: #f3f9f5;
+}
+
+/* ─── 3. Matcha Latte (ชาเขียวญี่ปุ่น พรีเมียม ครีมมี่) ─── */
+html[data-theme="matcha-latte"] {
+    --brand-primary: #3d7332;
+    --brand-primary-hover: #325f29;
+    --brand-primary-dark: #25471d;
+    --brand-accent: #d2f041;
+    --brand-accent-strong: #bfe028;
+    --brand-accent-soft: #f0f8dc;
+    --brand-surface: #f7faf3;
+    --brand-panel: #ffffff;
+    --brand-text: #1d3318;
+    --brand-muted: #6d8067;
+    --brand-border: #7ea872;
+    --brand-border-soft: #d7e6d0;
+    --brand-highlight: #f9fcb1;
+    --lime: #d2f041;
+    --chart: #d2f041;
+    --fern: #448437;
+    --juniper: #2f5b26;
+    --pine: #4a923d;
+    --deep: #3d7332;
+    --sage: #e8f4de;
+    --ink: #1d3318;
+    --cream: #f7faf3;
+}
+
+/* ─── 4. Emerald Forest (เขียวมรกตอัญมณี หรูหราทันสมัย) ─── */
+html[data-theme="emerald-forest"] {
+    --brand-primary: #059669;
+    --brand-primary-hover: #047857;
+    --brand-primary-dark: #064e3b;
+    --brand-accent: #34d399;
+    --brand-accent-strong: #10b981;
+    --brand-accent-soft: #ecfdf5;
+    --brand-surface: #f0fdf4;
+    --brand-panel: #ffffff;
+    --brand-text: #062e24;
+    --brand-muted: #527d70;
+    --brand-border: #34d399;
+    --brand-border-soft: #a7f3d0;
+    --brand-highlight: #a7f3d0;
+    --lime: #34d399;
+    --chart: #34d399;
+    --fern: #10b981;
+    --juniper: #047857;
+    --pine: #059669;
+    --deep: #047857;
+    --sage: #d1fae5;
+    --ink: #062e24;
+    --cream: #f0fdf4;
+}
+
+/* ─── 5. Olive & Pistachio (เขียวมะกอก & พิสตาชิโอ อบอุ่น เป็นธรรมชาติ) ─── */
+html[data-theme="olive-pistachio"] {
+    --brand-primary: #5c7c24;
+    --brand-primary-hover: #4c671c;
+    --brand-primary-dark: #374d11;
+    --brand-accent: #c6f135;
+    --brand-accent-strong: #b0dc24;
+    --brand-accent-soft: #f5fbde;
+    --brand-surface: #fafcf5;
+    --brand-panel: #ffffff;
+    --brand-text: #24330b;
+    --brand-muted: #77855d;
+    --brand-border: #90ab51;
+    --brand-border-soft: #e0edd0;
+    --brand-highlight: #f5fbc7;
+    --lime: #c6f135;
+    --chart: #c6f135;
+    --fern: #6c9429;
+    --juniper: #456018;
+    --pine: #78a22e;
+    --deep: #5c7c24;
+    --sage: #ecf5db;
+    --ink: #24330b;
+    --cream: #fafcf5;
+}
+
+/* ─── 6. Nordic Pine & Mint (เขียวไพน์นอร์ดิก & นีออนมิ้นต์ คูล มีพลัง) ─── */
+html[data-theme="nordic-pine"] {
+    --brand-primary: #1b6b5c;
+    --brand-primary-hover: #155549;
+    --brand-primary-dark: #0d3d34;
+    --brand-accent: #2ee8b6;
+    --brand-accent-strong: #12d29e;
+    --brand-accent-soft: #e5faf4;
+    --brand-surface: #f2faf7;
+    --brand-panel: #ffffff;
+    --brand-text: #0b2923;
+    --brand-muted: #597a73;
+    --brand-border: #42a893;
+    --brand-border-soft: #bceddf;
+    --brand-highlight: #aff5dc;
+    --lime: #2ee8b6;
+    --chart: #2ee8b6;
+    --fern: #238976;
+    --juniper: #16574a;
+    --pine: #289d87;
+    --deep: #1b6b5c;
+    --sage: #d8f5ec;
+    --ink: #0b2923;
+    --cream: #f2faf7;
 }
 
 * {

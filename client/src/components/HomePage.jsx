@@ -29,7 +29,7 @@ const fallbackPromotions = [
 
 const getHeroColor = color => {
     const legacyColors = ['#b8ff35', '#0e971c', '#0f9e1e', '#15952b']
-    return legacyColors.includes(String(color || '').toLowerCase()) ? '#b8ff35' : (color || '#b8ff35')
+    return legacyColors.includes(String(color || '').toLowerCase()) ? 'var(--brand-accent)' : (color || 'var(--brand-accent)')
 }
 
 export function HomePage({ onOrder, user, onAuth, onLogout, cartCount, onCart }) {

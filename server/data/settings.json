@@ -1,4 +1,5 @@
 {
+  "colorTheme": "classic-lime",
   "logoUrl": null,
   "mapProvider": "leaflet",
   "googleMapsApiKey": "",

@@ -38,6 +38,7 @@ export const getActiveSettings = () => {
         pointsRedeemRate: settings.pointsRedeemRate !== undefined ? Math.max(1, parseFloat(settings.pointsRedeemRate)) : 10,
         pointsMinRedeem: settings.pointsMinRedeem !== undefined ? Math.max(0, parseInt(settings.pointsMinRedeem)) : 10,
         pointsMaxDiscountPercent: settings.pointsMaxDiscountPercent !== undefined ? Math.min(100, Math.max(1, parseFloat(settings.pointsMaxDiscountPercent))) : 100,
+        colorTheme: settings.colorTheme || "classic-lime",
         ...settings
     };
 };
@@ -57,6 +58,7 @@ export const updateSiteSettings = (req, res, next) => {
         const settings = getSettings();
 
         // Merge allowed settings
+        if (payload.colorTheme !== undefined) settings.colorTheme = payload.colorTheme;
         if (payload.mapProvider !== undefined) settings.mapProvider = payload.mapProvider;
         if (payload.googleMapsApiKey !== undefined) settings.googleMapsApiKey = payload.googleMapsApiKey;
         if (payload.siteName !== undefined) settings.siteName = payload.siteName;

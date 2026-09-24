@@ -1,6 +1,12 @@
 import { createContext, useContext, useEffect, useState } from 'react'
 import { api, clearTokens, hasSessionToken, saveTokens } from './api'
 import { mapUser } from './database'
+import { initTheme, applyTheme } from './themeConfig'
+
+// Initialize theme immediately on script execution to prevent theme flashing
+if (typeof window !== 'undefined') {
+    initTheme()
+}
 
 const AuthContext = createContext(null)
 
@@ -21,6 +27,9 @@ export function AuthProvider({ children }) {
         api('/settings').then(res => {
             setSettings(res)
             document.title = (res?.siteName || 'LimeLeaf Catering')
+            if (res?.colorTheme) {
+                applyTheme(res.colorTheme)
+            }
         }).catch(() => { })
 
         let active = true
