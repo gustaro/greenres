@@ -10,6 +10,12 @@ export function ProfilePointsTab({ profile, orders = [], money, onOrderMore }) {
     const earnRate = Number(settings?.pointsEarnRate || 10)
     const redeemRate = Number(settings?.pointsRedeemRate || 10)
 
+    // Ensure orders belong strictly to this user
+    const userOrders = useMemo(() => {
+        if (!profile?.id) return []
+        return (orders || []).filter(order => !order.userId || order.userId === profile.id)
+    }, [orders, profile?.id])
+
     // Compute point transactions from orders and member bonus
     const transactions = useMemo(() => {
         const list = []
@@ -17,7 +23,7 @@ export function ProfilePointsTab({ profile, orders = [], money, onOrderMore }) {
         let totalPointsUsed = 0
 
         // Process orders
-        for (const order of orders) {
+        for (const order of userOrders) {
             if (order.foodStatus === 'ยกเลิก' || order.status === 'CANCELLED') continue
 
             const total = Number(order.totalAmount || order.total || 0)
@@ -71,7 +77,7 @@ export function ProfilePointsTab({ profile, orders = [], money, onOrderMore }) {
 
         // Sort descending by date
         return list.sort((a, b) => new Date(b.date) - new Date(a.date))
-    }, [orders, profile?.points, profile?.createdAt, isEn, money, t, earnRate, redeemRate])
+    }, [userOrders, profile?.points, profile?.createdAt, isEn, money, t, earnRate, redeemRate])
 
     const filteredList = useMemo(() => {
         if (filter === 'earned') return transactions.filter(t => t.type === 'earned')

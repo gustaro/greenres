@@ -151,6 +151,7 @@ export const mapOrder = row => {
 
     return {
         id: row.id,
+        userId: row.userId,
         orderNumber: `#${String(row.id).slice(-8).toUpperCase()}`,
         customerId: accountName,
         customerName,
@@ -318,7 +319,9 @@ export async function fetchOrders() {
 }
 
 export async function fetchOrderHistory() {
-    const orders = await fetchOrders()
+    if (!hasSessionToken()) return []
+    const result = await api('/orders?own=true&limit=100')
+    const orders = (result?.orders || []).map(mapOrder)
     const deliveryOrders = orders.filter(order => order.deliveryType === 'ให้จัดส่ง' && !['ยกเลิก', 'จัดส่งเสร็จสิ้น'].includes(order.foodStatus))
 
     await Promise.all(deliveryOrders.map(async order => {

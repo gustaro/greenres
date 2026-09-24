@@ -240,12 +240,16 @@ export const getOrders = async (req, res, next) => {
     const {
       page = 1, limit = 20, status, userId: filterUserId,
       from, to, sortOrder = "desc",
+      own,
     } = req.query;
     const skip = (parseInt(page) - 1) * parseInt(limit);
 
     const where = {};
-    // Customers can only see their own orders
-    if (req.user.role === "CUSTOMER") {
+    const isStaffOrAdmin = ["STAFF", "ADMIN", "KITCHEN"].includes(req.user.role);
+
+    // If 'own' is specified or user is not operational staff (e.g. CUSTOMER, DELIVERY/Rider),
+    // strictly limit to their own orders!
+    if (own === "true" || own === true || !isStaffOrAdmin) {
       where.userId = req.user.id;
     } else if (filterUserId) {
       where.userId = filterUserId;
