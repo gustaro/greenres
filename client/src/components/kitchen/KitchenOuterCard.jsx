@@ -11,6 +11,7 @@ export function KitchenOuterCard({
 }) {
     const isActionLoading = actionLoadingId === order.id
     const isDineIn = order.deliveryType === 'ทานที่ร้าน'
+    const isCancelled = order.serverStatus === 'CANCELLED' || order.foodStatus === 'ยกเลิก'
 
     const items = order.items || []
     const readyItems = items.filter(i => i.itemStatus === 'READY' || i.itemStatus === 'SERVED')
@@ -21,10 +22,13 @@ export function KitchenOuterCard({
 
     return (
         <article
-            className={`kitchen-outer-white-card status-${(order.serverStatus || 'CONFIRMED').toLowerCase()}`}
-            onClick={() => onOpenModal?.(order)}
-            style={{ cursor: 'pointer' }}
-            title="คลิกเพื่อดูและส่งทีละรายการ (Popup)"
+            className={`kitchen-outer-white-card status-${(order.serverStatus || 'CONFIRMED').toLowerCase()}${isCancelled ? ' is-cancelled' : ''}`}
+            onClick={isCancelled ? undefined : () => onOpenModal?.(order)}
+            style={{
+                cursor: isCancelled ? 'default' : 'pointer',
+                opacity: isCancelled ? 0.78 : 1,
+            }}
+            title={isCancelled ? 'ออเดอร์ถูกยกเลิกแล้ว (ไม่สามารถดำเนินการได้)' : 'คลิกเพื่อดูและส่งทีละรายการ (Popup)'}
         >
             {/* Header */}
             <header className="kitchen-outer-header">
@@ -147,9 +151,18 @@ export function KitchenOuterCard({
             </div>
 
             {/* Click to open popup hint banner */}
-            <div className="kitchen-card-open-hint">
-                <i className="bi bi-cursor-fill me-1"></i>
-                คลิกการ์ดนี้เพื่อเปิดส่งทีละรายการ (Popup)
+            <div
+                className={`kitchen-card-open-hint ${isCancelled ? 'disabled' : ''}`}
+                style={isCancelled ? {
+                    background: '#f9fafb',
+                    color: '#9ca3af',
+                    borderColor: '#e5e7eb',
+                    cursor: 'not-allowed',
+                    pointerEvents: 'none',
+                } : undefined}
+            >
+                <i className={`bi ${isCancelled ? 'bi-slash-circle' : 'bi-cursor-fill'} me-1`}></i>
+                {isCancelled ? 'ออเดอร์ถูกยกเลิกแล้ว (ปิดการสั่งทำ)' : 'คลิกการ์ดนี้เพื่อเปิดส่งทีละรายการ (Popup)'}
             </div>
 
             {/* Quick Actions Footer */}
@@ -162,7 +175,16 @@ export function KitchenOuterCard({
                         type="button"
                         className="kitchen-dispatch-all-btn"
                         onClick={() => onDispatchAll(order)}
-                        disabled={isActionLoading}
+                        disabled={isActionLoading || isCancelled}
+                        style={isCancelled ? {
+                            background: '#9ca3af',
+                            borderColor: '#9ca3af',
+                            color: '#ffffff',
+                            cursor: 'not-allowed',
+                            opacity: 0.45,
+                            boxShadow: 'none',
+                            pointerEvents: 'none',
+                        } : undefined}
                     >
                         <i className={`bi ${isActionLoading ? 'bi-arrow-repeat spin' : 'bi-send-check-fill'}`}></i>
                         {isActionLoading ? 'กำลังส่ง...' : `ส่งทุกรายการ (${activeItems.length})`}
@@ -174,8 +196,13 @@ export function KitchenOuterCard({
                         type="button"
                         className="staff-secondary"
                         onClick={() => startOrder(order)}
-                        disabled={isActionLoading}
-                        style={{ padding: '8px 12px', fontSize: 12, fontWeight: 700 }}
+                        disabled={isActionLoading || isCancelled}
+                        style={{
+                            padding: '8px 12px',
+                            fontSize: 12,
+                            fontWeight: 700,
+                            ...(isCancelled ? { opacity: 0.45, cursor: 'not-allowed', pointerEvents: 'none' } : {}),
+                        }}
                     >
                         <i className={`bi ${isActionLoading ? 'bi-arrow-repeat spin me-1' : 'bi-fire me-1'}`}></i>
                         {isActionLoading ? 'กำลังเริ่ม...' : 'เริ่มทำ'}
@@ -187,8 +214,15 @@ export function KitchenOuterCard({
                         type="button"
                         className="staff-primary"
                         onClick={() => finishOrder(order)}
-                        disabled={isActionLoading}
-                        style={{ flex: 1, padding: '8px 12px', fontSize: 12, fontWeight: 800, background: 'var(--brand-primary, #12852f)' }}
+                        disabled={isActionLoading || isCancelled}
+                        style={{
+                            flex: 1,
+                            padding: '8px 12px',
+                            fontSize: 12,
+                            fontWeight: 800,
+                            background: 'var(--brand-primary, #12852f)',
+                            ...(isCancelled ? { opacity: 0.45, cursor: 'not-allowed', pointerEvents: 'none' } : {}),
+                        }}
                     >
                         <i className={`bi ${isActionLoading ? 'bi-arrow-repeat spin me-1' : 'bi-check2-circle me-1'}`}></i>
                         {isActionLoading ? 'กำลังอัปเดต...' : 'พร้อมเสิร์ฟ'}
@@ -199,9 +233,20 @@ export function KitchenOuterCard({
                     type="button"
                     className="staff-danger"
                     onClick={() => cancelKitchenOrder(order)}
-                    disabled={isActionLoading}
-                    title="ยกเลิกออเดอร์"
-                    style={{ padding: '8px 10px', fontSize: 12, background: '#fee2e2', color: '#b91c1c', border: '1px solid #fca5a5', borderRadius: 8, cursor: 'pointer', fontWeight: 700 }}
+                    disabled={isActionLoading || isCancelled}
+                    title={isCancelled ? 'ออเดอร์นี้ถูกยกเลิกแล้ว' : 'ยกเลิกออเดอร์'}
+                    style={{
+                        padding: '8px 10px',
+                        fontSize: 12,
+                        background: isCancelled ? '#f3f4f6' : '#fee2e2',
+                        color: isCancelled ? '#9ca3af' : '#b91c1c',
+                        border: isCancelled ? '1px solid #e5e7eb' : '1px solid #fca5a5',
+                        borderRadius: 8,
+                        cursor: isCancelled ? 'not-allowed' : 'pointer',
+                        fontWeight: 700,
+                        opacity: isCancelled ? 0.45 : 1,
+                        pointerEvents: isCancelled ? 'none' : 'auto',
+                    }}
                 >
                     <i className={`bi ${isActionLoading ? 'bi-arrow-repeat spin' : 'bi-x-circle'}`}></i>
                 </button>

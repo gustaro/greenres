@@ -1208,14 +1208,31 @@
     border-top: 6px solid var(--brand-primary, var(--brand-primary));
 }
 
-.kitchen-outer-white-card.status-cancelled {
+.kitchen-outer-white-card.status-cancelled,
+.kitchen-outer-white-card.is-cancelled {
     border-top: 6px solid #ef4444;
+    border-color: #e5e7eb;
 }
 
 .kitchen-outer-white-card:hover {
     transform: translateY(-6px);
     box-shadow: 0 20px 38px -6px rgba(18, 63, 39, 0.22), 0 8px 18px -4px rgba(0, 0, 0, 0.08), 0 0 0 2px var(--brand-primary, var(--brand-primary));
     border-color: var(--brand-primary, var(--brand-primary));
+}
+
+.kitchen-outer-white-card.status-cancelled:hover,
+.kitchen-outer-white-card.is-cancelled:hover {
+    transform: none;
+    box-shadow: 0 10px 28px -4px rgba(18, 63, 39, 0.12), 0 4px 10px -2px rgba(0, 0, 0, 0.05);
+    border-color: #e5e7eb;
+}
+
+.kitchen-outer-white-card.status-cancelled:hover .kitchen-card-open-hint,
+.kitchen-outer-white-card.is-cancelled:hover .kitchen-card-open-hint {
+    background: #f9fafb !important;
+    border-color: #e5e7eb !important;
+    color: #9ca3af !important;
+    box-shadow: none !important;
 }
 
 .kitchen-outer-header {

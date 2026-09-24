@@ -21,6 +21,7 @@ export function KitchenItemModal({
     const progressPercent = items.length > 0 ? Math.round((readyItems.length / items.length) * 100) : 0
     const isAllReady = items.length > 0 && readyItems.length === items.length
     const isDineIn = order.deliveryType === 'ทานที่ร้าน'
+    const isCancelled = order.serverStatus === 'CANCELLED' || order.foodStatus === 'ยกเลิก'
 
     return (
         <div className="kitchen-modal-overlay" onClick={onClose}>
@@ -74,6 +75,26 @@ export function KitchenItemModal({
 
                 {/* Modal Body */}
                 <div className="kitchen-modal-body">
+                    {/* Cancelled Alert Banner */}
+                    {isCancelled && (
+                        <div style={{
+                            background: '#fef2f2',
+                            border: '1.5px solid #fca5a5',
+                            borderRadius: 10,
+                            padding: '10px 14px',
+                            marginBottom: 12,
+                            color: '#991b1b',
+                            fontWeight: 700,
+                            fontSize: 13,
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 8,
+                        }}>
+                            <i className="bi bi-x-circle-fill" style={{ fontSize: 18 }}></i>
+                            <span>ออเดอร์นี้ถูกยกเลิกแล้ว (ปิดการสั่งทำและไม่อนุญาตให้แก้ไขสถานะอาหาร)</span>
+                        </div>
+                    )}
+
                     {/* Overall Progress Box */}
                     <div className="kitchen-progress-box">
                         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, fontWeight: 700, marginBottom: 4, color: '#17351f' }}>
@@ -116,6 +137,7 @@ export function KitchenItemModal({
                                             orderId={order.id}
                                             itemLoadingKey={itemLoadingKey}
                                             onUpdateItemStatus={onUpdateItemStatus}
+                                            isCancelled={isCancelled}
                                         />
                                     ))}
                                 </ul>
@@ -160,6 +182,7 @@ export function KitchenItemModal({
                                                 orderId={order.id}
                                                 itemLoadingKey={itemLoadingKey}
                                                 onUpdateItemStatus={onUpdateItemStatus}
+                                                isCancelled={isCancelled}
                                             />
                                         ))}
                                     </ul>
@@ -176,6 +199,15 @@ export function KitchenItemModal({
                             type="button"
                             className="kitchen-dispatch-all-btn"
                             onClick={() => onDispatchAll(order)}
+                            disabled={isCancelled}
+                            style={isCancelled ? {
+                                background: '#9ca3af',
+                                borderColor: '#9ca3af',
+                                color: '#fff',
+                                cursor: 'not-allowed',
+                                opacity: 0.5,
+                                pointerEvents: 'none',
+                            } : undefined}
                         >
                             <i className="bi bi-send-check-fill"></i>
                             กดส่งทุกรายการที่เหลือ ({activeItems.length})
@@ -187,7 +219,13 @@ export function KitchenItemModal({
                             type="button"
                             className="staff-secondary"
                             onClick={() => startOrder(order)}
-                            style={{ padding: '8px 14px', fontSize: 13, fontWeight: 700 }}
+                            disabled={isCancelled}
+                            style={{
+                                padding: '8px 14px',
+                                fontSize: 13,
+                                fontWeight: 700,
+                                ...(isCancelled ? { opacity: 0.5, cursor: 'not-allowed', pointerEvents: 'none' } : {}),
+                            }}
                         >
                             <i className="bi bi-fire me-1"></i> เริ่มทำทั้งออเดอร์
                         </button>
@@ -201,7 +239,14 @@ export function KitchenItemModal({
                                 finishOrder(order)
                                 onClose()
                             }}
-                            style={{ padding: '10px 16px', fontSize: 13, fontWeight: 800, background: 'var(--brand-primary, #12852f)' }}
+                            disabled={isCancelled}
+                            style={{
+                                padding: '10px 16px',
+                                fontSize: 13,
+                                fontWeight: 800,
+                                background: 'var(--brand-primary, #12852f)',
+                                ...(isCancelled ? { opacity: 0.5, cursor: 'not-allowed', pointerEvents: 'none' } : {}),
+                            }}
                         >
                             <i className="bi bi-check2-circle me-1"></i> พร้อมเสิร์ฟแล้ว
                         </button>

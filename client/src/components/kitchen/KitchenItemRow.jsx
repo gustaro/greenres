@@ -3,6 +3,7 @@ export function KitchenItemRow({
     orderId,
     itemLoadingKey,
     onUpdateItemStatus,
+    isCancelled = false,
 }) {
     const isReady = item.itemStatus === 'READY' || item.itemStatus === 'SERVED'
     const isCooking = item.itemStatus === 'PREPARING'
@@ -21,7 +22,7 @@ export function KitchenItemRow({
                 marginBottom: 8,
                 background: isReady ? 'var(--brand-accent-soft, #effbdc)' : isCooking ? '#eff6ff' : '#fafaf9',
                 border: isReady ? '1.5px solid var(--brand-accent, #9fe51f)' : isCooking ? '1.5px solid #93c5fd' : '1px solid #e7e5e4',
-                opacity: isReady ? 0.85 : 1,
+                opacity: isCancelled ? 0.6 : isReady ? 0.85 : 1,
                 transition: 'all 0.2s ease',
             }}
         >
@@ -73,36 +74,40 @@ export function KitchenItemRow({
                     <div style={{ display: 'flex', gap: 4 }}>
                         <button
                             type="button"
-                            disabled={isLoading}
+                            disabled={isLoading || isCancelled}
                             onClick={() => onUpdateItemStatus(orderId, item.id, 'PREPARING')}
                             title="เริ่มทำเมนูนี้"
                             style={{
                                 padding: '6px 10px',
                                 fontSize: 11,
                                 fontWeight: 700,
-                                background: '#3b82f6',
+                                background: isCancelled ? '#9ca3af' : '#3b82f6',
                                 color: '#fff',
                                 border: 'none',
                                 borderRadius: 6,
-                                cursor: 'pointer',
+                                cursor: isCancelled ? 'not-allowed' : 'pointer',
+                                opacity: isCancelled ? 0.5 : 1,
+                                pointerEvents: isCancelled ? 'none' : 'auto',
                             }}
                         >
                             {isLoading ? <i className="bi bi-arrow-repeat spin" /> : <><i className="bi bi-fire"></i> ทำ</>}
                         </button>
                         <button
                             type="button"
-                            disabled={isLoading}
+                            disabled={isLoading || isCancelled}
                             onClick={() => onUpdateItemStatus(orderId, item.id, 'READY')}
                             title="เสร็จแล้ว กดส่งไปเสิร์ฟทันที"
                             style={{
                                 padding: '6px 10px',
                                 fontSize: 11,
                                 fontWeight: 800,
-                                background: 'var(--brand-primary, #12852f)',
+                                background: isCancelled ? '#9ca3af' : 'var(--brand-primary, #12852f)',
                                 color: '#fff',
                                 border: 'none',
                                 borderRadius: 6,
-                                cursor: 'pointer',
+                                cursor: isCancelled ? 'not-allowed' : 'pointer',
+                                opacity: isCancelled ? 0.5 : 1,
+                                pointerEvents: isCancelled ? 'none' : 'auto',
                             }}
                         >
                             {isLoading ? <i className="bi bi-arrow-repeat spin" /> : <><i className="bi bi-send-fill"></i> กดส่ง</>}
@@ -113,18 +118,20 @@ export function KitchenItemRow({
                 {isCooking && (
                     <button
                         type="button"
-                        disabled={isLoading}
+                        disabled={isLoading || isCancelled}
                         onClick={() => onUpdateItemStatus(orderId, item.id, 'READY')}
                         title="เสร็จแล้ว กดส่งไปเสิร์ฟทันที"
                         style={{
                             padding: '6px 12px',
                             fontSize: 12,
                             fontWeight: 800,
-                            background: 'var(--brand-primary, #12852f)',
+                            background: isCancelled ? '#9ca3af' : 'var(--brand-primary, #12852f)',
                             color: '#fff',
                             border: 'none',
                             borderRadius: 6,
-                            cursor: 'pointer',
+                            cursor: isCancelled ? 'not-allowed' : 'pointer',
+                            opacity: isCancelled ? 0.5 : 1,
+                            pointerEvents: isCancelled ? 'none' : 'auto',
                             display: 'inline-flex',
                             alignItems: 'center',
                             gap: 4,
@@ -137,18 +144,20 @@ export function KitchenItemRow({
                 {isReady && (
                     <button
                         type="button"
-                        disabled={isLoading}
+                        disabled={isLoading || isCancelled}
                         onClick={() => onUpdateItemStatus(orderId, item.id, 'PREPARING')}
                         title="คลิกเพื่อยกเลิกสถานะเสิร์ฟ (กลับไปทำใหม่)"
                         style={{
                             padding: '4px 8px',
                             fontSize: 10,
                             fontWeight: 600,
-                            background: '#d8e7d2',
-                            color: '#6d7b6e',
+                            background: isCancelled ? '#e5e7eb' : '#d8e7d2',
+                            color: isCancelled ? '#9ca3af' : '#6d7b6e',
                             border: 'none',
                             borderRadius: 4,
-                            cursor: 'pointer',
+                            cursor: isCancelled ? 'not-allowed' : 'pointer',
+                            opacity: isCancelled ? 0.5 : 1,
+                            pointerEvents: isCancelled ? 'none' : 'auto',
                         }}
                     >
                         {isLoading ? <i className="bi bi-arrow-repeat spin" /> : 'ย้อนกลับ'}
