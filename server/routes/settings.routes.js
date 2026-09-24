@@ -9,7 +9,8 @@ import {
     deleteHeroSlide,
     submitContactMessage,
     getContactMessages,
-    testStripeConnection
+    testStripeConnection,
+    testCloudinaryConnection
 } from "../controllers/settings.controller.js";
 import { authenticate } from "../middleware/auth.js";
 import { isAdmin } from "../middleware/role.js";
@@ -21,6 +22,7 @@ router.get("/", getSiteSettings);
 router.post("/logo", authenticate, isAdmin, upload.single("image"), updateLogo);
 router.put("/", authenticate, isAdmin, updateSiteSettings);
 router.post("/stripe/test-connection", authenticate, isAdmin, testStripeConnection);
+router.post("/cloudinary/test-connection", authenticate, isAdmin, testCloudinaryConnection);
 
 // Contact Messages
 router.post("/contact", submitContactMessage);

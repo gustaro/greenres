@@ -658,6 +658,10 @@ export const settingsApi = {
         method: 'POST',
         body: JSON.stringify(payload || {}),
     }),
+    testCloudinaryConnection: payload => api('/settings/cloudinary/test-connection', {
+        method: 'POST',
+        body: JSON.stringify(payload || {}),
+    }),
 }
 
 export const heroApi = {

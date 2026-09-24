@@ -124,6 +124,9 @@ export const getActiveSettings = () => {
         pointsMinRedeem: settings.pointsMinRedeem !== undefined ? Math.max(0, parseInt(settings.pointsMinRedeem)) : 10,
         pointsMaxDiscountPercent: settings.pointsMaxDiscountPercent !== undefined ? Math.min(100, Math.max(1, parseFloat(settings.pointsMaxDiscountPercent))) : 100,
         colorTheme: settings.colorTheme || "classic-lime",
+        cloudinaryCloudName: settings.cloudinaryCloudName || env.CLOUDINARY_CLOUD_NAME || "",
+        cloudinaryApiKey: settings.cloudinaryApiKey || env.CLOUDINARY_API_KEY || "",
+        cloudinaryApiSecret: settings.cloudinaryApiSecret || env.CLOUDINARY_API_SECRET || "",
         ...settings
     };
 };
@@ -182,6 +185,9 @@ export const updateSiteSettings = async (req, res) => {
         if (payload.pointsRedeemRate !== undefined) settings.pointsRedeemRate = Math.max(1, parseFloat(payload.pointsRedeemRate));
         if (payload.pointsMinRedeem !== undefined) settings.pointsMinRedeem = Math.max(0, parseInt(payload.pointsMinRedeem));
         if (payload.pointsMaxDiscountPercent !== undefined) settings.pointsMaxDiscountPercent = Math.min(100, Math.max(1, parseFloat(payload.pointsMaxDiscountPercent)));
+        if (payload.cloudinaryCloudName !== undefined) settings.cloudinaryCloudName = payload.cloudinaryCloudName;
+        if (payload.cloudinaryApiKey !== undefined) settings.cloudinaryApiKey = payload.cloudinaryApiKey;
+        if (payload.cloudinaryApiSecret !== undefined) settings.cloudinaryApiSecret = payload.cloudinaryApiSecret;
 
         inMemorySettings = settings;
 
@@ -369,3 +375,50 @@ export const testStripeConnection = async (req, res) => {
         });
     }
 };
+
+export const testCloudinaryConnection = async (req, res) => {
+    try {
+        const { cloudName, apiKey, apiSecret } = req.body || {};
+        const settings = getActiveSettings();
+
+        const targetCloudName = (cloudName || settings.cloudinaryCloudName || env.CLOUDINARY_CLOUD_NAME || "").trim();
+        const targetApiKey = (apiKey || settings.cloudinaryApiKey || env.CLOUDINARY_API_KEY || "").trim();
+        const targetApiSecret = (apiSecret || settings.cloudinaryApiSecret || env.CLOUDINARY_API_SECRET || "").trim();
+
+        if (!targetCloudName || !targetApiKey || !targetApiSecret) {
+            return res.status(400).json({
+                ok: false,
+                message: "กรุณากรอก Cloud Name, API Key และ API Secret ให้ครบถ้วน"
+            });
+        }
+
+        const { v2: cloudinaryTest } = await import("cloudinary");
+        cloudinaryTest.config({
+            cloud_name: targetCloudName,
+            api_key: targetApiKey,
+            api_secret: targetApiSecret,
+        });
+
+        const ping = await cloudinaryTest.api.ping();
+        let usage = null;
+        try {
+            usage = await cloudinaryTest.api.usage();
+        } catch {}
+
+        res.json({
+            ok: true,
+            cloudName: targetCloudName,
+            status: ping?.status || "ok",
+            plan: usage?.plan || "Standard",
+            creditsUsed: usage?.credits?.usage !== undefined ? `${usage.credits.usage.toFixed(1)}%` : null,
+            objectsCount: usage?.objects?.usage || null,
+            message: `เชื่อมต่อกับ Cloudinary สำเร็จ (Cloud: ${targetCloudName})`
+        });
+    } catch (err) {
+        res.status(400).json({
+            ok: false,
+            message: `เกิดข้อผิดพลาดในการเชื่อมต่อ Cloudinary: ${err.message}`
+        });
+    }
+};
+

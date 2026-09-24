@@ -12,6 +12,7 @@ import { AdminPromotionsTab } from './admin/AdminPromotionsTab'
 import { AdminUsersTab } from './admin/AdminUsersTab'
 import { AdminInventoryTab } from './admin/AdminInventoryTab'
 import { AdminReportsTab } from './admin/AdminReportsTab'
+import { AdminIntegrationsTab } from './admin/AdminIntegrationsTab'
 import './AdminDashboard.css'
 
 export { PageHead, Empty, PAGE_LINK_OPTIONS, roleNames, money } from './admin/AdminShared'
@@ -49,6 +50,7 @@ const navSections = [
         items: [
             ['users', 'ผู้ใช้งาน', 'bi-people'],
             ['settings', 'ตั้งค่าเว็บไซต์', 'bi-gear'],
+            ['integrations', 'บริการเชื่อมต่อ (API)', 'bi-plug'],
             ['social', 'ช่องทางโซเชียล', 'bi-share'],
         ]
     }
@@ -328,6 +330,7 @@ export function AdminDashboard({ orders = [], setOrders, products = [], setProdu
                         />
                     )}
                     {active === 'settings' && <WebSettings notify={notify} fail={fail} />}
+                    {active === 'integrations' && <AdminIntegrationsTab notify={notify} fail={fail} />}
                     {active === 'social' && <WebSocial notify={notify} fail={fail} />}
                 </div>
             </main>
