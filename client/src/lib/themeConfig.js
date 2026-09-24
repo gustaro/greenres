@@ -1,11 +1,12 @@
 /**
  * LimeLeaf Theme Palettes
  * 1. Classic Lime (เดิมปัจจุบัน)
- * 2. Sage Herb Garden (ตามรูปเมนูผัดผัก สดชื่น ออร์แกนิก)
- * 3. Matcha Latte (ชาเขียวญี่ปุ่น พรีเมียม ครีมมี่)
- * 4. Emerald Forest (เขียวมรกตอัญมณี หรูหราทันสมัย)
- * 5. Olive & Pistachio (เขียวมะกอก & พิสตาชิโอ อบอุ่น เป็นธรรมชาติ)
- * 6. Nordic Pine & Mint (เขียวไพน์นอร์ดิก & นีออนมิ้นต์ คูล มีพลัง)
+ * 2. Botanical Eucalyptus (เอิร์ธโทนสมุนไพร ผสานมอสเข้ม เซลาดอน และหินชนวน)
+ * 3. Sage Herb Garden (ตามรูปเมนูผัดผัก สดชื่น ออร์แกนิก)
+ * 4. Matcha Latte (ชาเขียวญี่ปุ่น พรีเมียม ครีมมี่)
+ * 5. Emerald Forest (เขียวมรกตอัญมณี หรูหราทันสมัย)
+ * 6. Olive & Pistachio (เขียวมะกอก & พิสตาชิโอ อบอุ่น เป็นธรรมชาติ)
+ * 7. Nordic Pine & Mint (เขียวไพน์นอร์ดิก & นีออนมิ้นต์ คูล มีพลัง)
  */
 
 export const COLOR_THEMES = [
@@ -44,6 +45,43 @@ export const COLOR_THEMES = [
             '--sage': '#e7f5dc',
             '--ink': '#17351f',
             '--cream': '#f6faf2',
+        }
+    },
+    {
+        id: 'botanical-eucalyptus',
+        name: 'Botanical Eucalyptus',
+        nameTh: 'เขียวโบทานิคัลยูคาลิปตัส (เอิร์ธโทนสมุนไพร)',
+        desc: 'โทนสีเขียวเอิร์ธโทนสุขุม ผสานสียูคาลิปตัส มอสเข้ม เซลาดอน และหินชนวน ให้ความรู้สึกอบอุ่น ผ่อนคลาย เรียบหรูสไตล์โบทานิคัล',
+        badge: 'เอิร์ธโทนธรรมชาติ',
+        preview: {
+            primary: '#658f80',
+            accent: '#b1c8ab',
+            dark: '#40643d',
+            surface: '#f5f8f6',
+        },
+        variables: {
+            '--brand-primary': '#658f80',
+            '--brand-primary-hover': '#54786b',
+            '--brand-primary-dark': '#40643d',
+            '--brand-accent': '#b1c8ab',
+            '--brand-accent-strong': '#618890',
+            '--brand-accent-soft': '#edf4ec',
+            '--brand-surface': '#f5f8f6',
+            '--brand-panel': '#ffffff',
+            '--brand-text': '#223326',
+            '--brand-muted': '#687e74',
+            '--brand-border': '#acbcc8',
+            '--brand-border-soft': '#d9e3ea',
+            '--brand-highlight': '#b0b7cc',
+            '--lime': '#b1c8ab',
+            '--chart': '#b1c8ab',
+            '--fern': '#658f80',
+            '--juniper': '#485b39',
+            '--pine': '#618890',
+            '--deep': '#40643d',
+            '--sage': '#edf4ec',
+            '--ink': '#223326',
+            '--cream': '#f5f8f6',
         }
     },
     {

@@ -25,7 +25,33 @@
     --brand-highlight: #edf38b;
 }
 
-/* ─── 2. Sage Herb Garden (ตามภาพเมนูผัดผัก สดชื่น ออร์แกนิก) ─── */
+/* ─── 2. Botanical Eucalyptus (เอิร์ธโทนสมุนไพร) ─── */
+html[data-theme="botanical-eucalyptus"] {
+    --brand-primary: #658f80;
+    --brand-primary-hover: #54786b;
+    --brand-primary-dark: #40643d;
+    --brand-accent: #b1c8ab;
+    --brand-accent-strong: #618890;
+    --brand-accent-soft: #edf4ec;
+    --brand-surface: #f5f8f6;
+    --brand-panel: #ffffff;
+    --brand-text: #223326;
+    --brand-muted: #687e74;
+    --brand-border: #acbcc8;
+    --brand-border-soft: #d9e3ea;
+    --brand-highlight: #b0b7cc;
+    --lime: #b1c8ab;
+    --chart: #b1c8ab;
+    --fern: #658f80;
+    --juniper: #485b39;
+    --pine: #618890;
+    --deep: #40643d;
+    --sage: #edf4ec;
+    --ink: #223326;
+    --cream: #f5f8f6;
+}
+
+/* ─── 3. Sage Herb Garden (ตามภาพเมนูผัดผัก สดชื่น ออร์แกนิก) ─── */
 html[data-theme="sage-herb"] {
     --brand-primary: #2a7260;
     --brand-primary-hover: #215f50;
@@ -51,7 +77,7 @@ html[data-theme="sage-herb"] {
     --cream: #f3f9f5;
 }
 
-/* ─── 3. Matcha Latte (ชาเขียวญี่ปุ่น พรีเมียม ครีมมี่) ─── */
+/* ─── 4. Matcha Latte (ชาเขียวญี่ปุ่น พรีเมียม ครีมมี่) ─── */
 html[data-theme="matcha-latte"] {
     --brand-primary: #3d7332;
     --brand-primary-hover: #325f29;
@@ -77,7 +103,7 @@ html[data-theme="matcha-latte"] {
     --cream: #f7faf3;
 }
 
-/* ─── 4. Emerald Forest (เขียวมรกตอัญมณี หรูหราทันสมัย) ─── */
+/* ─── 5. Emerald Forest (เขียวมรกตอัญมณี หรูหราทันสมัย) ─── */
 html[data-theme="emerald-forest"] {
     --brand-primary: #059669;
     --brand-primary-hover: #047857;
@@ -103,7 +129,7 @@ html[data-theme="emerald-forest"] {
     --cream: #f0fdf4;
 }
 
-/* ─── 5. Olive & Pistachio (เขียวมะกอก & พิสตาชิโอ อบอุ่น เป็นธรรมชาติ) ─── */
+/* ─── 6. Olive & Pistachio (เขียวมะกอก & พิสตาชิโอ อบอุ่น เป็นธรรมชาติ) ─── */
 html[data-theme="olive-pistachio"] {
     --brand-primary: #5c7c24;
     --brand-primary-hover: #4c671c;
@@ -129,7 +155,7 @@ html[data-theme="olive-pistachio"] {
     --cream: #fafcf5;
 }
 
-/* ─── 6. Nordic Pine & Mint (เขียวไพน์นอร์ดิก & นีออนมิ้นต์ คูล มีพลัง) ─── */
+/* ─── 7. Nordic Pine & Mint (เขียวไพน์นอร์ดิก & นีออนมิ้นต์ คูล มีพลัง) ─── */
 html[data-theme="nordic-pine"] {
     --brand-primary: #1b6b5c;
     --brand-primary-hover: #155549;
