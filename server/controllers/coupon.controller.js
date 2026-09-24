@@ -63,22 +63,27 @@ export const createCoupon = async (req, res, next) => {
     }
 
     const finalImageUrl = req.file ? req.file.path : (imageUrl || "/assets/basil-rice.png");
+    const finalDesc = String(description || "").trim();
+    const finalTitle = String(title || finalDesc || code).trim();
 
     const coupon = await prisma.coupon.create({
       data: {
-        code: code.toUpperCase(), description, discountType,
+        code: code.toUpperCase().trim(),
+        description: finalDesc,
+        discountType,
         discountValue: parseFloat(discountValue),
         minOrderAmount: minOrderAmount ? parseFloat(minOrderAmount) : null,
         maxDiscount: maxDiscount ? parseFloat(maxDiscount) : null,
         usageLimit: usageLimit ? parseInt(usageLimit) : null,
         expiresAt: expiresAt ? new Date(expiresAt) : null,
         metadata: {
-          title: title || description || code,
+          title: finalTitle,
           titleEn: String(titleEn || "").trim(),
+          description: finalDesc,
           descriptionEn: String(descriptionEn || "").trim(),
-          buttonLabel: buttonLabel || "ดูเมนู",
+          buttonLabel: String(buttonLabel || "ดูเมนู").trim(),
           buttonLabelEn: String(buttonLabelEn || "").trim(),
-          buttonLink: buttonLink || "/order",
+          buttonLink: String(buttonLink || "/order").trim(),
           imageUrl: finalImageUrl,
         }
       },
@@ -94,9 +99,15 @@ export const updateCoupon = async (req, res, next) => {
     const {
       isActive, usageLimit, expiresAt, title, buttonLabel, buttonLink, imageUrl, history,
       titleEn, descriptionEn, buttonLabelEn,
+      minOrderAmount, maxDiscount, discountValue, description, code,
       ...rest
     } = req.body;
     const data = { ...rest };
+    if (code !== undefined) data.code = String(code).toUpperCase().trim();
+    if (description !== undefined) data.description = String(description).trim();
+    if (discountValue !== undefined && discountValue !== "") data.discountValue = parseFloat(discountValue);
+    if (minOrderAmount !== undefined) data.minOrderAmount = minOrderAmount ? parseFloat(minOrderAmount) : null;
+    if (maxDiscount !== undefined) data.maxDiscount = maxDiscount ? parseFloat(maxDiscount) : null;
     if (isActive !== undefined) data.isActive = isActive === "true" || isActive === true;
     if (usageLimit !== undefined) data.usageLimit = usageLimit ? parseInt(usageLimit) : null;
     if (expiresAt !== undefined) data.expiresAt = expiresAt ? new Date(expiresAt) : null;
@@ -116,14 +127,18 @@ export const updateCoupon = async (req, res, next) => {
       }
     }
 
+    const finalTitle = title !== undefined ? String(title).trim() : (existingMetadata.title || existing.code);
+    const finalDesc = description !== undefined ? String(description).trim() : (existing.description || existingMetadata.description || "");
+
     data.metadata = {
       ...existingMetadata,
-      ...(title !== undefined && { title }),
+      title: finalTitle,
       ...(titleEn !== undefined && { titleEn: String(titleEn || "").trim() }),
+      description: finalDesc,
       ...(descriptionEn !== undefined && { descriptionEn: String(descriptionEn || "").trim() }),
-      ...(buttonLabel !== undefined && { buttonLabel }),
+      ...(buttonLabel !== undefined && { buttonLabel: String(buttonLabel).trim() }),
       ...(buttonLabelEn !== undefined && { buttonLabelEn: String(buttonLabelEn || "").trim() }),
-      ...(buttonLink !== undefined && { buttonLink }),
+      ...(buttonLink !== undefined && { buttonLink: String(buttonLink).trim() }),
       history: parsedHistory,
       imageUrl: finalImageUrl,
     };

@@ -175,7 +175,7 @@ export function HomePage({ onOrder, user, onAuth, onLogout, cartCount, onCart })
                             <article key={promotion.id}>
                                 <h3>{promoTitle}</h3>
                                 <div className="promotion-mini-card">
-                                    <div className="promotion-image"><img src={promotion.imageUrl || '/assets/hero-food.png'} alt={promoTitle} /><span>{promotion.discountValue ? `${promotion.discountValue}%` : promotion.code}</span></div>
+                                    <div className="promotion-image"><img src={promotion.imageUrl || '/assets/hero-food.png'} alt={promoTitle} /><span>{promotion.discountType === 'FIXED' ? `฿${promotion.discountValue}` : (promotion.discountValue ? `${promotion.discountValue}%` : promotion.code)}</span></div>
                                     <div className="promotion-copy"><small>{promotion.code}</small><p>{promoDesc}</p><button onClick={() => goTo(promotion.buttonLink)}>{promoBtn}</button></div>
                                 </div>
                             </article>

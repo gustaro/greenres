@@ -190,13 +190,13 @@ export function AdminPromotionsTab({ promotions, setPromotions, adminName, notif
                                         <option value="FIXED">จำนวนเงิน (฿)</option>
                                     </select>
                                 </label>
-                                <label>หัวข้อ (ภาษาไทย)<input name="title" required defaultValue={promotion.title} /></label>
+                                <label>หัวข้อ (ภาษาไทย)<input name="title" required defaultValue={promotion.title || promotion.code} /></label>
                                 <label>หัวข้อ (ภาษาอังกฤษ)<input name="titleEn" defaultValue={promotion.titleEn || ''} placeholder="e.g. New Member Discount" /></label>
-                                <label className="wide">รายละเอียด (ภาษาไทย)<textarea name="description" required defaultValue={promotion.description} /></label>
+                                <label className="wide">รายละเอียด (ภาษาไทย)<textarea name="description" required defaultValue={promotion.description || (promotion.discountType === 'PERCENT' ? `รับส่วนลด ${promotion.discountValue}%` : `รับส่วนลด ฿${promotion.discountValue}`)} /></label>
                                 <label className="wide">รายละเอียด (ภาษาอังกฤษ)<textarea name="descriptionEn" defaultValue={promotion.descriptionEn || ''} placeholder="e.g. 20% discount on first order" /></label>
                                 <label>มูลค่าส่วนลด<input name="value" type="number" min="1" step="0.01" required defaultValue={promotion.discountValue} /></label>
                                 <label>ยอดสั่งซื้อขั้นต่ำ (0 = ไม่มีขั้นต่ำ)<input name="minOrderAmount" type="number" min="0" step="1" defaultValue={promotion.minOrderAmount || ''} /></label>
-                                <label>ข้อความบนปุ่ม (ภาษาไทย)<input name="buttonLabel" defaultValue={promotion.buttonLabel} /></label>
+                                <label>ข้อความบนปุ่ม (ภาษาไทย)<input name="buttonLabel" defaultValue={promotion.buttonLabel || 'ดูเมนู'} /></label>
                                 <label>ข้อความบนปุ่ม (ภาษาอังกฤษ)<input name="buttonLabelEn" defaultValue={promotion.buttonLabelEn || ''} placeholder="e.g. View Menu" /></label>
                                 <label>ลิงก์ปุ่ม
                                     <select name="buttonLink" defaultValue={promotion.buttonLink || '/order'}>

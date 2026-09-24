@@ -123,7 +123,13 @@ export const mapProduct = row => {
 }
 
 const promoMetaFromRow = row => {
-    if (row.metadata && typeof row.metadata === 'object') return row.metadata
+    if (row.metadata && typeof row.metadata === 'object') {
+        return {
+            ...row.metadata,
+            title: row.metadata.title || row.code,
+            description: row.description || row.metadata.description || '',
+        }
+    }
     const meta = readJsonMeta(row.description, PROMO_META_PREFIX)
     if (meta) return meta
     return { title: row.code, description: row.description || '' }
@@ -136,7 +142,7 @@ export const mapPromotion = row => {
         code: row.code,
         title: meta.title || row.code,
         titleEn: meta.titleEn || '',
-        description: meta.description || '',
+        description: row.description || meta.description || '',
         descriptionEn: meta.descriptionEn || '',
         discountType: row.discountType,
         discountValue: Number(row.discountValue),
