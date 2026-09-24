@@ -119,7 +119,7 @@ export function HomePage({ onOrder, user, onAuth, onLogout, cartCount, onCart })
         <Navbar onOrder={onOrder} user={user} onAuth={onAuth} onLogout={onLogout} cartCount={cartCount} onCart={onCart} transparent />
         <main className="home-page">
             <section
-                className={`hero-home ${isAltTone ? 'hero-tone-primary' : 'hero-tone-accent'}`}
+                className={`hero-home ${isAltTone ? 'hero-tone-highlight' : 'hero-tone-accent'}`}
                 aria-roledescription="carousel"
                 aria-label={t('promotionsTitle')}
             >

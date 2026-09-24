@@ -99,7 +99,7 @@ export function AdminHeroTab({ heroSlides, setHeroSlides, notify, fail }) {
                 <div>
                     <strong>ระบบสลับสีพื้นหลังแบนเนอร์อัตโนมัติตามธีม (2 สี)</strong>
                     <p>
-                        พื้นหลังของแบนเนอร์แต่ละสไลด์จะสลับ 2 โทนสีระหว่าง <b>โทนไฮไลท์สดใส (Accent)</b> และ <b>โทนสีหลักเข้ม (Primary)</b> ให้โดยอัตโนมัติตามธีมสีของเว็บไซต์ที่เลือก เพื่อความสวยงาม กลมกลืน และอ่านง่ายในทุกธีม
+                        พื้นหลังของแบนเนอร์แต่ละสไลด์จะสลับ 2 โทนสีระหว่าง <b>โทนไฮไลท์สดใส (Accent)</b> และ <b>โทนสว่างประกายแดด (Highlight)</b> ให้โดยอัตโนมัติตามธีมสีของเว็บไซต์ โดยไม่ซ้ำหรือกลืนกับสีพื้นหลังของส่วนโปรโมชั่นด้านล่าง
                     </p>
                 </div>
             </div>
@@ -149,13 +149,13 @@ export function AdminHeroTab({ heroSlides, setHeroSlides, notify, fail }) {
                     heroSlides.map((hero, index) => {
                         const isAltTone = index % 2 === 1
                         const previewBg = isAltTone
-                            ? 'linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-primary-dark) 100%)'
+                            ? 'linear-gradient(135deg, var(--brand-highlight, #edf38b) 0%, var(--brand-accent-soft, #effbdc) 100%)'
                             : 'linear-gradient(135deg, var(--brand-accent) 0%, var(--brand-accent-strong, var(--brand-accent)) 100%)'
                         return (
                             <article key={hero.id} className={!hero.isActive ? 'inactive' : ''}>
                                 <div className="admin-hero-preview" style={{ background: previewBg }}>
                                     <img src={hero.imageUrl} alt="" />
-                                    <span>ลำดับที่ {hero.sortOrder} • {isAltTone ? 'โทน 2 (สีหลัก)' : 'โทน 1 (ไฮไลท์)'}</span>
+                                    <span>ลำดับที่ {hero.sortOrder} • {isAltTone ? 'โทน 2 (โกลเด้นไฮไลท์)' : 'โทน 1 (ไลม์สดใส)'}</span>
                                 </div>
                                 {editingHero === hero.id ? (
                                     <form className="admin-edit-form" onSubmit={event => saveHero(event, hero)}>
