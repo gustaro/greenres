@@ -1590,7 +1590,14 @@
 .admin-promo-grid .admin-edit-form {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px 14px;
     padding: 20px;
+}
+
+.admin-marketing-form input[type="datetime-local"],
+.admin-edit-form input[type="datetime-local"] {
+    min-width: 0;
+    max-width: 100%;
 }
 
 .admin-promo-grid .admin-edit-form .admin-form-actions {
@@ -1785,6 +1792,7 @@
 .admin-promo-grid .admin-edit-form {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px 14px;
     padding: 20px;
 }
 

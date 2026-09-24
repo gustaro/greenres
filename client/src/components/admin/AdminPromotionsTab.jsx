@@ -158,8 +158,8 @@ export function AdminPromotionsTab({ promotions, setPromotions, adminName, notif
                         {PAGE_LINK_OPTIONS.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
                     </select>
                 </label>
-                <label>วันหมดอายุ<input name="expiresAt" type="datetime-local" /></label>
-                <label>จำกัดจำนวนสิทธิ์ (ครั้ง)<input name="usageLimit" type="number" min="1" placeholder="ว่าง = ไม่จำกัด" /></label>
+                <label className="wide">วันหมดอายุ<input name="expiresAt" type="datetime-local" /></label>
+                <label className="wide">จำกัดจำนวนสิทธิ์ (ครั้ง)<input name="usageLimit" type="number" min="1" placeholder="ว่าง = ไม่จำกัด" /></label>
                 <label className="wide">อัปโหลดรูปภาพ (ไม่บังคับ)<input type="file" name="imageFile" accept="image/png, image/jpeg, image/webp" /></label>
                 <button className="admin-primary" disabled={isAdding}>
                     {isAdding ? <><i className="bi bi-arrow-repeat spin me-1" />กำลังสร้างโปรโมชั่น...</> : '+ สร้างโปรโมชั่น'}
@@ -194,8 +194,8 @@ export function AdminPromotionsTab({ promotions, setPromotions, adminName, notif
                                         )}
                                     </select>
                                 </label>
-                                <label>วันหมดอายุ<input name="expiresAt" type="datetime-local" defaultValue={promotion.expiresAt ? new Date(promotion.expiresAt).toISOString().slice(0, 16) : ''} /></label>
-                                <label>จำกัดจำนวนสิทธิ์<input name="usageLimit" type="number" min="0" defaultValue={promotion.usageLimit || ''} placeholder="ไม่จำกัด" /></label>
+                                <label className="wide">วันหมดอายุ<input name="expiresAt" type="datetime-local" defaultValue={promotion.expiresAt ? new Date(promotion.expiresAt).toISOString().slice(0, 16) : ''} /></label>
+                                <label className="wide">จำกัดจำนวนสิทธิ์ (ครั้ง)<input name="usageLimit" type="number" min="0" defaultValue={promotion.usageLimit || ''} placeholder="ไม่จำกัด" /></label>
                                 <label className="wide">อัปโหลดรูปภาพใหม่<input type="file" name="imageFile" accept="image/png, image/jpeg, image/webp" /></label>
                                 <div className="admin-form-actions">
                                     <button type="button" onClick={() => setEditingPromotion(null)}>ยกเลิก</button>
