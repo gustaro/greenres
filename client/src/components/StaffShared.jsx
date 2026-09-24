@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../lib/AuthContext'
+import { normalizeRole } from '../lib/database'
 import './RoleDashboards.css'
 
 export const money = value => new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB', maximumFractionDigits: 0 }).format(value || 0)
@@ -92,7 +93,7 @@ export function StaffShell({ role, title, subtitle, tabs, active, onTab, childre
     }, [])
 
     const userName = profile?.name || session?.user?.name || session?.user?.email || 'เจ้าหน้าที่'
-    const userRole = profile?.role || 'staff'
+    const userRole = normalizeRole(profile?.role || 'staff')
     const isAdmin = userRole === 'admin'
 
     const roleBadgeTitle = {

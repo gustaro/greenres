@@ -496,4 +496,88 @@ button.breadcrumb-item,
     object-fit: cover;
     border: 2px solid var(--brand-accent);
     display: block;
+}
+
+/* ─── Role Portal Navigation Badges ──────────────────────────── */
+.nav-role-badge {
+    height: 32px !important;
+    margin: auto 8px !important;
+    padding: 0 12px !important;
+    border-radius: 16px !important;
+    background: var(--brand-primary) !important;
+    color: var(--brand-accent) !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    font-size: 13px !important;
+    font-weight: 800 !important;
+    border: 1.5px solid var(--brand-accent) !important;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12) !important;
+    cursor: pointer !important;
+    transition: all 0.15s ease !important;
+}
+
+.nav-role-badge:hover {
+    background: var(--brand-primary-dark) !important;
+    color: #fff !important;
+    transform: translateY(-1px);
+}
+
+.nav-role-badge i {
+    font-size: 14px;
+}
+
+.responsive-role-section {
+    background: rgba(18, 133, 47, 0.08);
+    border-radius: 8px;
+    padding: 10px;
+    margin-bottom: 12px;
+    border: 1px solid rgba(18, 133, 47, 0.2);
+}
+
+.responsive-role-btn.main-role {
+    width: 100%;
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+    background: var(--brand-primary) !important;
+    color: var(--brand-accent) !important;
+    padding: 10px 14px !important;
+    border-radius: 8px !important;
+    font-weight: 800 !important;
+    font-size: 14px !important;
+    text-align: left;
+    border: 0;
+    cursor: pointer;
+}
+
+.responsive-role-btn.main-role .role-tag {
+    background: rgba(0, 0, 0, 0.25);
+    color: #fff;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 700;
+}
+
+.responsive-sub-roles {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+    margin-top: 8px;
+}
+
+.responsive-sub-roles button {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 4px !important;
+    padding: 6px 8px !important;
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    background: #fff !important;
+    color: var(--brand-primary-dark) !important;
+    border: 1px solid #d1d5db !important;
+    border-radius: 6px !important;
+    cursor: pointer;
 }

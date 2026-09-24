@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../lib/AuthContext'
 import { useLanguage } from '../lib/LanguageContext'
+import { normalizeRole } from '../lib/database'
 import './Navbar.css'
 
 const navItems = [
@@ -40,6 +41,35 @@ export function Navbar({ onOrder, user, onAuth, onLogout, cartCount, onCart, bre
 
     const currentUser = user || profile || (session ? { name: session.user?.email } : null)
     const avatarUrl = user?.avatarUrl || profile?.avatarUrl
+    const userRole = normalizeRole(profile?.role || user?.role || session?.user?.role)
+    const isOperational = ['admin', 'cashier', 'kitchen', 'delivery'].includes(userRole)
+
+    const roleConfigs = {
+        admin: {
+            path: '/admin',
+            title: lang === 'th' ? 'พอร์ทัลแอดมิน' : 'Admin Portal',
+            shortTitle: lang === 'th' ? 'แอดมิน' : 'Admin',
+            icon: 'bi bi-speedometer2',
+        },
+        cashier: {
+            path: '/cashier',
+            title: lang === 'th' ? 'พอร์ทัลแคชเชียร์' : 'Cashier Portal',
+            shortTitle: lang === 'th' ? 'แคชเชียร์' : 'Cashier',
+            icon: 'bi bi-cash-coin',
+        },
+        kitchen: {
+            path: '/kitchen',
+            title: lang === 'th' ? 'พอร์ทัลห้องครัว' : 'Kitchen Portal',
+            shortTitle: lang === 'th' ? 'ห้องครัว' : 'Kitchen',
+            icon: 'bi bi-fire',
+        },
+        delivery: {
+            path: '/delivery',
+            title: lang === 'th' ? 'พอร์ทัลไรเดอร์' : 'Rider Portal',
+            shortTitle: lang === 'th' ? 'ไรเดอร์' : 'Rider',
+            icon: 'bi bi-bicycle',
+        },
+    }
 
     useEffect(() => {
         const closeMenu = event => {
@@ -105,6 +135,16 @@ export function Navbar({ onOrder, user, onAuth, onLogout, cartCount, onCart, bre
                             {t(item.key)}
                         </button>
                     ))}
+                    {isOperational && roleConfigs[userRole] && (
+                        <button
+                            className="nav-role-badge"
+                            onClick={() => navigate(roleConfigs[userRole].path)}
+                            title={roleConfigs[userRole].title}
+                        >
+                            <i className={roleConfigs[userRole].icon} />
+                            <span>{roleConfigs[userRole].shortTitle}</span>
+                        </button>
+                    )}
                 </nav>
                 <button
                     className="lang"
@@ -131,6 +171,31 @@ export function Navbar({ onOrder, user, onAuth, onLogout, cartCount, onCart, bre
 
             <nav id="responsive-navigation" className="responsive-nav" aria-hidden={!menuOpen}>
                 <div className="responsive-nav-links">
+                    {isOperational && roleConfigs[userRole] && (
+                        <div className="responsive-role-section">
+                            <button
+                                className="responsive-role-btn main-role"
+                                onClick={() => { setMenuOpen(false); navigate(roleConfigs[userRole].path); }}
+                            >
+                                <i className={roleConfigs[userRole].icon} />
+                                <span>{roleConfigs[userRole].title}</span>
+                                <small className="role-tag">{userRole.toUpperCase()}</small>
+                            </button>
+                            {userRole === 'admin' && (
+                                <div className="responsive-sub-roles">
+                                    <button onClick={() => { setMenuOpen(false); navigate('/cashier'); }}>
+                                        <i className="bi bi-cash-coin" /> แคชเชียร์
+                                    </button>
+                                    <button onClick={() => { setMenuOpen(false); navigate('/kitchen'); }}>
+                                        <i className="bi bi-fire" /> ครัว
+                                    </button>
+                                    <button onClick={() => { setMenuOpen(false); navigate('/delivery'); }}>
+                                        <i className="bi bi-bicycle" /> ไรเดอร์
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    )}
                     {navItems.map((item) => (
                         <button key={item.key} onClick={() => handleNav(item.index)}>{t(item.key)}</button>
                     ))}

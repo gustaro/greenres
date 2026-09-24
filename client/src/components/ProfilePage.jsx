@@ -4,7 +4,7 @@ import { Navbar } from './Navbar'
 import { useAuth } from '../lib/AuthContext'
 import { useLanguage } from '../lib/LanguageContext'
 import { hasSessionToken } from '../lib/api'
-import { cancelOwnOrder, fetchOrderHistory } from '../lib/database'
+import { cancelOwnOrder, fetchOrderHistory, normalizeRole, getRoleDashboardPath } from '../lib/database'
 import { embedCoordinates, cacheAddressCoordinates } from '../lib/geo'
 import { ProfileInfoTab } from './profile/ProfileInfoTab'
 import { ProfileAddressTab } from './profile/ProfileAddressTab'
@@ -193,6 +193,23 @@ export function ProfilePage({
 
     const initial = (profile?.name ?? session?.user?.email ?? '?')[0].toUpperCase()
 
+    const userRole = normalizeRole(profile?.role || session?.user?.role)
+    const isOperational = ['admin', 'cashier', 'kitchen', 'delivery'].includes(userRole)
+
+    const roleTitles = {
+        admin: isEn ? 'Admin Management' : 'ระบบจัดการแอดมิน',
+        cashier: isEn ? 'Cashier Station' : 'สเตชั่นแคชเชียร์',
+        kitchen: isEn ? 'Kitchen Station' : 'สเตชั่นห้องครัว',
+        delivery: isEn ? 'Delivery Portal' : 'พอร์ทัลไรเดอร์ / จัดส่ง',
+    }
+
+    const roleIcons = {
+        admin: 'bi bi-speedometer2',
+        cashier: 'bi bi-cash-coin',
+        kitchen: 'bi bi-fire',
+        delivery: 'bi bi-bicycle',
+    }
+
     const menu = [
         { key: 'info', icon: <i className="bi bi-person" style={{ fontSize: 18, verticalAlign: 'middle' }} />, label: isEn ? 'Personal Info' : 'ข้อมูลส่วนตัว' },
         { key: 'orders', icon: <i className="bi bi-receipt" style={{ fontSize: 18, verticalAlign: 'middle' }} />, label: isEn ? 'Order History' : 'ประวัติการสั่งซื้อ' },
@@ -255,6 +272,30 @@ export function ProfilePage({
                             </div>
                         )}
                     </div>
+
+                    {isOperational && (
+                        <div className="sidebar-role-panel">
+                            <div className="sidebar-role-panel-header">
+                                <span className="sidebar-role-badge">
+                                    <i className={roleIcons[userRole]} /> {roleTitles[userRole]}
+                                </span>
+                            </div>
+                            <button
+                                className="sidebar-role-go-btn"
+                                onClick={() => navigate(getRoleDashboardPath(userRole))}
+                            >
+                                <span>{isEn ? 'Go to Station' : 'ไปยังหน้าปฏิบัติงาน'}</span>
+                                <i className="bi bi-arrow-right-short" style={{ fontSize: 20 }} />
+                            </button>
+                            {userRole === 'admin' && (
+                                <div className="sidebar-role-subgrid">
+                                    <button onClick={() => navigate('/cashier')}><i className="bi bi-cash-coin" /> แคชเชียร์</button>
+                                    <button onClick={() => navigate('/kitchen')}><i className="bi bi-fire" /> ครัว</button>
+                                    <button onClick={() => navigate('/delivery')}><i className="bi bi-bicycle" /> ไรเดอร์</button>
+                                </div>
+                            )}
+                        </div>
+                    )}
 
                     <nav className="sidebar-nav">
                         {menu.map(m => (

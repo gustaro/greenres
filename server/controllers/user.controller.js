@@ -9,10 +9,14 @@ export const createUser = async (req, res, next) => {
     if (password.length < 6) return res.status(400).json({ message: "Password must be at least 6 characters" });
     const existing = await prisma.user.findUnique({ where: { email } });
     if (existing) return res.status(409).json({ message: "Email already in use" });
-    const validRoles = ["CUSTOMER", "STAFF", "KITCHEN", "ADMIN"];
+    const validRoles = ["CUSTOMER", "STAFF", "KITCHEN", "RIDER", "ADMIN"];
+    let normalizedRole = String(role || "CUSTOMER").toUpperCase().trim();
+    if (normalizedRole === "DELIVERY") normalizedRole = "RIDER";
+    if (normalizedRole === "CASHIER") normalizedRole = "STAFF";
+    const finalRole = validRoles.includes(normalizedRole) ? normalizedRole : "CUSTOMER";
     const hashed = await bcrypt.hash(password, 12);
     const user = await prisma.user.create({
-      data: { email, name: name || null, phone: phone || null, password: hashed, role: validRoles.includes(role) ? role : "CUSTOMER" },
+      data: { email, name: name || null, phone: phone || null, password: hashed, role: finalRole },
       select: { id: true, email: true, name: true, phone: true, role: true, isActive: true, points: true, createdAt: true },
     });
     res.status(201).json(user);
@@ -159,14 +163,17 @@ export const updateUserStatus = async (req, res, next) => {
 export const updateUserRole = async (req, res, next) => {
   try {
     const { role } = req.body;
-    const validRoles = ["CUSTOMER", "STAFF", "KITCHEN", "ADMIN"];
-    if (!validRoles.includes(role)) {
+    const validRoles = ["CUSTOMER", "STAFF", "KITCHEN", "RIDER", "ADMIN"];
+    let normalizedRole = String(role || "").toUpperCase().trim();
+    if (normalizedRole === "DELIVERY") normalizedRole = "RIDER";
+    if (normalizedRole === "CASHIER") normalizedRole = "STAFF";
+    if (!validRoles.includes(normalizedRole)) {
       return res.status(400).json({ message: "Invalid role" });
     }
 
     const user = await prisma.user.update({
       where: { id: req.params.id },
-      data: { role },
+      data: { role: normalizedRole },
       select: { id: true, email: true, name: true, role: true },
     });
     res.json(user);

@@ -87,11 +87,11 @@ export function AdminUsersTab({ users, setUsers, notify, fail }) {
                 <label>
                     บทบาท
                     <select name="role" defaultValue="CUSTOMER">
-                        <option value="CUSTOMER">ลูกค้า</option>
-                        <option value="STAFF">แคชเชียร์</option>
-                        <option value="KITCHEN">ครัว</option>
-                        <option value="DELIVERY">เดลิเวอรี่ / ไรเดอร์</option>
-                        <option value="ADMIN">แอดมิน</option>
+                        <option value="CUSTOMER">ลูกค้า (Customer)</option>
+                        <option value="STAFF">แคชเชียร์ (Staff)</option>
+                        <option value="KITCHEN">ครัว (Kitchen)</option>
+                        <option value="RIDER">ไรเดอร์ / จัดส่ง (Rider)</option>
+                        <option value="ADMIN">แอดมิน (Admin)</option>
                     </select>
                 </label>
                 <button className="admin-primary" style={{ alignSelf: 'end' }} disabled={isAdding}>
@@ -175,12 +175,12 @@ export function AdminUsersTab({ users, setUsers, notify, fail }) {
                                                 </span>
                                             ) : (
                                                 <select
-                                                    value={userRoleLower}
+                                                    value={userRoleLower === 'rider' ? 'delivery' : userRoleLower}
                                                     disabled={updatingRoleId === user.id}
                                                     onChange={event => updateUserRole(user.id, event.target.value)}
                                                 >
                                                     <option value="customer">ลูกค้า (Customer)</option>
-                                                    <option value="delivery">ไรเดอร์ / จัดส่ง (Delivery)</option>
+                                                    <option value="delivery">ไรเดอร์ / จัดส่ง (Rider / Delivery)</option>
                                                 </select>
                                             )}
                                         </td>

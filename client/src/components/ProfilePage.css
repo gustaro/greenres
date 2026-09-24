@@ -1190,3 +1190,83 @@
     display: inline-block;
     animation: spin 1s linear infinite;
 }
+
+/* ─── Profile Sidebar Operational Role Panel ─────────────────── */
+.sidebar-role-panel {
+    margin: 12px 16px;
+    background: #f7faf5;
+    border: 1.5px solid var(--brand-accent);
+    border-radius: 8px;
+    padding: 12px;
+}
+
+.sidebar-role-panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+
+.sidebar-role-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 800;
+    color: var(--brand-primary-dark);
+}
+
+.sidebar-role-badge i {
+    font-size: 14px;
+    color: var(--brand-primary);
+}
+
+.sidebar-role-go-btn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--brand-primary);
+    color: var(--brand-accent);
+    font-size: 13px;
+    font-weight: 800;
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: 0;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.1s;
+}
+
+.sidebar-role-go-btn:hover {
+    background: var(--brand-primary-dark);
+    color: #fff;
+    transform: translateY(-1px);
+}
+
+.sidebar-role-subgrid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+    margin-top: 8px;
+}
+
+.sidebar-role-subgrid button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    background: #fff;
+    border: 1px solid #d1d5db;
+    border-radius: 5px;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--brand-primary-dark);
+    padding: 5px 4px;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.sidebar-role-subgrid button:hover {
+    background: var(--brand-surface);
+    border-color: var(--brand-primary);
+}

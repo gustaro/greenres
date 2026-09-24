@@ -10,7 +10,7 @@ import { CashierDashboard } from './components/CashierDashboard'
 import { AdminDashboard } from './components/AdminDashboard'
 import { AuthProvider, useAuth } from './lib/AuthContext'
 import { LanguageProvider, useLanguage } from './lib/LanguageContext'
-import { deliveryApi, ensureDeliveryForOrder, fetchCatalog, fetchOrders, placeOrder } from './lib/database'
+import { deliveryApi, ensureDeliveryForOrder, fetchCatalog, fetchOrders, placeOrder, getRoleDashboardPath, normalizeRole } from './lib/database'
 import { SERVER_CHANGE_EVENT, SERVER_SYNC_KEY } from './lib/api'
 import { attachRealtimeFallback, subscribeDatabaseChanges } from './lib/realtime'
 import { CartDrawer } from './components/Cart'
@@ -207,11 +207,8 @@ function MainApp() {
   }
 
   const handleLoginSuccess = user => {
-    const role = (user?.role || '').toLowerCase()
-    if (role === 'admin') navigate('/admin')
-    else if (role === 'cashier' || role === 'staff') navigate('/cashier')
-    else if (role === 'kitchen') navigate('/kitchen')
-    else if (role === 'delivery') navigate('/delivery')
+    const target = getRoleDashboardPath(user?.role)
+    navigate(target)
   }
 
   const navProps = {
@@ -231,8 +228,8 @@ function MainApp() {
         <Route path="/profile" element={<ProfilePage onOrder={() => navigate('/order')} {...navProps} />} />
         <Route path="/success" element={<Success onHome={() => navigate('/')} />} />
         <Route path="/kitchen" element={<RoleRoute session={session} profile={profile} loading={loading} roles={['kitchen', 'admin']} onAuth={() => setAuth(true)}><KitchenDashboard orders={orders} setOrders={setOrders} /></RoleRoute>} />
-        <Route path="/delivery" element={<RoleRoute session={session} profile={profile} loading={loading} roles={['delivery', 'admin']} onAuth={() => setAuth(true)}><DeliveryDashboard orders={orders} setOrders={setOrders} /></RoleRoute>} />
-        <Route path="/cashier" element={<RoleRoute session={session} profile={profile} loading={loading} roles={['cashier', 'admin']} onAuth={() => setAuth(true)}><CashierDashboard orders={orders} setOrders={setOrders} refreshOrders={refreshOrders} /></RoleRoute>} />
+        <Route path="/delivery" element={<RoleRoute session={session} profile={profile} loading={loading} roles={['delivery', 'rider', 'admin']} onAuth={() => setAuth(true)}><DeliveryDashboard orders={orders} setOrders={setOrders} /></RoleRoute>} />
+        <Route path="/cashier" element={<RoleRoute session={session} profile={profile} loading={loading} roles={['cashier', 'staff', 'admin']} onAuth={() => setAuth(true)}><CashierDashboard orders={orders} setOrders={setOrders} refreshOrders={refreshOrders} /></RoleRoute>} />
         <Route path="/admin" element={<RoleRoute session={session} profile={profile} loading={loading} roles={['admin']} onAuth={() => setAuth(true)}><AdminDashboard orders={orders} setOrders={setOrders} products={products} setProducts={setProducts} categories={categories} setCategories={setCategories} /></RoleRoute>} />
       </Routes>
       {auth && <AuthModal onClose={() => setAuth(false)} onSuccess={handleLoginSuccess} />}

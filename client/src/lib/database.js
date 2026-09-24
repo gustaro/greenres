@@ -4,16 +4,41 @@ import { extractCoordinates, cleanAddressText, embedCoordinates, cacheAddressCoo
 const roleMap = {
     CUSTOMER: 'customer',
     STAFF: 'cashier',
+    CASHIER: 'cashier',
     KITCHEN: 'kitchen',
     RIDER: 'delivery',
+    DELIVERY: 'delivery',
     ADMIN: 'admin',
+    SUPERADMIN: 'admin',
 }
 
 const serverRoleMap = {
     customer: 'CUSTOMER',
     cashier: 'STAFF',
+    staff: 'STAFF',
     kitchen: 'KITCHEN',
+    delivery: 'RIDER',
+    rider: 'RIDER',
     admin: 'ADMIN',
+}
+
+export const normalizeRole = role => {
+    const r = String(role || '').toLowerCase().trim()
+    if (r === 'admin' || r === 'superadmin') return 'admin'
+    if (r === 'cashier' || r === 'staff') return 'cashier'
+    if (r === 'kitchen') return 'kitchen'
+    if (r === 'delivery' || r === 'rider') return 'delivery'
+    if (r === 'customer' || r === 'user') return 'customer'
+    return r
+}
+
+export const getRoleDashboardPath = role => {
+    const r = normalizeRole(role)
+    if (r === 'admin') return '/admin'
+    if (r === 'cashier') return '/cashier'
+    if (r === 'kitchen') return '/kitchen'
+    if (r === 'delivery') return '/delivery'
+    return '/order'
 }
 
 const PROMO_META_PREFIX = 'LIMELEAF_PROMO:'

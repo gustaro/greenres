@@ -13,9 +13,11 @@ export const PAGE_LINK_OPTIONS = [
 export const roleNames = {
     customer: 'ลูกค้า',
     cashier: 'แคชเชียร์ / STAFF',
+    staff: 'แคชเชียร์ / STAFF',
     kitchen: 'ครัว',
     admin: 'แอดมิน',
     delivery: 'ไรเดอร์ / จัดส่ง',
+    rider: 'ไรเดอร์ / จัดส่ง',
 }
 
 export { formatPaymentOverview, formatCashierPaymentMethod } from '../StaffShared'
