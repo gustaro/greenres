@@ -5,16 +5,12 @@ import { PageHead } from './AdminShared'
 export function AdminCategoriesTab({ categories, setCategories, products, notify, fail }) {
     const [isAdding, setIsAdding] = useState(false)
     const [deletingId, setDeletingId] = useState(null)
-    const serverCanCreateSlug = name => /[a-z0-9]/i.test(name)
 
     const addCategory = async event => {
         event.preventDefault()
         const form = new FormData(event.currentTarget)
         const name = form.get('name').trim()
         if (!name) return
-        if (!serverCanCreateSlug(name)) {
-            return notify('Server สร้าง slug จาก A-Z/0-9 เท่านั้น กรุณาใส่ตัวอักษรอังกฤษในชื่อประเภทด้วย')
-        }
         setIsAdding(true)
         try {
             const data = await catalogApi.createCategory({ name, sortOrder: categories.length })
@@ -29,13 +25,10 @@ export function AdminCategoriesTab({ categories, setCategories, products, notify
     }
 
     const updateCategory = async (id, changes) => {
-        if (changes.name && !serverCanCreateSlug(changes.name)) {
-            return notify('ชื่อประเภทต้องมี A-Z/0-9 อย่างน้อย 1 ตัว เนื่องจาก Server สร้าง slug อัตโนมัติ')
-        }
         try {
             await catalogApi.updateCategory(id, changes)
             setCategories(current => current.map(category => category.id === id ? { ...category, ...changes } : category))
-            notify('อัปเดตสเตตัสแล้ว')
+            notify('อัปเดตประเภทสินค้าแล้ว')
         } catch (error) {
             fail(error)
         }

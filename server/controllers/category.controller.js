@@ -52,12 +52,28 @@ export const getCategoryBySlug = async (req, res, next) => {
   }
 };
 
+const generateCategorySlug = async (name, excludeId = null) => {
+  let baseSlug = (name || "").toLowerCase().trim().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
+  if (!baseSlug) {
+    baseSlug = excludeId ? `cat-${excludeId.slice(-6)}` : `cat-${Date.now().toString(36)}`;
+  }
+  baseSlug = baseSlug.replace(/^-+|-+$/g, '') || `cat-${Date.now().toString(36)}`;
+
+  let slug = baseSlug;
+  const where = excludeId ? { slug, NOT: { id: excludeId } } : { slug };
+  const existing = await prisma.category.findFirst({ where });
+  if (existing) {
+    slug = `${baseSlug}-${Date.now().toString(36)}`;
+  }
+  return slug;
+};
+
 export const createCategory = async (req, res, next) => {
   try {
     const { name, description, sortOrder } = req.body;
     if (!name) return res.status(400).json({ message: "Name is required" });
 
-    const slug = name.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
+    const slug = await generateCategorySlug(name);
     const imageUrl = req.file?.path || null;
 
     const category = await prisma.category.create({
@@ -87,7 +103,7 @@ export const updateCategory = async (req, res, next) => {
     const data = {};
     if (name !== undefined) {
       data.name = name;
-      data.slug = name.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
+      data.slug = await generateCategorySlug(name, existing.id);
     }
     if (description !== undefined) data.description = description;
     if (sortOrder !== undefined) data.sortOrder = parseInt(sortOrder);

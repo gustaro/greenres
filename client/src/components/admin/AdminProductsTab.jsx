@@ -6,7 +6,10 @@ export function AdminProductsTab({ products, setProducts, categories, notify, fa
     const [isAdding, setIsAdding] = useState(false)
     const [deletingId, setDeletingId] = useState(null)
     const [updatingImageId, setUpdatingImageId] = useState(null)
-    const serverCanCreateSlug = name => /[a-z0-9]/i.test(name)
+    const [editingProduct, setEditingProduct] = useState(null)
+    const [isSavingEdit, setIsSavingEdit] = useState(false)
+    const [editImagePreview, setEditImagePreview] = useState(null)
+    const [editImageFile, setEditImageFile] = useState(null)
 
     const addProduct = async event => {
         event.preventDefault()
@@ -17,19 +20,11 @@ export function AdminProductsTab({ products, setProducts, categories, notify, fa
         const extraDesc = String(form.get('description') || '').trim()
         const requestedStock = Math.max(0, Number(form.get('stock') || 0))
 
-        if (!nameTh) {
-            return notify('กรุณาระบุชื่อสินค้าภาษาไทย')
+        if (!nameTh && !nameEn) {
+            return notify('กรุณาระบุชื่อสินค้า')
         }
 
-        // Ensure server slug can be created using English name if Thai has no alphanumeric chars
-        let finalName = nameTh
-        if (!serverCanCreateSlug(finalName)) {
-            if (nameEn && serverCanCreateSlug(nameEn)) {
-                finalName = `${nameTh} (${nameEn})`
-            } else {
-                return notify('กรุณาระบุชื่อภาษาอังกฤษที่มีตัวอักษร A-Z เพื่อให้ระบบสร้าง slug สินค้าได้')
-            }
-        }
+        const finalName = nameTh || nameEn
 
         setIsAdding(true)
         try {
@@ -45,7 +40,7 @@ export function AdminProductsTab({ products, setProducts, categories, notify, fa
             if (requestedStock === 0) data = await catalogApi.updateProduct(data.id, { stock: 0, isActive: false })
             setProducts(current => [...current, mapProduct(data)])
             formElement.reset()
-            notify('เพิ่มสินค้าสำเร็จ (ทั้งชื่อไทยและอังกฤษ)')
+            notify('เพิ่มสินค้าสำเร็จ')
         } catch (error) {
             fail(error)
         } finally {
@@ -54,37 +49,93 @@ export function AdminProductsTab({ products, setProducts, categories, notify, fa
     }
 
     const updateProduct = async (id, changes) => {
-        if (changes.name && !serverCanCreateSlug(changes.name)) {
-            return notify('ชื่อสินค้าต้องมี A-Z/0-9 อย่างน้อย 1 ตัว เนื่องจาก Server สร้าง slug อัตโนมัติ')
-        }
         const payload = {}
         if ('categoryId' in changes) payload.categoryId = changes.categoryId
         if ('en' in changes) payload.description = changes.en
+        if ('description' in changes) payload.description = changes.description
         if ('stock' in changes) {
-            payload.stock = changes.stock
-            payload.isActive = Number(changes.stock) > 0
+            payload.stock = Number(changes.stock)
+            if (!('isActive' in changes)) {
+                payload.isActive = Number(changes.stock) > 0
+            }
         }
         if ('name' in changes) payload.name = changes.name
-        if ('price' in changes) payload.price = changes.price
+        if ('price' in changes) payload.price = Number(changes.price)
+        if ('isActive' in changes) payload.isActive = Boolean(changes.isActive)
         if ('status' in changes) payload.isActive = !['หมด', 'วัตถุดิบไม่เพียงพอ'].includes(changes.status)
 
         let body = payload
         if (changes.imageFile instanceof File) {
             setUpdatingImageId(id)
             body = new FormData()
-            Object.entries(payload).forEach(([key, value]) => body.append(key, String(value)))
+            Object.entries(payload).forEach(([key, value]) => {
+                if (value !== undefined && value !== null) {
+                    body.append(key, String(value))
+                }
+            })
             body.append('image', changes.imageFile)
         }
         try {
             const data = await catalogApi.updateProduct(id, body)
             setProducts(current => current.map(product => product.id === id ? mapProduct(data) : product))
-            notify('อัปเดตสินค้าแล้ว')
+            notify('อัปเดตสินค้าเรียบร้อยแล้ว')
+            return true
         } catch (error) {
             fail(error)
         } finally {
             if (changes.imageFile instanceof File) {
                 setUpdatingImageId(null)
             }
+        }
+        return false
+    }
+
+    const openEditModal = product => {
+        setEditingProduct(product)
+        setEditImagePreview(product.img || product.imageUrl || '')
+        setEditImageFile(null)
+    }
+
+    const closeEditModal = () => {
+        setEditingProduct(null)
+        setEditImagePreview(null)
+        setEditImageFile(null)
+    }
+
+    const handleEditModalSave = async event => {
+        event.preventDefault()
+        if (!editingProduct) return
+        const form = new FormData(event.currentTarget)
+        const name = String(form.get('name') || '').trim()
+        const en = String(form.get('en') || '').trim()
+        const categoryId = String(form.get('categoryId') || '')
+        const price = Number(form.get('price') || 0)
+        const stock = Math.max(0, Number(form.get('stock') || 0))
+        const isActive = form.get('isActive') === 'true'
+
+        if (!name) {
+            return notify('กรุณากรอกชื่อสินค้า')
+        }
+
+        setIsSavingEdit(true)
+        try {
+            const changes = {
+                name,
+                en,
+                categoryId,
+                price,
+                stock,
+                isActive,
+            }
+            if (editImageFile instanceof File) {
+                changes.imageFile = editImageFile
+            }
+            const ok = await updateProduct(editingProduct.id, changes)
+            if (ok) {
+                closeEditModal()
+            }
+        } finally {
+            setIsSavingEdit(false)
         }
     }
 
@@ -111,8 +162,8 @@ export function AdminProductsTab({ products, setProducts, categories, notify, fa
                     <input name="nameTh" required placeholder="เช่น ข้าวกะเพราไก่กรอบ" />
                 </label>
                 <label>
-                    ชื่อสินค้า (English Name) *
-                    <input name="nameEn" required placeholder="e.g. Crispy Basil Chicken Rice" />
+                    ชื่อสินค้า (English Name)
+                    <input name="nameEn" placeholder="e.g. Crispy Basil Chicken Rice" />
                 </label>
                 <label>
                     รายละเอียดเพิ่มเติม
@@ -156,7 +207,7 @@ export function AdminProductsTab({ products, setProducts, categories, notify, fa
                                 <th>ราคา</th>
                                 <th>สต๊อก</th>
                                 <th>สถานะ</th>
-                                <th></th>
+                                <th style={{ textAlign: 'center' }}>การจัดการ</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -164,20 +215,24 @@ export function AdminProductsTab({ products, setProducts, categories, notify, fa
                                 <tr key={product.id}>
                                     <td>
                                         <div className="admin-product-cell">
-                                            <img src={product.img} alt="" />
+                                            <img src={product.img} alt={product.name} />
                                             <span>
                                                 <small style={{ color: 'var(--brand-primary-dark, #075c1b)', fontWeight: 700, fontSize: 10 }}>ชื่อไทย:</small>
                                                 <input
+                                                    key={`name-${product.id}-${product.name}`}
                                                     className="admin-text-input"
                                                     defaultValue={product.name}
                                                     placeholder="ชื่อภาษาไทย"
-                                                    onBlur={event => event.target.value.trim() !== product.name && updateProduct(product.id, { name: event.target.value.trim() })}
+                                                    onKeyDown={event => { if (event.key === 'Enter') event.currentTarget.blur() }}
+                                                    onBlur={event => event.target.value.trim() && event.target.value.trim() !== product.name && updateProduct(product.id, { name: event.target.value.trim() })}
                                                 />
                                                 <small style={{ color: 'var(--brand-primary-dark, #075c1b)', fontWeight: 700, fontSize: 10, marginTop: 4, display: 'block' }}>English Name:</small>
                                                 <input
+                                                    key={`en-${product.id}-${product.en}`}
                                                     className="admin-text-input small"
                                                     defaultValue={product.en}
                                                     placeholder="English Name"
+                                                    onKeyDown={event => { if (event.key === 'Enter') event.currentTarget.blur() }}
                                                     onBlur={event => event.target.value.trim() !== product.en && updateProduct(product.id, { en: event.target.value.trim() })}
                                                 />
                                             </span>
@@ -213,32 +268,59 @@ export function AdminProductsTab({ products, setProducts, categories, notify, fa
                                     </td>
                                     <td>
                                         <input
+                                            key={`price-${product.id}-${product.price}`}
                                             className="admin-number-input"
                                             type="number"
                                             min="0.01"
                                             step="0.01"
                                             defaultValue={product.price}
-                                            onBlur={event => Number(event.target.value) !== product.price && updateProduct(product.id, { price: Number(event.target.value) })}
+                                            onKeyDown={event => { if (event.key === 'Enter') event.currentTarget.blur() }}
+                                            onBlur={event => Number(event.target.value) > 0 && Number(event.target.value) !== product.price && updateProduct(product.id, { price: Number(event.target.value) })}
                                         />
                                     </td>
                                     <td>
                                         <input
+                                            key={`stock-${product.id}-${product.stock}`}
                                             className="admin-number-input"
                                             type="number"
                                             min="0"
                                             defaultValue={product.stock}
-                                            onBlur={event => Number(event.target.value) !== product.stock && updateProduct(product.id, { stock: Math.max(0, Number(event.target.value)) })}
+                                            onKeyDown={event => { if (event.key === 'Enter') event.currentTarget.blur() }}
+                                            onBlur={event => event.target.value !== '' && Number(event.target.value) !== product.stock && updateProduct(product.id, { stock: Math.max(0, Number(event.target.value)) })}
                                         />
                                     </td>
                                     <td>
-                                        <i className={`admin-badge ${product.status === 'หมด' ? 'blocked' : product.status === 'เหลือน้อย' ? 'pending' : ''}`}>
-                                            {product.status}
-                                        </i>
+                                        <button
+                                            type="button"
+                                            className={`admin-badge-btn ${product.isActive ? 'active' : 'inactive'}`}
+                                            onClick={() => updateProduct(product.id, { isActive: !product.isActive })}
+                                            title="คลิกเพื่อสลับสถานะ มีสินค้า / สินค้าหมด"
+                                        >
+                                            <i className={`bi ${product.isActive ? 'bi-check-circle-fill' : 'bi-x-circle-fill'}`} />
+                                            <span>{product.isActive ? 'มีสินค้า' : 'สินค้าหมด'}</span>
+                                        </button>
                                     </td>
                                     <td>
-                                        <button className="admin-text-danger" disabled={deletingId === product.id} onClick={() => deleteProduct(product.id)}>
-                                            {deletingId === product.id ? <><i className="bi bi-arrow-repeat spin" /> ลบ...</> : 'ลบ'}
-                                        </button>
+                                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+                                            <button
+                                                type="button"
+                                                className="btn-edit-action"
+                                                onClick={() => openEditModal(product)}
+                                                title="แก้ไขข้อมูลสินค้าแบบละเอียด"
+                                            >
+                                                <i className="bi bi-pencil-square" />
+                                                <span>แก้ไข</span>
+                                            </button>
+                                            <button
+                                                type="button"
+                                                className="admin-text-danger"
+                                                disabled={deletingId === product.id}
+                                                onClick={() => deleteProduct(product.id)}
+                                                title="ลบสินค้านี้"
+                                            >
+                                                {deletingId === product.id ? <><i className="bi bi-arrow-repeat spin" /> ลบ...</> : 'ลบ'}
+                                            </button>
+                                        </div>
                                     </td>
                                 </tr>
                             ))}
@@ -246,6 +328,131 @@ export function AdminProductsTab({ products, setProducts, categories, notify, fa
                     </table>
                 </div>
             </section>
+
+            {/* Modal แก้ไขสินค้า */}
+            {editingProduct && (
+                <div className="admin-modal-backdrop" onClick={e => { if (e.target === e.currentTarget) closeEditModal() }}>
+                    <div className="admin-modal-card" role="dialog" aria-modal="true">
+                        <div className="admin-modal-header">
+                            <div className="admin-modal-title-wrap">
+                                <h3><i className="bi bi-pencil-square text-success" />แก้ไขข้อมูลสินค้า</h3>
+                                <small>รหัสสินค้า: {editingProduct.id}</small>
+                            </div>
+                            <button type="button" className="admin-modal-close" onClick={closeEditModal} aria-label="ปิด">
+                                <i className="bi bi-x-lg" />
+                            </button>
+                        </div>
+                        <form onSubmit={handleEditModalSave} style={{ display: 'contents' }}>
+                            <div className="admin-modal-body">
+                                <div className="admin-modal-image-row">
+                                    <img
+                                        src={editImagePreview || editingProduct.img || '/assets/basil-rice.png'}
+                                        alt="รูปตัวอย่างสินค้า"
+                                        className="admin-modal-image-preview"
+                                    />
+                                    <div className="admin-modal-image-actions">
+                                        <label>รูปภาพสินค้า</label>
+                                        <label className="admin-file-label" style={{ width: 'auto' }}>
+                                            <input
+                                                type="file"
+                                                accept="image/*"
+                                                className="admin-file-input"
+                                                onChange={event => {
+                                                    const file = event.target.files?.[0]
+                                                    if (file) {
+                                                        setEditImageFile(file)
+                                                        setEditImagePreview(URL.createObjectURL(file))
+                                                    }
+                                                }}
+                                            />
+                                            <span style={{ minHeight: 34, padding: '0 12px' }}>
+                                                <i className="bi bi-camera-fill" style={{ marginRight: 6 }} />
+                                                {editImageFile ? 'เลือกไฟล์ใหม่แล้ว' : 'เปลี่ยนรูปสินค้า'}
+                                            </span>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <div className="admin-modal-grid-2">
+                                    <div className="admin-modal-field">
+                                        <label>ชื่อสินค้า (ภาษาไทย) *</label>
+                                        <input
+                                            name="name"
+                                            required
+                                            defaultValue={editingProduct.name}
+                                            placeholder="เช่น ข้าวกะเพราไก่กรอบ"
+                                        />
+                                    </div>
+                                    <div className="admin-modal-field">
+                                        <label>ชื่อสินค้า (English Name)</label>
+                                        <input
+                                            name="en"
+                                            defaultValue={editingProduct.en}
+                                            placeholder="e.g. Crispy Basil Chicken Rice"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="admin-modal-field">
+                                    <label>หมวดหมู่สินค้า *</label>
+                                    <select name="categoryId" defaultValue={editingProduct.categoryId} required>
+                                        {categories.map(cat => (
+                                            <option key={cat.id} value={cat.id}>{cat.name}</option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                <div className="admin-modal-grid-2">
+                                    <div className="admin-modal-field">
+                                        <label>ราคา (บาท) *</label>
+                                        <input
+                                            name="price"
+                                            type="number"
+                                            min="0.01"
+                                            step="0.01"
+                                            required
+                                            defaultValue={editingProduct.price}
+                                            placeholder="เช่น 129"
+                                        />
+                                    </div>
+                                    <div className="admin-modal-field">
+                                        <label>สต๊อกสินค้า (ชิ้น) *</label>
+                                        <input
+                                            name="stock"
+                                            type="number"
+                                            min="0"
+                                            required
+                                            defaultValue={editingProduct.stock}
+                                            placeholder="เช่น 50"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="admin-modal-field">
+                                    <label>สถานะการขาย *</label>
+                                    <select name="isActive" defaultValue={editingProduct.isActive ? 'true' : 'false'}>
+                                        <option value="true">🟢 เปิดขาย (มีสินค้า พร้อมจำหน่าย)</option>
+                                        <option value="false">🔴 ปิดขาย (สินค้าหมด / พักจำหน่าย)</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div className="admin-modal-footer">
+                                <button type="button" className="admin-secondary" onClick={closeEditModal} disabled={isSavingEdit}>
+                                    ยกเลิก
+                                </button>
+                                <button type="submit" className="admin-primary" disabled={isSavingEdit}>
+                                    {isSavingEdit ? (
+                                        <><i className="bi bi-arrow-repeat spin me-1" />กำลังบันทึก...</>
+                                    ) : (
+                                        <><i className="bi bi-check2-circle me-1" />บันทึกการแก้ไข</>
+                                    )}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
         </>
     )
 }

@@ -131,6 +131,25 @@ export const getTopProducts = async (req, res, next) => {
   }
 };
 
+const generateProductSlug = async (name, description, excludeId = null) => {
+  let baseSlug = (name || "").toLowerCase().trim().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
+  if (!baseSlug && description) {
+    baseSlug = description.toLowerCase().trim().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
+  }
+  if (!baseSlug) {
+    baseSlug = excludeId ? `item-${excludeId.slice(-6)}` : `item-${Date.now().toString(36)}`;
+  }
+  baseSlug = baseSlug.replace(/^-+|-+$/g, '') || `item-${Date.now().toString(36)}`;
+
+  let slug = baseSlug;
+  const where = excludeId ? { slug, NOT: { id: excludeId } } : { slug };
+  const existing = await prisma.product.findFirst({ where });
+  if (existing) {
+    slug = `${baseSlug}-${Date.now().toString(36)}`;
+  }
+  return slug;
+};
+
 export const createProduct = async (req, res, next) => {
   try {
     const { categoryId, name, description, price, isFeatured, prepTime, stock } = req.body;
@@ -138,7 +157,7 @@ export const createProduct = async (req, res, next) => {
       return res.status(400).json({ message: "categoryId, name, and price are required" });
     }
 
-    const slug = name.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
+    const slug = await generateProductSlug(name, description);
     const imageUrl = req.file?.path || null;
 
     const product = await prisma.product.create({
@@ -184,7 +203,7 @@ export const updateProduct = async (req, res, next) => {
     if (categoryId) data.categoryId = categoryId;
     if (name !== undefined) {
       data.name = name;
-      data.slug = name.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
+      data.slug = await generateProductSlug(name, description || existing.description, existing.id);
     }
     if (description !== undefined) data.description = description;
     if (price !== undefined) data.price = parseFloat(price);
