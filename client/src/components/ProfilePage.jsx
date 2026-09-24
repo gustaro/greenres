@@ -13,7 +13,12 @@ import './ProfilePage.css'
 
 const money = value => new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB', maximumFractionDigits: 0 }).format(value || 0)
 
-export function ProfilePage() {
+export function ProfilePage({
+    onCart,
+    cartCount = 0,
+    onAuth,
+    onOrder,
+} = {}) {
     const { session, profile, loading, updateProfile, signOut, uploadAvatar, addAddress: addSavedAddress, deleteAddress } = useAuth()
     const navigate = useNavigate()
     const [searchParams] = useSearchParams()
@@ -156,11 +161,11 @@ export function ProfilePage() {
         <div className="profile-page">
             <Navbar
                 user={profile}
-                onOrder={() => navigate('/order')}
-                onAuth={() => { }}
+                onOrder={onOrder || (() => navigate('/order'))}
+                onAuth={onAuth || (() => { })}
                 onLogout={handleLogout}
-                cartCount={0}
-                onCart={() => { }}
+                cartCount={cartCount}
+                onCart={onCart || (() => { })}
                 breadcrumbs={[
                     { label: isEn ? 'My Profile' : 'โปรไฟล์ของฉัน', to: '/profile' },
                     { label: menu.find(m => m.key === tab)?.label ?? (isEn ? 'Profile' : 'โปรไฟล์') }

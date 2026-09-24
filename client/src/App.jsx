@@ -228,7 +228,7 @@ function MainApp() {
         <Route path="/" element={<HomePage onOrder={() => navigate('/order')} {...navProps} />} />
         <Route path="/order" element={<OrderPage onHome={() => navigate('/')} {...navProps} products={products} categories={categories} cart={cart} setCart={setCart} itemNotes={itemNotes} setItemNotes={setItemNotes} onCheckout={openCheckout} pointsToUse={pointsToUse} setPointsToUse={setPointsToUse} />} />
         <Route path="/map" element={<StoreMapPage {...navProps} onHome={() => navigate('/')} onOrder={() => navigate('/order')} />} />
-        <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/profile" element={<ProfilePage onOrder={() => navigate('/order')} {...navProps} />} />
         <Route path="/success" element={<Success onHome={() => navigate('/')} />} />
         <Route path="/kitchen" element={<RoleRoute session={session} profile={profile} loading={loading} roles={['kitchen', 'admin']} onAuth={() => setAuth(true)}><KitchenDashboard orders={orders} setOrders={setOrders} /></RoleRoute>} />
         <Route path="/delivery" element={<RoleRoute session={session} profile={profile} loading={loading} roles={['delivery', 'admin']} onAuth={() => setAuth(true)}><DeliveryDashboard orders={orders} setOrders={setOrders} /></RoleRoute>} />
