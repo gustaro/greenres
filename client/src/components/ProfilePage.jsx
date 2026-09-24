@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { Navbar } from './Navbar'
 import { useAuth } from '../lib/AuthContext'
@@ -20,7 +20,7 @@ export function ProfilePage({
     onAuth,
     onOrder,
 } = {}) {
-    const { session, profile, loading, updateProfile, signOut, uploadAvatar, addAddress: addSavedAddress, deleteAddress } = useAuth()
+    const { session, profile, loading, updateProfile, signOut, uploadAvatar, addAddress: addSavedAddress, deleteAddress, refreshProfile, settings } = useAuth()
     const navigate = useNavigate()
     const [searchParams] = useSearchParams()
     const { isEn, t } = useLanguage()
@@ -76,6 +76,7 @@ export function ProfilePage({
         }
         const loadActivity = async () => {
             if (active) setActivityLoading(true)
+            await refreshProfile?.().catch(() => { })
             const orderResult = await fetchOrderHistory().catch(() => [])
             if (active) {
                 setOrders(sortOrdersLatestFirst(orderResult))
@@ -83,11 +84,35 @@ export function ProfilePage({
             }
         }
         loadActivity()
-        const timer = window.setInterval(() => fetchOrderHistory().then(orderResult => {
-            if (active) setOrders(sortOrdersLatestFirst(orderResult))
-        }).catch(() => { }), 30000)
+        const timer = window.setInterval(() => {
+            refreshProfile?.().catch(() => { })
+            fetchOrderHistory().then(orderResult => {
+                if (active) setOrders(sortOrdersLatestFirst(orderResult))
+            }).catch(() => { })
+        }, 30000)
         return () => { active = false; window.clearInterval(timer) }
     }, [session])
+
+    const earnRate = Number(settings?.pointsEarnRate || 10)
+    const netDeliveredPoints = useMemo(() => {
+        let earned = 0
+        let used = 0
+        for (const order of orders || []) {
+            if (order.foodStatus === 'ยกเลิก' || order.status === 'CANCELLED') continue
+            const isCompleted = ['จัดส่งเสร็จสิ้น', 'ทำเสร็จแล้ว', 'เสร็จสิ้น'].includes(order.foodStatus) || order.status === 'DELIVERED'
+            if (isCompleted) {
+                const total = Number(order.totalAmount || order.total || 0)
+                earned += Math.floor(total / earnRate)
+            }
+            const usedPts = Number(order.pointsUsed || order.meta?.pointsUsed || 0)
+            if (usedPts > 0) {
+                used += usedPts
+            }
+        }
+        return Math.max(0, earned - used)
+    }, [orders, earnRate])
+
+    const displayPoints = Math.max(Number(profile?.points || 0), netDeliveredPoints)
 
     const showToast = (msg, type = 'success') => {
         setToast({ msg, type })
@@ -218,7 +243,7 @@ export function ProfilePage({
                                 style={{ cursor: 'pointer' }}
                             >
                                 <i className="bi bi-star-fill" />
-                                <span>{(profile.points || 0).toLocaleString()} P</span>
+                                <span>{displayPoints.toLocaleString()} P</span>
                             </div>
                         )}
                     </div>
@@ -285,6 +310,8 @@ export function ProfilePage({
                             orders={orders}
                             money={money}
                             onOrderMore={() => navigate('/order')}
+                            refreshProfile={refreshProfile}
+                            displayPoints={displayPoints}
                         />
                     )}
                 </main>

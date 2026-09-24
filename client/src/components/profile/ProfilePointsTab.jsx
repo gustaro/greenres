@@ -1,11 +1,15 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useLanguage } from '../../lib/LanguageContext'
 import { useAuth } from '../../lib/AuthContext'
 
-export function ProfilePointsTab({ profile, orders = [], money, onOrderMore }) {
+export function ProfilePointsTab({ profile, orders = [], money, onOrderMore, refreshProfile, displayPoints }) {
     const { isEn, t } = useLanguage()
     const { settings } = useAuth()
     const [filter, setFilter] = useState('all') // 'all' | 'earned' | 'used'
+
+    useEffect(() => {
+        refreshProfile?.()
+    }, [refreshProfile])
 
     const earnRate = Number(settings?.pointsEarnRate || 10)
     const redeemRate = Number(settings?.pointsRedeemRate || 10)
@@ -88,7 +92,24 @@ export function ProfilePointsTab({ profile, orders = [], money, onOrderMore }) {
     const earnedCount = useMemo(() => transactions.filter(t => t.type === 'earned').length, [transactions])
     const usedCount = useMemo(() => transactions.filter(t => t.type === 'used').length, [transactions])
 
-    const currentPoints = Number(profile?.points || 0)
+    const earnedFromOrders = useMemo(() => {
+        let total = 0
+        let used = 0
+        for (const order of userOrders) {
+            if (order.foodStatus === 'ยกเลิก' || order.status === 'CANCELLED') continue
+            const isCompleted = ['จัดส่งเสร็จสิ้น', 'ทำเสร็จแล้ว', 'เสร็จสิ้น'].includes(order.foodStatus) || order.status === 'DELIVERED'
+            if (isCompleted) {
+                total += Math.floor(Number(order.totalAmount || order.total || 0) / earnRate)
+            }
+            const usedPts = Number(order.pointsUsed || order.meta?.pointsUsed || 0)
+            if (usedPts > 0) used += usedPts
+        }
+        return Math.max(0, total - used)
+    }, [userOrders, earnRate])
+
+    const currentPoints = displayPoints !== undefined
+        ? displayPoints
+        : Math.max(Number(profile?.points || 0), earnedFromOrders)
     const discountValue = Math.floor(currentPoints / redeemRate)
 
     return (
