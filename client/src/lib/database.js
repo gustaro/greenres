@@ -708,8 +708,14 @@ export const settingsApi = {
 
 export const heroApi = {
     list: () => api('/settings/hero'),
-    create: payload => api('/settings/hero', { method: 'POST', body: JSON.stringify(payload) }),
-    update: (id, payload) => api(`/settings/hero/${id}`, { method: 'PUT', body: JSON.stringify(payload) }),
+    create: payload => api('/settings/hero', {
+        method: 'POST',
+        body: payload instanceof FormData ? payload : JSON.stringify(payload)
+    }),
+    update: (id, payload) => api(`/settings/hero/${id}`, {
+        method: 'PUT',
+        body: payload instanceof FormData ? payload : JSON.stringify(payload)
+    }),
     remove: id => api(`/settings/hero/${id}`, { method: 'DELETE' }),
 }
 

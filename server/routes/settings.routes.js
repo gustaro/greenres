@@ -30,8 +30,8 @@ router.get("/contact", authenticate, isAdmin, getContactMessages);
 
 // Hero Slides
 router.get("/hero", getHeroSlides);
-router.post("/hero", authenticate, isAdmin, createHeroSlide);
-router.put("/hero/:id", authenticate, isAdmin, updateHeroSlide);
+router.post("/hero", authenticate, isAdmin, upload.single("image"), createHeroSlide);
+router.put("/hero/:id", authenticate, isAdmin, upload.single("image"), updateHeroSlide);
 router.delete("/hero/:id", authenticate, isAdmin, deleteHeroSlide);
 
 export default router;

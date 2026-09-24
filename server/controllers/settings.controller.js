@@ -230,22 +230,56 @@ const saveSettings = async (settings) => {
     saveSettingsToFile(settings);
 };
 
-export const getHeroSlides = (req, res, next) => {
+const ensureLoadedSettings = async () => {
+    if (!inMemorySettings) {
+        const dbSettings = await loadSettingsFromDb();
+        inMemorySettings = dbSettings || getLocalFileSettings();
+    }
+    return inMemorySettings;
+};
+
+export const getHeroSlides = async (req, res, next) => {
     try {
+        await ensureLoadedSettings();
         const settings = getSettings();
-        res.set("Cache-Control", "public, max-age=30, s-maxage=60, stale-while-revalidate=120");
+        res.set("Cache-Control", "public, max-age=10, s-maxage=30, stale-while-revalidate=60");
         res.json(Array.isArray(settings.heroSlides) ? settings.heroSlides : []);
     } catch (err) { next(err); }
 };
 
 export const createHeroSlide = async (req, res, next) => {
     try {
-        const settings = { ...getSettings() };
+        await ensureLoadedSettings();
+        const settings = { ...(inMemorySettings || getLocalFileSettings()) };
         if (!Array.isArray(settings.heroSlides)) settings.heroSlides = [];
-        const { eyebrow = '', title, description = '', buttonLabel = 'สั่งเลย', buttonLink = '/order', imageUrl = '/assets/hero-food.png', backgroundColor = '#b8ff35', sortOrder } = req.body;
+        
+        const uploadedImageUrl = req.file ? (req.file.path || req.file.secure_url || req.file.url) : null;
+        const {
+            eyebrow = '',
+            title,
+            description = '',
+            buttonLabel = 'สั่งเลย',
+            buttonLink = '/order',
+            backgroundColor = '#b8ff35',
+            sortOrder
+        } = req.body || {};
+        
         if (!title) return res.status(400).json({ message: 'title is required' });
+        
+        const imageUrl = uploadedImageUrl || req.body.imageUrl || '/assets/hero-food.png';
         const id = `hero-${Date.now()}`;
-        const slide = { id, eyebrow, title, description, buttonLabel, buttonLink, imageUrl, backgroundColor, sortOrder: sortOrder !== undefined ? Number(sortOrder) : settings.heroSlides.length + 1, isActive: true };
+        const slide = {
+            id,
+            eyebrow,
+            title,
+            description,
+            buttonLabel,
+            buttonLink,
+            imageUrl,
+            backgroundColor,
+            sortOrder: sortOrder !== undefined ? Number(sortOrder) : settings.heroSlides.length + 1,
+            isActive: true
+        };
         settings.heroSlides.push(slide);
         settings.heroSlides.sort((a, b) => a.sortOrder - b.sortOrder);
         await saveSettings(settings);
@@ -255,11 +289,43 @@ export const createHeroSlide = async (req, res, next) => {
 
 export const updateHeroSlide = async (req, res, next) => {
     try {
-        const settings = { ...getSettings() };
-        if (!Array.isArray(settings.heroSlides)) return res.status(404).json({ message: 'not found' });
-        const idx = settings.heroSlides.findIndex(s => s.id === req.params.id);
-        if (idx === -1) return res.status(404).json({ message: 'slide not found' });
-        settings.heroSlides[idx] = { ...settings.heroSlides[idx], ...req.body, id: req.params.id };
+        await ensureLoadedSettings();
+        const settings = { ...(inMemorySettings || getLocalFileSettings()) };
+        if (!Array.isArray(settings.heroSlides)) settings.heroSlides = [];
+        
+        const uploadedImageUrl = req.file ? (req.file.path || req.file.secure_url || req.file.url) : null;
+        const targetId = String(req.params.id);
+        const idx = settings.heroSlides.findIndex(s => String(s.id) === targetId);
+
+        if (idx === -1) {
+            // Upsert if not found
+            const newSlide = {
+                id: targetId,
+                eyebrow: req.body.eyebrow || '',
+                title: req.body.title || '',
+                description: req.body.description || '',
+                buttonLabel: req.body.buttonLabel || 'สั่งเลย',
+                buttonLink: req.body.buttonLink || '/order',
+                imageUrl: uploadedImageUrl || req.body.imageUrl || '/assets/hero-food.png',
+                sortOrder: req.body.sortOrder !== undefined ? Number(req.body.sortOrder) : settings.heroSlides.length + 1,
+                isActive: req.body.isActive !== undefined ? Boolean(req.body.isActive) : true
+            };
+            settings.heroSlides.push(newSlide);
+            settings.heroSlides.sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
+            await saveSettings(settings);
+            return res.json(newSlide);
+        }
+
+        const existing = settings.heroSlides[idx];
+        const imageUrl = uploadedImageUrl || req.body.imageUrl || existing.imageUrl || '/assets/hero-food.png';
+
+        settings.heroSlides[idx] = {
+            ...existing,
+            ...req.body,
+            imageUrl,
+            sortOrder: req.body.sortOrder !== undefined ? Number(req.body.sortOrder) : existing.sortOrder,
+            id: targetId
+        };
         settings.heroSlides.sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
         await saveSettings(settings);
         res.json(settings.heroSlides[idx]);
@@ -268,9 +334,10 @@ export const updateHeroSlide = async (req, res, next) => {
 
 export const deleteHeroSlide = async (req, res, next) => {
     try {
-        const settings = { ...getSettings() };
+        await ensureLoadedSettings();
+        const settings = { ...(inMemorySettings || getLocalFileSettings()) };
         if (!Array.isArray(settings.heroSlides)) return res.status(404).json({ message: 'not found' });
-        settings.heroSlides = settings.heroSlides.filter(s => s.id !== req.params.id);
+        settings.heroSlides = settings.heroSlides.filter(s => String(s.id) !== String(req.params.id));
         await saveSettings(settings);
         res.json({ ok: true });
     } catch (err) { next(err); }

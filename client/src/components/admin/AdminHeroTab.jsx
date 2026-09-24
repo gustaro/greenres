@@ -11,22 +11,29 @@ export function AdminHeroTab({ heroSlides, setHeroSlides, notify, fail }) {
 
     const addHero = async event => {
         event.preventDefault()
-        const form = new FormData(event.currentTarget)
-        const payload = {
-            eyebrow: form.get('eyebrow')?.trim() || '',
-            title: form.get('title')?.trim() || '',
-            description: form.get('description')?.trim() || '',
-            buttonLabel: form.get('buttonLabel')?.trim() || 'สั่งเลย',
-            buttonLink: form.get('buttonLink')?.trim() || '/order',
-            sortOrder: Number(form.get('sortOrder') || heroSlides.length + 1),
-            imageUrl: form.get('imageUrl')?.trim() || '/assets/hero-food.png',
+        const formEl = event.currentTarget
+        const form = new FormData(formEl)
+        const title = form.get('title')?.trim()
+        if (!title) return notify('กรุณาใส่หัวข้อหลัก')
+
+        const imageFile = form.get('image')
+        const formData = new FormData()
+        formData.append('eyebrow', form.get('eyebrow')?.trim() || '')
+        formData.append('title', title)
+        formData.append('description', form.get('description')?.trim() || '')
+        formData.append('buttonLabel', form.get('buttonLabel')?.trim() || 'สั่งเลย')
+        formData.append('buttonLink', form.get('buttonLink')?.trim() || '/order')
+        formData.append('sortOrder', String(Number(form.get('sortOrder') || heroSlides.length + 1)))
+
+        if (imageFile instanceof File && imageFile.size > 0) {
+            formData.append('image', imageFile)
         }
-        if (!payload.title) return notify('กรุณาใส่หัวข้อหลัก')
+
         setIsAdding(true)
         try {
-            const data = await heroApi.create(payload)
+            const data = await heroApi.create(formData)
             setHeroSlides(current => [...current, data].sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0)))
-            event.currentTarget.reset()
+            formEl.reset()
             notify('เพิ่มแบนเนอร์หน้าแรกเรียบร้อยแล้ว')
         } catch (error) {
             fail(error)
@@ -37,19 +44,28 @@ export function AdminHeroTab({ heroSlides, setHeroSlides, notify, fail }) {
 
     const saveHero = async (event, hero) => {
         event.preventDefault()
-        const form = new FormData(event.currentTarget)
-        const payload = {
-            eyebrow: form.get('eyebrow')?.trim() || '',
-            title: form.get('title')?.trim() || '',
-            description: form.get('description')?.trim() || '',
-            buttonLabel: form.get('buttonLabel')?.trim() || 'สั่งเลย',
-            buttonLink: form.get('buttonLink')?.trim() || '/order',
-            sortOrder: Number(form.get('sortOrder') || hero.sortOrder),
-            imageUrl: form.get('imageUrl')?.trim() || hero.imageUrl,
+        const formEl = event.currentTarget
+        const form = new FormData(formEl)
+        const title = form.get('title')?.trim()
+        if (!title) return notify('กรุณาใส่หัวข้อหลัก')
+
+        const imageFile = form.get('image')
+        const formData = new FormData()
+        formData.append('eyebrow', form.get('eyebrow')?.trim() || '')
+        formData.append('title', title)
+        formData.append('description', form.get('description')?.trim() || '')
+        formData.append('buttonLabel', form.get('buttonLabel')?.trim() || 'สั่งเลย')
+        formData.append('buttonLink', form.get('buttonLink')?.trim() || '/order')
+        formData.append('sortOrder', String(Number(form.get('sortOrder') || hero.sortOrder)))
+        formData.append('imageUrl', hero.imageUrl || '/assets/hero-food.png')
+
+        if (imageFile instanceof File && imageFile.size > 0) {
+            formData.append('image', imageFile)
         }
+
         setSavingId(hero.id)
         try {
-            const data = await heroApi.update(hero.id, payload)
+            const data = await heroApi.update(hero.id, formData)
             setHeroSlides(current => current.map(s => s.id === hero.id ? data : s).sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0)))
             setEditingHero(null)
             notify('บันทึกการแก้ไขแบนเนอร์แล้ว')
@@ -131,11 +147,7 @@ export function AdminHeroTab({ heroSlides, setHeroSlides, notify, fail }) {
                     <input name="sortOrder" type="number" min="0" defaultValue={heroSlides.length + 1} title="เลขน้อยจะแสดงก่อน" />
                 </label>
                 <label className="wide">
-                    ลิงก์รูปภาพ (Image URL)
-                    <input name="imageUrl" placeholder="/assets/hero-food.png หรือ https://..." />
-                </label>
-                <label className="wide">
-                    หรือเลือกไฟล์รูปจากเครื่อง (ไม่เกิน 5 MB)
+                    อัปโหลดรูปภาพแบนเนอร์ (ไม่เกิน 5 MB)
                     <input name="image" type="file" accept="image/*" />
                 </label>
                 <button className="admin-primary" disabled={isAdding}>
@@ -172,8 +184,10 @@ export function AdminHeroTab({ heroSlides, setHeroSlides, notify, fail }) {
                                             </select>
                                         </label>
                                         <label>ลำดับการแสดงผล<input name="sortOrder" type="number" min="0" defaultValue={hero.sortOrder} /></label>
-                                        <label className="wide">ลิงก์รูปภาพ<input name="imageUrl" defaultValue={hero.imageUrl} /></label>
-                                        <label className="wide">เปลี่ยนรูปภาพใหม่<input name="image" type="file" accept="image/*" /></label>
+                                        <label className="wide">
+                                            เลือกเปลี่ยนรูปภาพใหม่ (ไม่เกิน 5 MB)
+                                            <input name="image" type="file" accept="image/*" />
+                                        </label>
                                         <div className="admin-form-actions">
                                             <button type="button" onClick={() => setEditingHero(null)}>ยกเลิก</button>
                                             <button className="admin-primary" disabled={savingId === hero.id}>
