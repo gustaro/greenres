@@ -16,15 +16,15 @@ const fallbackProducts = [
 ]
 
 const fallbackSlides = [
-    { id: 'default-1', eyebrow: 'LIMELEAF CATERING', title: 'สดใหม่ทุกโอกาส', description: 'บริการจัดเลี้ยงอาหารไทยและฟิวชั่น สำหรับประชุม งานเลี้ยง และอีเวนต์', buttonLabel: 'สั่งเลย', buttonLink: '/order', imageUrl: '/assets/hero-food.png', backgroundColor: '#b8ff35' },
-    { id: 'default-2', eyebrow: 'FRESH FUSION', title: 'อร่อยง่าย ได้ทุกวัน', description: 'เมนูจานเดียว ของทานเล่น และเครื่องดื่ม ส่งตรงถึงบ้าน', buttonLabel: 'ดูเมนู', buttonLink: '/order', imageUrl: '/assets/pad-thai.png', backgroundColor: '#b8ff35' },
-    { id: 'default-3', eyebrow: 'PARTY BOX', title: 'ครบอร่อยในกล่องเดียว', description: 'เลือกเมนูได้หลายแบบ เหมาะกับทีมเล็กหรือปาร์ตี้ใหญ่', buttonLabel: 'เลือกชุดอาหาร', buttonLink: '/order', imageUrl: '/assets/green-curry.png', backgroundColor: '#b8ff35' },
+    { id: 'default-1', eyebrow: 'LIMELEAF CATERING', eyebrowEn: 'LIMELEAF CATERING', title: 'สดใหม่ทุกโอกาส', titleEn: 'Fresh for Every Occasion', description: 'บริการจัดเลี้ยงอาหารไทยและฟิวชั่น สำหรับประชุม งานเลี้ยง และอีเวนต์', descriptionEn: 'Thai & fusion catering service for meetings, parties, and events', buttonLabel: 'สั่งเลย', buttonLabelEn: 'Order Now', buttonLink: '/order', imageUrl: '/assets/hero-food.png', backgroundColor: '#b8ff35' },
+    { id: 'default-2', eyebrow: 'FRESH FUSION', eyebrowEn: 'FRESH FUSION', title: 'อร่อยง่าย ได้ทุกวัน', titleEn: 'Simply Delicious Every Day', description: 'เมนูจานเดียว ของทานเล่น และเครื่องดื่ม ส่งตรงถึงบ้าน', descriptionEn: 'Single dishes, appetizers, and beverages delivered to your doorstep', buttonLabel: 'ดูเมนู', buttonLabelEn: 'View Menu', buttonLink: '/order', imageUrl: '/assets/pad-thai.png', backgroundColor: '#b8ff35' },
+    { id: 'default-3', eyebrow: 'PARTY BOX', eyebrowEn: 'PARTY BOX', title: 'ครบอร่อยในกล่องเดียว', titleEn: 'Complete Flavor in One Box', description: 'เลือกเมนูได้หลายแบบ เหมาะกับทีมเล็กหรือปาร์ตี้ใหญ่', descriptionEn: 'Various set options, ideal for small teams or large parties', buttonLabel: 'เลือกชุดอาหาร', buttonLabelEn: 'Choose Sets', buttonLink: '/order', imageUrl: '/assets/green-curry.png', backgroundColor: '#b8ff35' },
 ]
 
 const fallbackPromotions = [
-    { id: 'promo-1', code: 'LIME20', title: 'สมาชิกใหม่ลดทันที', description: 'รับส่วนลด 20% สำหรับออเดอร์แรก', discountValue: 20, imageUrl: '/assets/basil-rice.png', buttonLabel: 'รับโปรนี้', buttonLink: '/order' },
-    { id: 'promo-2', code: 'FRESH SET', title: 'เซตอิ่มคุ้มทุกวัน', description: 'จับคู่เมนูจานหลักและเครื่องดื่มในราคาพิเศษ', discountValue: 15, imageUrl: '/assets/pad-thai.png', buttonLabel: 'ดูเซตสุดคุ้ม', buttonLink: '/order' },
-    { id: 'promo-3', code: 'MEMBER', title: 'สะสมแต้ม แลกความอร่อย', description: 'ทุกยอดสั่งซื้อรับคะแนนสมาชิกสำหรับครั้งถัดไป', discountValue: 10, imageUrl: '/assets/mango-sticky-rice.png', buttonLabel: 'เริ่มสะสมแต้ม', buttonLink: '/order' },
+    { id: 'promo-1', code: 'LIME20', title: 'สมาชิกใหม่ลดทันที', titleEn: 'New Member Instant Discount', description: 'รับส่วนลด 20% สำหรับออเดอร์แรก', descriptionEn: 'Get 20% off on your first order', discountValue: 20, imageUrl: '/assets/basil-rice.png', buttonLabel: 'รับโปรนี้', buttonLabelEn: 'Claim Deal', buttonLink: '/order' },
+    { id: 'promo-2', code: 'FRESH SET', title: 'เซตอิ่มคุ้มทุกวัน', titleEn: 'Daily Value Meal Set', description: 'จับคู่เมนูจานหลักและเครื่องดื่มในราคาพิเศษ', descriptionEn: 'Pair main dishes and drinks at a special price', discountValue: 15, imageUrl: '/assets/pad-thai.png', buttonLabel: 'ดูเซตสุดคุ้ม', buttonLabelEn: 'View Set', buttonLink: '/order' },
+    { id: 'promo-3', code: 'MEMBER', title: 'สะสมแต้ม แลกความอร่อย', titleEn: 'Earn Points for Rewards', description: 'ทุกยอดสั่งซื้อรับคะแนนสมาชิกสำหรับครั้งถัดไป', descriptionEn: 'Earn member points on every order for your next meal', discountValue: 10, imageUrl: '/assets/mango-sticky-rice.png', buttonLabel: 'เริ่มสะสมแต้ม', buttonLabelEn: 'Start Earning', buttonLink: '/order' },
 ]
 
 
@@ -135,15 +135,17 @@ export function HomePage({ onOrder, user, onAuth, onLogout, cartCount, onCart })
                 )}
                 <div className="hero-slide" key={currentSlide.id}>
                     <div className="hero-copy">
-                        <span>{currentSlide.eyebrow}</span>
-                        <h1>{currentSlide.title}</h1>
-                        <p>{currentSlide.description}</p>
-                        <button onClick={() => goTo(currentSlide.buttonLink)}>{currentSlide.buttonLabel || (isEn ? 'Order Now' : 'สั่งเลย')} <i className="bi bi-arrow-right ms-2" /></button>
+                        <span>{(isEn && currentSlide.eyebrowEn) ? currentSlide.eyebrowEn : currentSlide.eyebrow}</span>
+                        <h1>{(isEn && currentSlide.titleEn) ? currentSlide.titleEn : currentSlide.title}</h1>
+                        <p>{(isEn && currentSlide.descriptionEn) ? currentSlide.descriptionEn : currentSlide.description}</p>
+                        <button onClick={() => goTo(currentSlide.buttonLink)}>
+                            {(isEn && currentSlide.buttonLabelEn) ? currentSlide.buttonLabelEn : (currentSlide.buttonLabel || (isEn ? 'Order Now' : 'สั่งเลย'))} <i className="bi bi-arrow-right ms-2" />
+                        </button>
                     </div>
                     <div className="hero-picture">
                         <span className="hero-picture-glow" />
                         <div className="hero-picture-frame">
-                            <img src={currentSlide.imageUrl || '/assets/hero-food.png'} alt={currentSlide.title} />
+                            <img src={currentSlide.imageUrl || '/assets/hero-food.png'} alt={(isEn && currentSlide.titleEn) ? currentSlide.titleEn : currentSlide.title} />
                         </div>
                     </div>
                 </div>
@@ -165,13 +167,20 @@ export function HomePage({ onOrder, user, onAuth, onLogout, cartCount, onCart })
             <section className="promotion-section" id="promotions">
                 <div className="promotion-heading"><div><small>LIMELEAF DEALS</small><h2>{t('promotionsTitle')}</h2></div></div>
                 <div className="promotion-grid">
-                    {promotions.map(promotion => <article key={promotion.id}>
-                        <h3>{promotion.title}</h3>
-                        <div className="promotion-mini-card">
-                            <div className="promotion-image"><img src={promotion.imageUrl || '/assets/hero-food.png'} alt={promotion.title} /><span>{promotion.discountValue ? `${promotion.discountValue}%` : promotion.code}</span></div>
-                            <div className="promotion-copy"><small>{promotion.code}</small><p>{promotion.description}</p><button onClick={() => goTo(promotion.buttonLink)}>{promotion.buttonLabel || t('claimOffer')}</button></div>
-                        </div>
-                    </article>)}
+                    {promotions.map(promotion => {
+                        const promoTitle = (isEn && promotion.titleEn) ? promotion.titleEn : promotion.title
+                        const promoDesc = (isEn && promotion.descriptionEn) ? promotion.descriptionEn : promotion.description
+                        const promoBtn = (isEn && promotion.buttonLabelEn) ? promotion.buttonLabelEn : (promotion.buttonLabel || t('claimOffer'))
+                        return (
+                            <article key={promotion.id}>
+                                <h3>{promoTitle}</h3>
+                                <div className="promotion-mini-card">
+                                    <div className="promotion-image"><img src={promotion.imageUrl || '/assets/hero-food.png'} alt={promoTitle} /><span>{promotion.discountValue ? `${promotion.discountValue}%` : promotion.code}</span></div>
+                                    <div className="promotion-copy"><small>{promotion.code}</small><p>{promoDesc}</p><button onClick={() => goTo(promotion.buttonLink)}>{promoBtn}</button></div>
+                                </div>
+                            </article>
+                        )
+                    })}
                 </div>
             </section>
 

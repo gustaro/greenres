@@ -51,7 +51,8 @@ export const createCoupon = async (req, res, next) => {
     const {
       code, description, discountType, discountValue,
       minOrderAmount, maxDiscount, usageLimit, expiresAt,
-      title, buttonLabel, buttonLink, imageUrl
+      title, buttonLabel, buttonLink, imageUrl,
+      titleEn, descriptionEn, buttonLabelEn
     } = req.body;
 
     if (!code || !discountType || !discountValue) {
@@ -73,7 +74,10 @@ export const createCoupon = async (req, res, next) => {
         expiresAt: expiresAt ? new Date(expiresAt) : null,
         metadata: {
           title: title || description || code,
+          titleEn: String(titleEn || "").trim(),
+          descriptionEn: String(descriptionEn || "").trim(),
           buttonLabel: buttonLabel || "ดูเมนู",
+          buttonLabelEn: String(buttonLabelEn || "").trim(),
           buttonLink: buttonLink || "/order",
           imageUrl: finalImageUrl,
         }
@@ -87,7 +91,11 @@ export const createCoupon = async (req, res, next) => {
 
 export const updateCoupon = async (req, res, next) => {
   try {
-    const { isActive, usageLimit, expiresAt, title, buttonLabel, buttonLink, imageUrl, history, ...rest } = req.body;
+    const {
+      isActive, usageLimit, expiresAt, title, buttonLabel, buttonLink, imageUrl, history,
+      titleEn, descriptionEn, buttonLabelEn,
+      ...rest
+    } = req.body;
     const data = { ...rest };
     if (isActive !== undefined) data.isActive = isActive === "true" || isActive === true;
     if (usageLimit !== undefined) data.usageLimit = usageLimit ? parseInt(usageLimit) : null;
@@ -111,7 +119,10 @@ export const updateCoupon = async (req, res, next) => {
     data.metadata = {
       ...existingMetadata,
       ...(title !== undefined && { title }),
+      ...(titleEn !== undefined && { titleEn: String(titleEn || "").trim() }),
+      ...(descriptionEn !== undefined && { descriptionEn: String(descriptionEn || "").trim() }),
       ...(buttonLabel !== undefined && { buttonLabel }),
+      ...(buttonLabelEn !== undefined && { buttonLabelEn: String(buttonLabelEn || "").trim() }),
       ...(buttonLink !== undefined && { buttonLink }),
       history: parsedHistory,
       imageUrl: finalImageUrl,

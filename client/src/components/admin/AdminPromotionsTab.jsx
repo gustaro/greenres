@@ -35,10 +35,13 @@ export function AdminPromotionsTab({ promotions, setPromotions, adminName, notif
             const payload = {
                 code: form.get('code').trim().toUpperCase(),
                 title: form.get('title').trim(),
+                titleEn: form.get('titleEn')?.trim() || '',
                 description: form.get('description').trim(),
+                descriptionEn: form.get('descriptionEn')?.trim() || '',
                 discountType: form.get('discountType') || 'PERCENT',
                 discountValue: Number(form.get('value')),
                 buttonLabel: form.get('buttonLabel').trim() || 'ดูเมนู',
+                buttonLabelEn: form.get('buttonLabelEn')?.trim() || '',
                 buttonLink: form.get('buttonLink').trim() || '/order',
                 usageLimit: usageLimitVal,
                 expiresAt: expiresAtVal,
@@ -92,10 +95,13 @@ export function AdminPromotionsTab({ promotions, setPromotions, adminName, notif
             const payload = {
                 code: form.get('code').trim().toUpperCase(),
                 title: form.get('title').trim(),
+                titleEn: form.get('titleEn')?.trim() || '',
                 description: form.get('description').trim(),
+                descriptionEn: form.get('descriptionEn')?.trim() || '',
                 discountType: form.get('discountType') || 'PERCENT',
                 discountValue: Number(form.get('value')),
                 buttonLabel: form.get('buttonLabel').trim() || 'ดูเมนู',
+                buttonLabelEn: form.get('buttonLabelEn')?.trim() || '',
                 buttonLink: form.get('buttonLink').trim() || '/order',
                 minOrderAmount: minAmt > 0 ? minAmt : null,
                 usageLimit: usageLimitVal,
@@ -140,9 +146,11 @@ export function AdminPromotionsTab({ promotions, setPromotions, adminName, notif
         <>
             <PageHead eyebrow="MARKETING" title="จัดการโปรโมชั่น" description="จัดการคูปองตาม Coupon API ของ Server (รายการคูปองฝั่งลูกค้าเป็นสิทธิ์ที่ Server จำกัดไว้)" />
             <form className="admin-marketing-form promotion" onSubmit={addPromotion}>
-                <label>โค้ด<input name="code" required placeholder="LIME20" /></label>
-                <label>หัวข้อโปรโมชั่น<input name="title" required placeholder="สมาชิกใหม่ลดทันที" /></label>
-                <label className="wide">รายละเอียด<textarea name="description" required placeholder="รับส่วนลดสำหรับออเดอร์แรก" /></label>
+                <label>โค้ดโปรโมชั่น<input name="code" required placeholder="LIME20" /></label>
+                <label>หัวข้อโปรโมชั่น (ภาษาไทย)<input name="title" required placeholder="สมาชิกใหม่ลดทันที" /></label>
+                <label className="wide">หัวข้อโปรโมชั่น (ภาษาอังกฤษ - English Title)<input name="titleEn" placeholder="e.g. New Member Instant Discount" /></label>
+                <label className="wide">รายละเอียด (ภาษาไทย)<textarea name="description" required placeholder="รับส่วนลดสำหรับออเดอร์แรก" /></label>
+                <label className="wide">รายละเอียด (ภาษาอังกฤษ - English Description)<textarea name="descriptionEn" placeholder="e.g. Get instant 20% discount on your first order" /></label>
                 <label>
                     ประเภทส่วนลด
                     <select name="discountType" defaultValue="PERCENT">
@@ -152,14 +160,15 @@ export function AdminPromotionsTab({ promotions, setPromotions, adminName, notif
                 </label>
                 <label>มูลค่าส่วนลด<input name="value" required type="number" min="1" step="0.01" /></label>
                 <label>ยอดสั่งขั้นต่ำ (฿)<input name="minOrderAmount" type="number" min="0" step="0.01" placeholder="0 = ไม่จำกัด" /></label>
-                <label>ข้อความบนปุ่ม<input name="buttonLabel" defaultValue="ดูเมนู" /></label>
                 <label>ลิงก์ปุ่ม
                     <select name="buttonLink" defaultValue="/order">
                         {PAGE_LINK_OPTIONS.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
                     </select>
                 </label>
-                <label className="wide">วันหมดอายุ<input name="expiresAt" type="datetime-local" /></label>
-                <label className="wide">จำกัดจำนวนสิทธิ์ (ครั้ง)<input name="usageLimit" type="number" min="1" placeholder="ว่าง = ไม่จำกัด" /></label>
+                <label className="wide">ข้อความบนปุ่ม (ภาษาไทย)<input name="buttonLabel" defaultValue="ดูเมนู" placeholder="ดูเมนู" /></label>
+                <label className="wide">ข้อความบนปุ่ม (ภาษาอังกฤษ)<input name="buttonLabelEn" placeholder="e.g. View Menu / Claim Now" /></label>
+                <label>วันหมดอายุ<input name="expiresAt" type="datetime-local" /></label>
+                <label>จำกัดจำนวนสิทธิ์ (ครั้ง)<input name="usageLimit" type="number" min="1" placeholder="ว่าง = ไม่จำกัด" /></label>
                 <label className="wide">อัปโหลดรูปภาพ (ไม่บังคับ)<input type="file" name="imageFile" accept="image/png, image/jpeg, image/webp" /></label>
                 <button className="admin-primary" disabled={isAdding}>
                     {isAdding ? <><i className="bi bi-arrow-repeat spin me-1" />กำลังสร้างโปรโมชั่น...</> : '+ สร้างโปรโมชั่น'}
@@ -174,8 +183,6 @@ export function AdminPromotionsTab({ promotions, setPromotions, adminName, notif
                         {editingPromotion === promotion.id ? (
                             <form className="admin-edit-form" onSubmit={event => savePromotion(event, promotion)}>
                                 <label>โค้ด<input name="code" required defaultValue={promotion.code} /></label>
-                                <label>หัวข้อ<input name="title" required defaultValue={promotion.title} /></label>
-                                <label className="wide">รายละเอียด<textarea name="description" required defaultValue={promotion.description} /></label>
                                 <label>
                                     ประเภทส่วนลด
                                     <select name="discountType" defaultValue={promotion.discountType}>
@@ -183,9 +190,14 @@ export function AdminPromotionsTab({ promotions, setPromotions, adminName, notif
                                         <option value="FIXED">จำนวนเงิน (฿)</option>
                                     </select>
                                 </label>
+                                <label>หัวข้อ (ภาษาไทย)<input name="title" required defaultValue={promotion.title} /></label>
+                                <label>หัวข้อ (ภาษาอังกฤษ)<input name="titleEn" defaultValue={promotion.titleEn || ''} placeholder="e.g. New Member Discount" /></label>
+                                <label className="wide">รายละเอียด (ภาษาไทย)<textarea name="description" required defaultValue={promotion.description} /></label>
+                                <label className="wide">รายละเอียด (ภาษาอังกฤษ)<textarea name="descriptionEn" defaultValue={promotion.descriptionEn || ''} placeholder="e.g. 20% discount on first order" /></label>
                                 <label>มูลค่าส่วนลด<input name="value" type="number" min="1" step="0.01" required defaultValue={promotion.discountValue} /></label>
-                                <label className="wide">ยอดสั่งซื้อขั้นต่ำ (0 = ไม่มีขั้นต่ำ)<input name="minOrderAmount" type="number" min="0" step="1" defaultValue={promotion.minOrderAmount || ''} /></label>
-                                <label>ข้อความบนปุ่ม<input name="buttonLabel" defaultValue={promotion.buttonLabel} /></label>
+                                <label>ยอดสั่งซื้อขั้นต่ำ (0 = ไม่มีขั้นต่ำ)<input name="minOrderAmount" type="number" min="0" step="1" defaultValue={promotion.minOrderAmount || ''} /></label>
+                                <label>ข้อความบนปุ่ม (ภาษาไทย)<input name="buttonLabel" defaultValue={promotion.buttonLabel} /></label>
+                                <label>ข้อความบนปุ่ม (ภาษาอังกฤษ)<input name="buttonLabelEn" defaultValue={promotion.buttonLabelEn || ''} placeholder="e.g. View Menu" /></label>
                                 <label>ลิงก์ปุ่ม
                                     <select name="buttonLink" defaultValue={promotion.buttonLink || '/order'}>
                                         {PAGE_LINK_OPTIONS.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
@@ -194,7 +206,7 @@ export function AdminPromotionsTab({ promotions, setPromotions, adminName, notif
                                         )}
                                     </select>
                                 </label>
-                                <label className="wide">วันหมดอายุ<input name="expiresAt" type="datetime-local" defaultValue={promotion.expiresAt ? new Date(promotion.expiresAt).toISOString().slice(0, 16) : ''} /></label>
+                                <label>วันหมดอายุ<input name="expiresAt" type="datetime-local" defaultValue={promotion.expiresAt ? new Date(promotion.expiresAt).toISOString().slice(0, 16) : ''} /></label>
                                 <label className="wide">จำกัดจำนวนสิทธิ์ (ครั้ง)<input name="usageLimit" type="number" min="0" defaultValue={promotion.usageLimit || ''} placeholder="ไม่จำกัด" /></label>
                                 <label className="wide">อัปโหลดรูปภาพใหม่<input type="file" name="imageFile" accept="image/png, image/jpeg, image/webp" /></label>
                                 <div className="admin-form-actions">
@@ -212,10 +224,20 @@ export function AdminPromotionsTab({ promotions, setPromotions, adminName, notif
                                 </div>
                                 <div className="admin-promo-content">
                                     <div className="admin-promo-title-row"><span className="code">{promotion.code}</span></div>
-                                    <h2>{promotion.title}</h2>
+                                    <h2>
+                                        {promotion.title}
+                                        {promotion.titleEn && <span style={{ display: 'block', fontSize: '13px', color: 'var(--brand-muted)', fontWeight: 600, marginTop: 2 }}>{promotion.titleEn}</span>}
+                                    </h2>
                                     <p>{promotion.description}</p>
+                                    {promotion.descriptionEn && <p style={{ fontSize: '12px', color: '#68776b', fontStyle: 'italic', margin: '2px 0 6px' }}>{promotion.descriptionEn}</p>}
                                     <div className="admin-promo-discount">
                                         <strong>{promotion.discountType === 'PERCENT' ? `ลด ${promotion.discountValue}%` : `ลด ${money(promotion.discountValue)}`}</strong>
+                                    </div>
+                                    <div style={{ fontSize: '11px', color: 'var(--brand-muted)', margin: '4px 0 6px' }}>
+                                        <i className="bi bi-cursor-fill me-1" />
+                                        ปุ่ม: <b>{promotion.buttonLabel}</b>
+                                        {promotion.buttonLabelEn && <span> ({promotion.buttonLabelEn})</span>}
+                                        {' → '}{promotion.buttonLink}
                                     </div>
                                     {promotion.expiresAt && (
                                         <div className="admin-promo-meta-tag">

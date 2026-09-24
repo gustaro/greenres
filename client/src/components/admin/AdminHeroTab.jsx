@@ -19,9 +19,13 @@ export function AdminHeroTab({ heroSlides, setHeroSlides, notify, fail }) {
         const imageFile = form.get('image')
         const formData = new FormData()
         formData.append('eyebrow', form.get('eyebrow')?.trim() || '')
+        formData.append('eyebrowEn', form.get('eyebrowEn')?.trim() || '')
         formData.append('title', title)
+        formData.append('titleEn', form.get('titleEn')?.trim() || '')
         formData.append('description', form.get('description')?.trim() || '')
+        formData.append('descriptionEn', form.get('descriptionEn')?.trim() || '')
         formData.append('buttonLabel', form.get('buttonLabel')?.trim() || 'สั่งเลย')
+        formData.append('buttonLabelEn', form.get('buttonLabelEn')?.trim() || '')
         formData.append('buttonLink', form.get('buttonLink')?.trim() || '/order')
         formData.append('sortOrder', String(Number(form.get('sortOrder') || heroSlides.length + 1)))
 
@@ -52,9 +56,13 @@ export function AdminHeroTab({ heroSlides, setHeroSlides, notify, fail }) {
         const imageFile = form.get('image')
         const formData = new FormData()
         formData.append('eyebrow', form.get('eyebrow')?.trim() || '')
+        formData.append('eyebrowEn', form.get('eyebrowEn')?.trim() || '')
         formData.append('title', title)
+        formData.append('titleEn', form.get('titleEn')?.trim() || '')
         formData.append('description', form.get('description')?.trim() || '')
+        formData.append('descriptionEn', form.get('descriptionEn')?.trim() || '')
         formData.append('buttonLabel', form.get('buttonLabel')?.trim() || 'สั่งเลย')
+        formData.append('buttonLabelEn', form.get('buttonLabelEn')?.trim() || '')
         formData.append('buttonLink', form.get('buttonLink')?.trim() || '/order')
         formData.append('sortOrder', String(Number(form.get('sortOrder') || hero.sortOrder)))
         formData.append('imageUrl', hero.imageUrl || '/assets/hero-food.png')
@@ -120,21 +128,37 @@ export function AdminHeroTab({ heroSlides, setHeroSlides, notify, fail }) {
                 </div>
             </div>
             <form className="admin-marketing-form" onSubmit={addHero}>
-                <label>
-                    หัวข้อย่อยด้านบน (Eyebrow)
+                <label className="wide">
+                    หัวข้อย่อยด้านบน (Eyebrow - ภาษาไทย)
                     <input name="eyebrow" required placeholder="เช่น LIMELEAF CATERING หรือ โปรโมชั่นพิเศษ" />
                 </label>
-                <label>
-                    หัวข้อหลัก (Title)
+                <label className="wide">
+                    หัวข้อย่อยด้านบน (Eyebrow - ภาษาอังกฤษ)
+                    <input name="eyebrowEn" placeholder="e.g. LIMELEAF CATERING or SPECIAL PROMOTION" />
+                </label>
+                <label className="wide">
+                    หัวข้อหลัก (Title - ภาษาไทย)
                     <input name="title" required placeholder="เช่น สดใหม่ทุกโอกาส หรือ เมนูแนะนำประจำสัปดาห์" />
                 </label>
                 <label className="wide">
-                    รายละเอียด (Description)
+                    หัวข้อหลัก (Title - ภาษาอังกฤษ)
+                    <input name="titleEn" placeholder="e.g. Fresh for Every Occasion" />
+                </label>
+                <label className="wide">
+                    รายละเอียด (Description - ภาษาไทย)
                     <textarea name="description" required placeholder="คำอธิบายสั้นๆ ดึงดูดลูกค้า เช่น บริการจัดเลี้ยงอาหารไทยรสชาติต้นตำรับ..." />
                 </label>
+                <label className="wide">
+                    รายละเอียด (Description - ภาษาอังกฤษ)
+                    <textarea name="descriptionEn" placeholder="Short engaging description in English..." />
+                </label>
                 <label>
-                    ข้อความบนปุ่มกด (Button Label)
-                    <input name="buttonLabel" required defaultValue="สั่งเลย" placeholder="เช่น สั่งเลย, ดูเมนู, จองโต๊ะ" />
+                    ข้อความบนปุ่มกด (TH)
+                    <input name="buttonLabel" required defaultValue="สั่งเลย" placeholder="เช่น สั่งเลย, ดูเมนู" />
+                </label>
+                <label>
+                    ข้อความบนปุ่มกด (EN)
+                    <input name="buttonLabelEn" defaultValue="Order Now" placeholder="e.g. Order Now, View Menu" />
                 </label>
                 <label>
                     ปลายทางเมื่อกดปุ่ม (Button Link)
@@ -146,14 +170,14 @@ export function AdminHeroTab({ heroSlides, setHeroSlides, notify, fail }) {
                     ลำดับการแสดงผล (Sort Order)
                     <input name="sortOrder" type="number" min="0" defaultValue={heroSlides.length + 1} title="เลขน้อยจะแสดงก่อน" />
                 </label>
-                <label className="wide">
+                <label className="wide" style={{ gridColumn: '1 / -1' }}>
                     อัปโหลดรูปภาพแบนเนอร์ (ไม่เกิน 5 MB)
                     <input name="image" type="file" accept="image/*" />
                     <span style={{ fontSize: '11px', color: 'var(--brand-muted)', marginTop: '4px', display: 'block' }}>
                         * ขนาดมาตรฐานที่แนะนำ: อัตราส่วน 16:10 หรือ 16:9 (เช่น 1200×750px หรือ 960×600px) ระบบจะปรับและ Crop พอดีกรอบมาตรฐานของทุกแบนเนอร์ให้อัตโนมัติ
                     </span>
                 </label>
-                <button className="admin-primary" disabled={isAdding}>
+                <button className="admin-primary" disabled={isAdding} style={{ gridColumn: '1 / -1' }}>
                     {isAdding ? <><i className="bi bi-arrow-repeat spin" /> กำลังเพิ่มแบนเนอร์...</> : '+ เพิ่มแบนเนอร์หน้าแรก'}
                 </button>
             </form>
@@ -174,10 +198,14 @@ export function AdminHeroTab({ heroSlides, setHeroSlides, notify, fail }) {
                                 </div>
                                 {editingHero === hero.id ? (
                                     <form className="admin-edit-form" onSubmit={event => saveHero(event, hero)}>
-                                        <label>หัวข้อย่อยด้านบน<input name="eyebrow" required defaultValue={hero.eyebrow} /></label>
-                                        <label>หัวข้อหลัก<input name="title" required defaultValue={hero.title} /></label>
-                                        <label className="wide">รายละเอียด<textarea name="description" required defaultValue={hero.description} /></label>
-                                        <label>ข้อความบนปุ่มกด<input name="buttonLabel" required defaultValue={hero.buttonLabel} /></label>
+                                        <label className="wide">หัวข้อย่อยด้านบน (ภาษาไทย)<input name="eyebrow" required defaultValue={hero.eyebrow} /></label>
+                                        <label className="wide">หัวข้อย่อยด้านบน (ภาษาอังกฤษ)<input name="eyebrowEn" defaultValue={hero.eyebrowEn || ''} placeholder="e.g. LIMELEAF CATERING" /></label>
+                                        <label className="wide">หัวข้อหลัก (ภาษาไทย)<input name="title" required defaultValue={hero.title} /></label>
+                                        <label className="wide">หัวข้อหลัก (ภาษาอังกฤษ)<input name="titleEn" defaultValue={hero.titleEn || ''} placeholder="e.g. Fresh for Every Occasion" /></label>
+                                        <label className="wide">รายละเอียด (ภาษาไทย)<textarea name="description" required defaultValue={hero.description} /></label>
+                                        <label className="wide">รายละเอียด (ภาษาอังกฤษ)<textarea name="descriptionEn" defaultValue={hero.descriptionEn || ''} placeholder="Short English description..." /></label>
+                                        <label>ข้อความบนปุ่มกด (TH)<input name="buttonLabel" required defaultValue={hero.buttonLabel} /></label>
+                                        <label>ข้อความบนปุ่มกด (EN)<input name="buttonLabelEn" defaultValue={hero.buttonLabelEn || ''} placeholder="e.g. Order Now" /></label>
                                         <label>ปลายทางเมื่อกดปุ่ม
                                             <select name="buttonLink" defaultValue={hero.buttonLink || '/order'}>
                                                 {PAGE_LINK_OPTIONS.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
@@ -187,7 +215,7 @@ export function AdminHeroTab({ heroSlides, setHeroSlides, notify, fail }) {
                                             </select>
                                         </label>
                                         <label>ลำดับการแสดงผล<input name="sortOrder" type="number" min="0" defaultValue={hero.sortOrder} /></label>
-                                        <label className="wide">
+                                        <label className="wide" style={{ gridColumn: '1 / -1' }}>
                                             เลือกเปลี่ยนรูปภาพใหม่ (ไม่เกิน 5 MB)
                                             <input name="image" type="file" accept="image/*" />
                                             <span style={{ fontSize: '11px', color: 'var(--brand-muted)', marginTop: '4px', display: 'block' }}>
@@ -203,10 +231,21 @@ export function AdminHeroTab({ heroSlides, setHeroSlides, notify, fail }) {
                                     </form>
                                 ) : (
                                     <div className="admin-hero-info">
-                                        <small>{hero.eyebrow}</small>
-                                        <h2>{hero.title}</h2>
+                                        <small>
+                                            {hero.eyebrow}
+                                            {hero.eyebrowEn && <span style={{ color: 'var(--brand-muted)', marginLeft: 6 }}>({hero.eyebrowEn})</span>}
+                                        </small>
+                                        <h2>
+                                            {hero.title}
+                                            {hero.titleEn && <span style={{ display: 'block', fontSize: 14, fontWeight: 600, color: 'var(--brand-muted)', marginTop: 2 }}>{hero.titleEn}</span>}
+                                        </h2>
                                         <p>{hero.description}</p>
-                                        <b>{hero.buttonLabel} → {hero.buttonLink}</b>
+                                        {hero.descriptionEn && <p style={{ fontSize: 12, color: '#68776b', fontStyle: 'italic', margin: '2px 0 6px' }}>{hero.descriptionEn}</p>}
+                                        <b>
+                                            {hero.buttonLabel}
+                                            {hero.buttonLabelEn && <span style={{ fontWeight: 500, color: 'var(--brand-muted)', marginLeft: 4 }}>({hero.buttonLabelEn})</span>}
+                                            {' → '}{hero.buttonLink}
+                                        </b>
                                     </div>
                                 )}
                                 {editingHero !== hero.id && (

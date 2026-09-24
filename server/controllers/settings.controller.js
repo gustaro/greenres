@@ -262,9 +262,13 @@ export const createHeroSlide = async (req, res, next) => {
         const uploadedImageUrl = req.file ? (req.file.path || req.file.secure_url || req.file.url) : null;
         const {
             eyebrow = '',
+            eyebrowEn = '',
             title,
+            titleEn = '',
             description = '',
+            descriptionEn = '',
             buttonLabel = 'สั่งเลย',
+            buttonLabelEn = '',
             buttonLink = '/order',
             backgroundColor = '#b8ff35',
             sortOrder
@@ -276,11 +280,15 @@ export const createHeroSlide = async (req, res, next) => {
         const id = `hero-${Date.now()}`;
         const slide = {
             id,
-            eyebrow,
-            title,
-            description,
-            buttonLabel,
-            buttonLink,
+            eyebrow: String(eyebrow || '').trim(),
+            eyebrowEn: String(eyebrowEn || '').trim(),
+            title: String(title || '').trim(),
+            titleEn: String(titleEn || '').trim(),
+            description: String(description || '').trim(),
+            descriptionEn: String(descriptionEn || '').trim(),
+            buttonLabel: String(buttonLabel || 'สั่งเลย').trim(),
+            buttonLabelEn: String(buttonLabelEn || '').trim(),
+            buttonLink: String(buttonLink || '/order').trim(),
             imageUrl,
             backgroundColor,
             sortOrder: sortOrder !== undefined ? Number(sortOrder) : settings.heroSlides.length + 1,
@@ -308,11 +316,15 @@ export const updateHeroSlide = async (req, res, next) => {
             // Upsert if not found
             const newSlide = {
                 id: targetId,
-                eyebrow: req.body.eyebrow || '',
-                title: req.body.title || '',
-                description: req.body.description || '',
-                buttonLabel: req.body.buttonLabel || 'สั่งเลย',
-                buttonLink: req.body.buttonLink || '/order',
+                eyebrow: String(req.body.eyebrow || '').trim(),
+                eyebrowEn: String(req.body.eyebrowEn || '').trim(),
+                title: String(req.body.title || '').trim(),
+                titleEn: String(req.body.titleEn || '').trim(),
+                description: String(req.body.description || '').trim(),
+                descriptionEn: String(req.body.descriptionEn || '').trim(),
+                buttonLabel: String(req.body.buttonLabel || 'สั่งเลย').trim(),
+                buttonLabelEn: String(req.body.buttonLabelEn || '').trim(),
+                buttonLink: String(req.body.buttonLink || '/order').trim(),
                 imageUrl: uploadedImageUrl || req.body.imageUrl || '/assets/hero-food.png',
                 sortOrder: req.body.sortOrder !== undefined ? Number(req.body.sortOrder) : settings.heroSlides.length + 1,
                 isActive: req.body.isActive !== undefined ? Boolean(req.body.isActive) : true
@@ -330,6 +342,14 @@ export const updateHeroSlide = async (req, res, next) => {
         settings.heroSlides[idx] = {
             ...existing,
             ...req.body,
+            eyebrow: req.body.eyebrow !== undefined ? String(req.body.eyebrow || '').trim() : existing.eyebrow,
+            eyebrowEn: req.body.eyebrowEn !== undefined ? String(req.body.eyebrowEn || '').trim() : (existing.eyebrowEn || ''),
+            title: req.body.title !== undefined ? String(req.body.title || '').trim() : existing.title,
+            titleEn: req.body.titleEn !== undefined ? String(req.body.titleEn || '').trim() : (existing.titleEn || ''),
+            description: req.body.description !== undefined ? String(req.body.description || '').trim() : existing.description,
+            descriptionEn: req.body.descriptionEn !== undefined ? String(req.body.descriptionEn || '').trim() : (existing.descriptionEn || ''),
+            buttonLabel: req.body.buttonLabel !== undefined ? String(req.body.buttonLabel || '').trim() : existing.buttonLabel,
+            buttonLabelEn: req.body.buttonLabelEn !== undefined ? String(req.body.buttonLabelEn || '').trim() : (existing.buttonLabelEn || ''),
             imageUrl,
             sortOrder: req.body.sortOrder !== undefined ? Number(req.body.sortOrder) : existing.sortOrder,
             id: targetId
