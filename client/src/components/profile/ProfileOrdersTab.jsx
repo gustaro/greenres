@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import { useLanguage } from '../../lib/LanguageContext'
 
 const statusTranslation = {
@@ -25,6 +26,10 @@ export function ProfileOrdersTab({
 }) {
     const { isEn, t } = useLanguage()
 
+    const sortedOrders = useMemo(() => {
+        return [...(orders || [])].sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime())
+    }, [orders])
+
     const translateStep = (step) => isEn ? (statusTranslation[step] || step) : step
 
     const translateDeliveryType = (type) => {
@@ -47,9 +52,9 @@ export function ProfileOrdersTab({
                 <button onClick={onOrderMore}>{t('profileOrderMore')}</button>
             </div>
             {activityLoading && <p className="pf-muted">{t('profileLoadingOrders')}</p>}
-            {!activityLoading && orders.length === 0 && <div className="pf-activity-empty">{t('noOrdersYet')}</div>}
+            {!activityLoading && sortedOrders.length === 0 && <div className="pf-activity-empty">{t('noOrdersYet')}</div>}
             <div className="pf-order-list">
-                {orders.map(order => {
+                {sortedOrders.map(order => {
                     const steps = orderSteps(order)
                     const currentStep = steps.indexOf(order.foodStatus)
                     return (

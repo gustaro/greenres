@@ -70,17 +70,20 @@ export function ProfilePage({
     useEffect(() => {
         if (!session) return undefined
         let active = true
+        const sortOrdersLatestFirst = (list) => {
+            return (list || []).slice().sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime())
+        }
         const loadActivity = async () => {
             if (active) setActivityLoading(true)
             const orderResult = await fetchOrderHistory().catch(() => [])
             if (active) {
-                setOrders(orderResult.slice().reverse())
+                setOrders(sortOrdersLatestFirst(orderResult))
                 setActivityLoading(false)
             }
         }
         loadActivity()
         const timer = window.setInterval(() => fetchOrderHistory().then(orderResult => {
-            if (active) setOrders(orderResult.slice().reverse())
+            if (active) setOrders(sortOrdersLatestFirst(orderResult))
         }).catch(() => { }), 30000)
         return () => { active = false; window.clearInterval(timer) }
     }, [session])
