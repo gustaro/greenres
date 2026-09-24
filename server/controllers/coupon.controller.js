@@ -2,7 +2,9 @@ import { prisma } from "../config/prisma.js";
 
 export const getCoupons = async (req, res, next) => {
   try {
-    const coupons = await prisma.coupon.findMany({ orderBy: { createdAt: "desc" } });
+    const isAdminUser = req.user?.role === "ADMIN" || req.user?.role === "SUPERADMIN";
+    const where = isAdminUser ? {} : { isActive: true };
+    const coupons = await prisma.coupon.findMany({ where, orderBy: { createdAt: "desc" } });
     res.json(coupons);
   } catch (error) {
     next(error);

@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from 'react'
+import { createContext, useContext, useEffect, useState, useCallback } from 'react'
 import { api, clearTokens, hasSessionToken, saveTokens } from './api'
 import { mapUser } from './database'
 import { initTheme, applyTheme } from './themeConfig'
@@ -16,12 +16,24 @@ export function AuthProvider({ children }) {
     const [loading, setLoading] = useState(true)
     const [settings, setSettings] = useState({ logoUrl: null })
 
-    const setAuthenticatedUser = user => {
+    const setAuthenticatedUser = useCallback(user => {
         const mapped = mapUser(user)
         setProfile(mapped)
-        setSession(mapped ? { user: mapped } : null)
+        setSession(prev => {
+            if (!mapped) return null
+            if (
+                prev?.user?.id === mapped.id &&
+                prev?.user?.points === mapped.points &&
+                prev?.user?.name === mapped.name &&
+                prev?.user?.phone === mapped.phone &&
+                prev?.user?.role === mapped.role
+            ) {
+                return prev
+            }
+            return { user: mapped }
+        })
         return mapped
-    }
+    }, [])
 
     useEffect(() => {
         api('/settings').then(res => {
@@ -67,7 +79,7 @@ export function AuthProvider({ children }) {
         setAuthenticatedUser(null)
     }
 
-    const refreshProfile = async () => {
+    const refreshProfile = useCallback(async () => {
         if (!hasSessionToken()) return { error: new Error('กรุณาเข้าสู่ระบบ') }
         try {
             const user = await api('/auth/me')
@@ -76,7 +88,7 @@ export function AuthProvider({ children }) {
         } catch (error) {
             return { error }
         }
-    }
+    }, [setAuthenticatedUser])
 
     const updateProfile = async updates => {
         if (!session) return { error: new Error('กรุณาเข้าสู่ระบบ') }

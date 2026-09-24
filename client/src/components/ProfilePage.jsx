@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { Navbar } from './Navbar'
 import { useAuth } from '../lib/AuthContext'
 import { useLanguage } from '../lib/LanguageContext'
+import { hasSessionToken } from '../lib/api'
 import { cancelOwnOrder, fetchOrderHistory } from '../lib/database'
 import { embedCoordinates, cacheAddressCoordinates } from '../lib/geo'
 import { ProfileInfoTab } from './profile/ProfileInfoTab'
@@ -68,19 +69,26 @@ export function ProfilePage({
         if (searchParams.get('tab') === 'address') setTab('address')
     }, [searchParams])
 
+    const userId = session?.user?.id
+
     useEffect(() => {
-        if (!session) return undefined
+        if (!userId) return undefined
         let active = true
         const sortOrdersLatestFirst = (list) => {
             return (list || []).slice().sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime())
         }
         const loadActivity = async () => {
             if (active) setActivityLoading(true)
-            await refreshProfile?.().catch(() => { })
-            const orderResult = await fetchOrderHistory().catch(() => [])
-            if (active) {
-                setOrders(sortOrdersLatestFirst(orderResult))
-                setActivityLoading(false)
+            try {
+                await refreshProfile?.().catch(() => { })
+                const orderResult = await fetchOrderHistory().catch(() => [])
+                if (active) {
+                    setOrders(sortOrdersLatestFirst(orderResult))
+                }
+            } finally {
+                if (active) {
+                    setActivityLoading(false)
+                }
             }
         }
         loadActivity()
@@ -91,7 +99,7 @@ export function ProfilePage({
             }).catch(() => { })
         }, 30000)
         return () => { active = false; window.clearInterval(timer) }
-    }, [session])
+    }, [userId, refreshProfile])
 
     const earnRate = Number(settings?.pointsEarnRate || 10)
     const netDeliveredPoints = useMemo(() => {
@@ -173,7 +181,7 @@ export function ProfilePage({
         ? ['รอยืนยัน', 'รอครัว', 'กำลังทำ', 'รอไรเดอร์', 'พร้อมจัดส่ง', 'กำลังจัดส่ง', 'ถึงปลายทาง', 'จัดส่งเสร็จสิ้น']
         : ['รอยืนยัน', 'รอครัว', 'กำลังทำ', 'ทำเสร็จแล้ว', 'เสร็จสิ้น']
 
-    if (loading || (session && activityLoading && orders.length === 0)) {
+    if (loading || (!profile && hasSessionToken())) {
         return (
             <div className="app-loading" role="status" aria-label="กำลังโหลด">
                 <div className="app-loading-mark"><i /><i /></div>

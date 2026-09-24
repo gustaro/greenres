@@ -9,7 +9,7 @@ export function ProfilePointsTab({ profile, orders = [], money, onOrderMore, ref
 
     useEffect(() => {
         refreshProfile?.()
-    }, [refreshProfile])
+    }, [])
 
     const earnRate = Number(settings?.pointsEarnRate || 10)
     const redeemRate = Number(settings?.pointsRedeemRate || 10)

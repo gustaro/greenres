@@ -292,7 +292,7 @@ export async function fetchMarketing() {
     try {
         const [heroSlides, coupons] = await Promise.all([
             api('/settings/hero', { skipCache: true }).catch(() => []),
-            hasSessionToken() ? api('/coupons').catch(() => []) : Promise.resolve([])
+            api('/coupons').catch(() => [])
         ])
         const activeHero = Array.isArray(heroSlides) ? heroSlides.filter(s => s.isActive !== false) : []
         const promotions = Array.isArray(coupons) ? coupons.filter(item => item.isActive).map(mapPromotion) : []
@@ -320,19 +320,21 @@ export async function fetchOrders() {
 
 export async function fetchOrderHistory() {
     if (!hasSessionToken()) return []
-    const result = await api('/orders?own=true&limit=100')
+    const result = await api('/orders?own=true&limit=100').catch(() => ({ orders: [] }))
     const orders = (result?.orders || []).map(mapOrder)
     const deliveryOrders = orders.filter(order => order.deliveryType === 'ให้จัดส่ง' && !['ยกเลิก', 'จัดส่งเสร็จสิ้น'].includes(order.foodStatus))
 
     await Promise.all(deliveryOrders.map(async order => {
         try {
             const delivery = await api(`/delivery/order/${order.id}`)
-            order.deliveryId = delivery.id
-            order.deliveryStatus = delivery.status
-            order.foodStatus = deliveryStatusLabel(delivery.status)
-            order.rider = delivery.rider
-        } catch (error) {
-            if (!(error instanceof ApiError) || error.status !== 404) throw error
+            if (delivery) {
+                order.deliveryId = delivery.id
+                order.deliveryStatus = delivery.status
+                order.foodStatus = deliveryStatusLabel(delivery.status)
+                order.rider = delivery.rider
+            }
+        } catch {
+            // Ignore delivery tracking lookup errors
         }
     })).catch(() => { })
 
