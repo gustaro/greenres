@@ -8,14 +8,21 @@ export function AdminCategoriesTab({ categories, setCategories, products, notify
 
     const addCategory = async event => {
         event.preventDefault()
-        const form = new FormData(event.currentTarget)
+        const formElement = event.currentTarget
+        const form = new FormData(formElement)
         const name = form.get('name').trim()
+        const nameEn = String(form.get('nameEn') || '').trim()
         if (!name) return
         setIsAdding(true)
         try {
-            const data = await catalogApi.createCategory({ name, sortOrder: categories.length })
+            const data = await catalogApi.createCategory({
+                name,
+                nameEn,
+                description: nameEn,
+                sortOrder: categories.length
+            })
             setCategories(current => [...current, mapCategory(data)])
-            event.currentTarget.reset()
+            formElement.reset()
             notify('เพิ่มประเภทสินค้าแล้ว')
         } catch (error) {
             fail(error)
@@ -26,8 +33,8 @@ export function AdminCategoriesTab({ categories, setCategories, products, notify
 
     const updateCategory = async (id, changes) => {
         try {
-            await catalogApi.updateCategory(id, changes)
-            setCategories(current => current.map(category => category.id === id ? { ...category, ...changes } : category))
+            const data = await catalogApi.updateCategory(id, changes)
+            setCategories(current => current.map(category => category.id === id ? mapCategory(data) : category))
             notify('อัปเดตประเภทสินค้าแล้ว')
         } catch (error) {
             fail(error)
@@ -53,13 +60,17 @@ export function AdminCategoriesTab({ categories, setCategories, products, notify
 
     return (
         <>
-            <PageHead eyebrow="CATALOG" title="จัดการประเภทสินค้า" description="จัดหมวดหมู่เพื่อให้ลูกค้าค้นหาเมนูได้ง่ายขึ้น" />
-            <form className="admin-inline-form" onSubmit={addCategory}>
-                <label>
-                    ชื่อประเภทสินค้า
-                    <input name="name" required placeholder="เช่น อาหารทานเล่น" />
+            <PageHead eyebrow="CATALOG" title="จัดการประเภทสินค้า" description="จัดหมวดหมู่ทั้งภาษาไทยและอังกฤษ เพื่อให้ลูกค้าค้นหาเมนูได้ง่ายขึ้น" />
+            <form className="admin-inline-form" onSubmit={addCategory} style={{ display: 'flex', gap: 14, flexWrap: 'wrap', alignItems: 'flex-end' }}>
+                <label style={{ flex: '1 1 200px' }}>
+                    ชื่อประเภทสินค้า (ภาษาไทย) *
+                    <input name="name" required placeholder="เช่น อาหารทานเล่น, สลัด" />
                 </label>
-                <button className="admin-primary" disabled={isAdding}>
+                <label style={{ flex: '1 1 200px' }}>
+                    ชื่อภาษาอังกฤษ (English Name)
+                    <input name="nameEn" placeholder="e.g. Appetizers, Salads" />
+                </label>
+                <button className="admin-primary" disabled={isAdding} style={{ minHeight: 40 }}>
                     {isAdding ? <><i className="bi bi-arrow-repeat spin" /> กำลังเพิ่ม...</> : '+ เพิ่มประเภท'}
                 </button>
             </form>
@@ -68,7 +79,8 @@ export function AdminCategoriesTab({ categories, setCategories, products, notify
                     <table>
                         <thead>
                             <tr>
-                                <th>ประเภท</th>
+                                <th>ชื่อประเภท (ไทย)</th>
+                                <th>ชื่อภาษาอังกฤษ (English Name)</th>
                                 <th>ลำดับ</th>
                                 <th>จำนวนสินค้า</th>
                                 <th>การจัดการ</th>
@@ -79,17 +91,32 @@ export function AdminCategoriesTab({ categories, setCategories, products, notify
                                 <tr key={category.id}>
                                     <td>
                                         <input
+                                            key={`cat-name-${category.id}-${category.name}`}
                                             className="admin-text-input"
                                             defaultValue={category.name}
-                                            onBlur={event => event.target.value.trim() !== category.name && updateCategory(category.id, { name: event.target.value.trim() })}
+                                            placeholder="ชื่อภาษาไทย"
+                                            onKeyDown={event => { if (event.key === 'Enter') event.currentTarget.blur() }}
+                                            onBlur={event => event.target.value.trim() && event.target.value.trim() !== category.name && updateCategory(category.id, { name: event.target.value.trim() })}
                                         />
                                     </td>
                                     <td>
                                         <input
+                                            key={`cat-en-${category.id}-${category.nameEn}`}
+                                            className="admin-text-input"
+                                            defaultValue={category.nameEn || ''}
+                                            placeholder="e.g. Appetizers, Salads"
+                                            onKeyDown={event => { if (event.key === 'Enter') event.currentTarget.blur() }}
+                                            onBlur={event => event.target.value.trim() !== (category.nameEn || '') && updateCategory(category.id, { nameEn: event.target.value.trim(), description: event.target.value.trim() })}
+                                        />
+                                    </td>
+                                    <td>
+                                        <input
+                                            key={`cat-sort-${category.id}-${category.sort_order}`}
                                             className="admin-number-input"
                                             type="number"
                                             min="0"
                                             defaultValue={category.sort_order}
+                                            onKeyDown={event => { if (event.key === 'Enter') event.currentTarget.blur() }}
                                             onBlur={event => Number(event.target.value) !== category.sort_order && updateCategory(category.id, { sortOrder: Number(event.target.value) })}
                                         />
                                     </td>

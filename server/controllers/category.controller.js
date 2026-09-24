@@ -70,14 +70,15 @@ const generateCategorySlug = async (name, excludeId = null) => {
 
 export const createCategory = async (req, res, next) => {
   try {
-    const { name, description, sortOrder } = req.body;
+    const { name, nameEn, description, sortOrder } = req.body;
     if (!name) return res.status(400).json({ message: "Name is required" });
 
-    const slug = await generateCategorySlug(name);
+    const finalDescription = nameEn !== undefined ? nameEn : (description || null);
+    const slug = await generateCategorySlug(nameEn || name);
     const imageUrl = req.file?.path || null;
 
     const category = await prisma.category.create({
-      data: { name, slug, description, imageUrl, sortOrder: parseInt(sortOrder) || 0 },
+      data: { name, slug, description: finalDescription, imageUrl, sortOrder: parseInt(sortOrder) || 0 },
     });
     clearCategoriesCache();
     clearProductsCache();
@@ -89,7 +90,7 @@ export const createCategory = async (req, res, next) => {
 
 export const updateCategory = async (req, res, next) => {
   try {
-    const { name, description, sortOrder, isActive } = req.body;
+    const { name, nameEn, description, sortOrder, isActive } = req.body;
 
     const existing = await prisma.category.findUnique({ where: { id: req.params.id } });
     if (!existing) return res.status(404).json({ message: "Category not found" });
@@ -101,11 +102,12 @@ export const updateCategory = async (req, res, next) => {
     }
 
     const data = {};
+    const finalDescription = nameEn !== undefined ? nameEn : description;
+    if (finalDescription !== undefined) data.description = finalDescription;
     if (name !== undefined) {
       data.name = name;
-      data.slug = await generateCategorySlug(name, existing.id);
+      data.slug = await generateCategorySlug(nameEn || existing.description || name, existing.id);
     }
-    if (description !== undefined) data.description = description;
     if (sortOrder !== undefined) data.sortOrder = parseInt(sortOrder);
     if (isActive !== undefined) data.isActive = isActive === "true" || isActive === true;
     if (req.file) data.imageUrl = req.file.path;

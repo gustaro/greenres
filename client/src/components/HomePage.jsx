@@ -193,6 +193,7 @@ export function HomePage({ onOrder, user, onAuth, onLogout, cartCount, onCart })
                                 <div>
                                     <h3>{mainTitle}</h3>
                                     <small>{subTitle}</small>
+                                    {product.description && <p style={{ fontSize: '11.5px', color: '#68776b', margin: '2px 0 4px', lineHeight: 1.3, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{product.description}</p>}
                                     <strong>฿{product.price}</strong>
                                     <button onClick={onOrder}>{t('orderNow')}</button>
                                 </div>
@@ -220,6 +221,7 @@ export function HomePage({ onOrder, user, onAuth, onLogout, cartCount, onCart })
                                 <div>
                                     <h3>{mainTitle}</h3>
                                     <small>{subTitle}</small>
+                                    {product.description && <p style={{ fontSize: '11.5px', color: '#68776b', margin: '2px 0 4px', lineHeight: 1.3, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{product.description}</p>}
                                     <strong>฿{product.price}</strong>
                                     <button onClick={onOrder}>{t('orderNow')}</button>
                                 </div>

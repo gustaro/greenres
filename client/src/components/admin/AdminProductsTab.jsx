@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { catalogApi, mapProduct } from '../../lib/database'
+import { catalogApi, mapProduct, serializeProductDescription } from '../../lib/database'
 import { PageHead } from './AdminShared'
 
 export function AdminProductsTab({ products, setProducts, categories, notify, fail }) {
@@ -30,7 +30,7 @@ export function AdminProductsTab({ products, setProducts, categories, notify, fa
         try {
             const payload = new FormData()
             payload.append('name', finalName)
-            payload.append('description', nameEn || extraDesc || '')
+            payload.append('description', serializeProductDescription(nameEn, extraDesc))
             payload.append('categoryId', String(form.get('categoryId') || ''))
             payload.append('price', String(Number(form.get('price') || 0)))
             payload.append('stock', String(requestedStock === 0 ? 1 : requestedStock))
@@ -51,8 +51,12 @@ export function AdminProductsTab({ products, setProducts, categories, notify, fa
     const updateProduct = async (id, changes) => {
         const payload = {}
         if ('categoryId' in changes) payload.categoryId = changes.categoryId
-        if ('en' in changes) payload.description = changes.en
-        if ('description' in changes) payload.description = changes.description
+        if ('en' in changes || 'description' in changes) {
+            const existingProduct = products.find(p => p.id === id)
+            const enVal = 'en' in changes ? changes.en : (existingProduct?.en || '')
+            const descVal = 'description' in changes ? changes.description : (existingProduct?.description || '')
+            payload.description = serializeProductDescription(enVal, descVal)
+        }
         if ('stock' in changes) {
             payload.stock = Number(changes.stock)
             if (!('isActive' in changes)) {
@@ -108,6 +112,7 @@ export function AdminProductsTab({ products, setProducts, categories, notify, fa
         const form = new FormData(event.currentTarget)
         const name = String(form.get('name') || '').trim()
         const en = String(form.get('en') || '').trim()
+        const description = String(form.get('description') || '').trim()
         const categoryId = String(form.get('categoryId') || '')
         const price = Number(form.get('price') || 0)
         const stock = Math.max(0, Number(form.get('stock') || 0))
@@ -122,6 +127,7 @@ export function AdminProductsTab({ products, setProducts, categories, notify, fa
             const changes = {
                 name,
                 en,
+                description,
                 categoryId,
                 price,
                 stock,
@@ -173,7 +179,9 @@ export function AdminProductsTab({ products, setProducts, categories, notify, fa
                     ประเภท
                     <select name="categoryId" required>
                         {categories.map(category => (
-                            <option key={category.id} value={category.id}>{category.name}</option>
+                            <option key={category.id} value={category.id}>
+                                {category.name} {category.nameEn ? `(${category.nameEn})` : ''}
+                            </option>
                         ))}
                     </select>
                 </label>
@@ -262,7 +270,9 @@ export function AdminProductsTab({ products, setProducts, categories, notify, fa
                                             onChange={event => updateProduct(product.id, { categoryId: event.target.value })}
                                         >
                                             {categories.map(category => (
-                                                <option key={category.id} value={category.id}>{category.name}</option>
+                                                <option key={category.id} value={category.id}>
+                                                    {category.name} {category.nameEn ? `(${category.nameEn})` : ''}
+                                                </option>
                                             ))}
                                         </select>
                                     </td>
@@ -394,10 +404,22 @@ export function AdminProductsTab({ products, setProducts, categories, notify, fa
                                 </div>
 
                                 <div className="admin-modal-field">
+                                    <label>รายละเอียดเพิ่มเติม</label>
+                                    <textarea
+                                        name="description"
+                                        defaultValue={editingProduct.description || ''}
+                                        placeholder="รายละเอียดหรือจุดเด่นเมนู เช่น เผ็ดระดับ 2 อุดมด้วยวิตามิน แคลอรี่ต่ำ"
+                                        rows="2"
+                                    />
+                                </div>
+
+                                <div className="admin-modal-field">
                                     <label>หมวดหมู่สินค้า *</label>
                                     <select name="categoryId" defaultValue={editingProduct.categoryId} required>
                                         {categories.map(cat => (
-                                            <option key={cat.id} value={cat.id}>{cat.name}</option>
+                                            <option key={cat.id} value={cat.id}>
+                                                {cat.name} {cat.nameEn ? `(${cat.nameEn})` : ''}
+                                            </option>
                                         ))}
                                     </select>
                                 </div>

@@ -70,28 +70,57 @@ export const mapUser = user => user ? ({
 
 export const mapCategory = row => ({
     ...row,
+    nameEn: row.description || '',
     sortOrder: Number(row.sortOrder || 0),
     sort_order: Number(row.sortOrder || 0),
 })
 
-export const mapProduct = row => ({
-    id: row.id,
-    categoryId: row.categoryId,
-    name: row.name,
-    en: row.description || '',
-    price: Number(row.price),
-    img: row.imageUrl || '/assets/basil-rice.png',
-    imageUrl: row.imageUrl,
-    status: !row.isActive
-        ? 'หมด'
-        : row.recipeItems?.length && row.recipeItems.some(item => !item.ingredient?.isActive || Number(item.ingredient?.quantity || 0) < Number(item.quantityRequired || 0))
-            ? 'วัตถุดิบไม่เพียงพอ'
-            : 'มี',
-    stock: Number(row.stock || 0),
-    isActive: row.isActive,
-    isFeatured: row.isFeatured,
-    prepTime: row.prepTime,
-})
+export const parseProductDescription = raw => {
+    if (!raw) return { en: '', description: '' }
+    if (typeof raw === 'object') {
+        return { en: raw.en || '', description: raw.description || raw.detail || '' }
+    }
+    if (typeof raw === 'string' && raw.trim().startsWith('{')) {
+        try {
+            const data = JSON.parse(raw)
+            return {
+                en: data.en || '',
+                description: data.description || data.detail || '',
+            }
+        } catch { }
+    }
+    return { en: raw, description: '' }
+}
+
+export const serializeProductDescription = (en, description) => {
+    const cleanEn = String(en || '').trim()
+    const cleanDesc = String(description || '').trim()
+    if (!cleanDesc) return cleanEn
+    return JSON.stringify({ en: cleanEn, description: cleanDesc })
+}
+
+export const mapProduct = row => {
+    const { en, description } = parseProductDescription(row.description)
+    return {
+        id: row.id,
+        categoryId: row.categoryId,
+        name: row.name,
+        en: en || '',
+        description: description || '',
+        price: Number(row.price),
+        img: row.imageUrl || '/assets/basil-rice.png',
+        imageUrl: row.imageUrl,
+        status: !row.isActive
+            ? 'หมด'
+            : row.recipeItems?.length && row.recipeItems.some(item => !item.ingredient?.isActive || Number(item.ingredient?.quantity || 0) < Number(item.quantityRequired || 0))
+                ? 'วัตถุดิบไม่เพียงพอ'
+                : 'มี',
+        stock: Number(row.stock || 0),
+        isActive: row.isActive,
+        isFeatured: row.isFeatured,
+        prepTime: row.prepTime,
+    }
+}
 
 const promoMetaFromRow = row => {
     if (row.metadata && typeof row.metadata === 'object') return row.metadata
