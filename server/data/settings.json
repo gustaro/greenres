@@ -4,5 +4,10 @@
   "googleMapsApiKey": "",
   "facebookUrl": "https://www.facebook.com",
   "instagramUrl": "https://www.instagram.com",
-  "lineUrl": "#"
+  "lineUrl": "#",
+  "pointsEnabled": true,
+  "pointsEarnRate": 10,
+  "pointsRedeemRate": 10,
+  "pointsMinRedeem": 10,
+  "pointsMaxDiscountPercent": 100
 }

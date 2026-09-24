@@ -7,6 +7,74 @@ export const money = value => new Intl.NumberFormat('th-TH', { style: 'currency'
 export const orderCode = order => order.orderNumber || order.orderId || order.id
 export const scheduleLabel = order => order.deliveryType !== 'ให้จัดส่ง' ? order.deliveryType : order.deliveryScheduleType === 'ระบุเวลา' && order.scheduledAt ? `จัดส่ง ${new Date(order.scheduledAt).toLocaleString('th-TH', { dateStyle: 'short', timeStyle: 'short' })}` : 'จัดส่งทันที'
 
+/**
+ * Normalizes payment method for Admin Overview / Reports and Summary
+ * Groups all QR/PromptPay variants into a single overview label: "จ่ายด้วย QR"
+ */
+export function formatPaymentOverview(method) {
+    if (!method) return 'ไม่ระบุ'
+    const str = String(method).trim()
+    if (/promptpay|คิวอาร์|qr|พร้อมเพย์/i.test(str)) {
+        return 'จ่ายด้วย QR'
+    }
+    if (/เงินสด|cash/i.test(str)) {
+        return 'เงินสด'
+    }
+    if (/บัตร|card|credit|edc|stripe/i.test(str)) {
+        return 'บัตรเครดิต/เดบิต'
+    }
+    if (/ปลายทาง|cod/i.test(str)) {
+        return 'ชำระเงินปลายทาง'
+    }
+    if (/ชำระที่ร้าน|หน้าร้าน/i.test(str)) {
+        return 'ชำระที่ร้าน'
+    }
+    return str
+}
+
+/**
+ * Formats payment method for Cashier display
+ * For QR payments, displays only "QR - [REF No.]" (e.g. "QR - LL-261421")
+ */
+export function formatCashierPaymentMethod(method, order = null) {
+    if (!method && !order) return 'ไม่ระบุ'
+    const str = String(method || order?.paymentMethod || '').trim()
+
+    // Check if it's a QR / PromptPay payment
+    const isQr = /promptpay|คิวอาร์|qr|พร้อมเพย์/i.test(str) || order?.serverPaymentMethod === 'PROMPTPAY_STRIPE'
+    if (isQr) {
+        // Try extracting REF code from: "REF: LL-261421", "LL-261421", or order properties
+        const refMatch = str.match(/REF:\s*([A-Za-z0-9_-]+)/i) || str.match(/\b(LL-\d+)\b/i)
+        const refCode = refMatch ? refMatch[1] : (order?.paymentReference || order?.refCode || '')
+
+        if (refCode) {
+            return `QR - ${refCode}`
+        }
+        // Fallback if there's a Stripe PaymentIntent ID (e.g. pi_3U1bU...)
+        const stripeMatch = str.match(/Stripe:\s*([A-Za-z0-9_]+)/i) || (order?.stripePaymentId ? [null, order.stripePaymentId] : null)
+        if (stripeMatch) {
+            const shortStripe = stripeMatch[1].length > 10 ? stripeMatch[1].slice(-8) : stripeMatch[1]
+            return `QR - ${shortStripe}`
+        }
+        return 'QR'
+    }
+
+    if (/เงินสด|cash/i.test(str)) {
+        return 'เงินสด'
+    }
+    if (/บัตร|card|credit|edc/i.test(str)) {
+        const cardMatch = str.match(/(?:บัตร\s*)?(\([•\*\d\s]+\)|[•\*\d\s]{4,})/i)
+        return cardMatch ? `บัตร ${cardMatch[1]}` : 'บัตรเครดิต'
+    }
+    if (/ปลายทาง|cod/i.test(str)) {
+        return 'ชำระเงินปลายทาง'
+    }
+    if (/ชำระที่ร้าน|หน้าร้าน/i.test(str)) {
+        return 'ชำระที่ร้าน'
+    }
+    return str || 'ไม่ระบุ'
+}
+
 export function StaffShell({ role, title, subtitle, tabs, active, onTab, children }) {
     const { settings, profile, session, signOut } = useAuth()
     const navigate = useNavigate()
@@ -37,86 +105,95 @@ export function StaffShell({ role, title, subtitle, tabs, active, onTab, childre
     return (
         <div className={`staff-page ${role}`}>
             <header className="staff-top">
+                {/* 1. Brand & Portal Identity */}
                 <div className="staff-brand">
-                    {settings?.logoUrl ? (
-                        <img src={settings.logoUrl} alt="Logo" style={{ width: 38, height: 38, objectFit: 'contain', borderRadius: 8, background: '#fff', padding: 2 }} />
-                    ) : (
-                        <span>LL</span>
-                    )}
-                    <div>
-                        <b>{settings?.siteName || 'LimeLeaf'} Operations</b>
-                        <small>{role.toUpperCase()} PORTAL</small>
-                    </div>
+                    <Link to="/" className="staff-brand-link" title="กลับหน้าแรก">
+                        {settings?.logoUrl ? (
+                            <img src={settings.logoUrl} alt="Logo" className="staff-brand-img" />
+                        ) : (
+                            <span className="staff-brand-fallback">LL</span>
+                        )}
+                        <div className="staff-brand-text">
+                            <b>{settings?.siteName || 'LimeLeaf'} Operations</b>
+                            <span className="staff-portal-badge">{role.toUpperCase()} PORTAL</span>
+                        </div>
+                    </Link>
                 </div>
 
+                {/* 2. Station Title & Subtitle */}
                 <div className="staff-header-center">
-                    <h1 style={{ margin: 0, fontSize: 20, color: '#fff', fontWeight: 800 }}>{title}</h1>
-                    <p className="staff-subtitle" style={{ margin: '2px 0 0', fontSize: 12 }}>{subtitle}</p>
+                    <h1 className="staff-header-title">{title}</h1>
+                    {subtitle && <p className="staff-subtitle">{subtitle}</p>}
                 </div>
 
-                <div className="staff-header-right" style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-                    {/* Navigation Quick Links for Staff/Admin */}
-                    <div className="staff-quick-nav" style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-                        <Link to="/" className="staff-quick-btn" title="กลับหน้าแรก">
-                            <i className="bi bi-house-door"></i> หน้าหลัก
+                {/* 3. Quick Navigation Station Switcher */}
+                <nav className="staff-quick-nav" aria-label="สลับหน้าที่รับผิดชอบ">
+                    <Link to="/" className="staff-quick-btn" title="กลับหน้าแรก">
+                        <i className="bi bi-house-door"></i>
+                        <span>หน้าหลัก</span>
+                    </Link>
+                    {(isAdmin || userRole === 'cashier') && role !== 'cashier' && (
+                        <Link to="/cashier" className="staff-quick-btn" title="แคชเชียร์">
+                            <i className="bi bi-cash-coin"></i>
+                            <span>แคชเชียร์</span>
                         </Link>
-                        {(isAdmin || userRole === 'cashier') && role !== 'cashier' && (
-                            <Link to="/cashier" className="staff-quick-btn" title="แคชเชียร์">
-                                <i className="bi bi-cash-coin"></i> แคชเชียร์
-                            </Link>
-                        )}
-                        {(isAdmin || userRole === 'kitchen') && role !== 'kitchen' && (
-                            <Link to="/kitchen" className="staff-quick-btn" title="ครัว">
-                                <i className="bi bi-fire"></i> ครัว
-                            </Link>
-                        )}
-                        {(isAdmin || userRole === 'delivery') && role !== 'delivery' && (
-                            <Link to="/delivery" className="staff-quick-btn" title="จัดส่ง">
-                                <i className="bi bi-bicycle"></i> จัดส่ง
-                            </Link>
-                        )}
-                        {isAdmin && role !== 'admin' && (
-                            <Link to="/admin" className="staff-quick-btn" title="แอดมิน">
-                                <i className="bi bi-speedometer2"></i> แอดมิน
-                            </Link>
-                        )}
-                    </div>
+                    )}
+                    {(isAdmin || userRole === 'kitchen') && role !== 'kitchen' && (
+                        <Link to="/kitchen" className="staff-quick-btn" title="ครัว">
+                            <i className="bi bi-fire"></i>
+                            <span>ครัว</span>
+                        </Link>
+                    )}
+                    {(isAdmin || userRole === 'delivery') && role !== 'delivery' && (
+                        <Link to="/delivery" className="staff-quick-btn" title="จัดส่ง">
+                            <i className="bi bi-bicycle"></i>
+                            <span>จัดส่ง</span>
+                        </Link>
+                    )}
+                    {isAdmin && role !== 'admin' && (
+                        <Link to="/admin" className="staff-quick-btn" title="แอดมิน">
+                            <i className="bi bi-speedometer2"></i>
+                            <span>แอดมิน</span>
+                        </Link>
+                    )}
+                </nav>
 
-                    {/* User Profile Avatar & Name */}
-                    <div className="staff-user-badge" style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '4px 10px', background: 'rgba(255, 255, 255, 0.1)', borderRadius: 24, border: '1px solid rgba(255, 255, 255, 0.15)' }}>
-                        <div style={{ width: 28, height: 28, borderRadius: '50%', background: '#b8ff35', color: '#075c1b', fontWeight: 800, fontSize: 13, display: 'grid', placeItems: 'center', overflow: 'hidden' }}>
-                            {profile?.avatarUrl ? (
-                                <img src={profile.avatarUrl} alt={userName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                            ) : (
-                                userName.charAt(0).toUpperCase()
-                            )}
-                        </div>
-                        <div style={{ textAlign: 'left', lineHeight: 1.2 }}>
-                            <div style={{ fontSize: 12, fontWeight: 700, color: '#fff', maxWidth: 110, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                                {userName}
-                            </div>
-                            <small style={{ fontSize: 9, color: '#9db7a5', display: 'block' }}>{roleBadgeTitle}</small>
-                        </div>
-                        <button
-                            type="button"
-                            onClick={async () => {
-                                await signOut()
-                                navigate('/')
-                            }}
-                            title="ออกจากระบบ"
-                            style={{ border: 0, background: 'transparent', color: '#fca5a5', cursor: 'pointer', padding: 2, fontSize: 14, marginLeft: 4 }}
-                        >
-                            <i className="bi bi-box-arrow-right"></i>
-                        </button>
+                {/* 4. User Profile & Logout */}
+                <div className="staff-user-badge">
+                    <div className="staff-avatar-wrap">
+                        {profile?.avatarUrl ? (
+                            <img src={profile.avatarUrl} alt={userName} className="staff-avatar-img" />
+                        ) : (
+                            <span className="staff-avatar-letter">{userName.charAt(0).toUpperCase()}</span>
+                        )}
+                        <span className={`staff-avatar-status ${isOnline ? 'online' : 'offline'}`} title={isOnline ? 'ออนไลน์' : 'ออฟไลน์'} />
                     </div>
+                    <div className="staff-user-info">
+                        <span className="staff-user-name" title={userName}>{userName}</span>
+                        <small className="staff-user-role">{roleBadgeTitle}</small>
+                    </div>
+                    <button
+                        type="button"
+                        onClick={async () => {
+                            await signOut()
+                            navigate('/')
+                        }}
+                        className="staff-logout-btn"
+                        title="ออกจากระบบ"
+                        aria-label="ออกจากระบบ"
+                    >
+                        <i className="bi bi-box-arrow-right"></i>
+                    </button>
                 </div>
             </header>
 
-            <nav className="staff-tabs">
+            <nav className="staff-tabs" aria-label="แท็บเมนูการดำเนินงาน">
                 <div className="staff-tabs-list">
                     {tabs.map(t => (
                         <button key={t.key || t.tab} className={active === (t.key || t.tab) ? 'active' : ''} onClick={() => onTab(t.key || t.tab)}>
-                            <i className={`bi ${t.icon}`}></i>{t.label}{t.count > 0 && <b>{t.count}</b>}
+                            <i className={`bi ${t.icon}`}></i>
+                            <span>{t.label}</span>
+                            {t.count > 0 && <b className="staff-tab-count">{t.count}</b>}
                         </button>
                     ))}
                 </div>
@@ -124,7 +201,8 @@ export function StaffShell({ role, title, subtitle, tabs, active, onTab, childre
                 <div className="staff-tabs-right">
                     <span className={`staff-live ${isOnline ? 'online' : 'offline'}`} title={isOnline ? 'สถานะ: ออนไลน์' : 'สถานะ: ออฟไลน์'}>
                         <i />
-                        {isOnline ? 'ออนไลน์ (Online)' : 'ออฟไลน์ (Offline)'}
+                        <span className="staff-live-text">{isOnline ? 'ออนไลน์' : 'ออฟไลน์'}</span>
+                        <span className="staff-live-subtext">{isOnline ? ' (Online)' : ' (Offline)'}</span>
                     </span>
                 </div>
             </nav>

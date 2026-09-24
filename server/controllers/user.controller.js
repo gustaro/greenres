@@ -1,5 +1,6 @@
 import bcrypt from "bcrypt";
 import { prisma } from "../config/prisma.js";
+import { getActiveSettings } from "./settings.controller.js";
 
 export const createUser = async (req, res, next) => {
   try {
@@ -254,6 +255,9 @@ export const getPointsHistory = async (req, res, next) => {
     });
     if (!user) return res.status(404).json({ message: "User not found" });
 
+    const activeSettings = getActiveSettings();
+    const earnRate = activeSettings.pointsEarnRate || 10;
+
     const orders = await prisma.order.findMany({
       where: { userId: req.user.id },
       orderBy: { createdAt: "desc" },
@@ -261,16 +265,20 @@ export const getPointsHistory = async (req, res, next) => {
         id: true,
         total: true,
         status: true,
+        notes: true,
         createdAt: true,
       },
     });
 
     const history = [];
     let totalFromOrders = 0;
+    let totalSpentPoints = 0;
 
     for (const order of orders) {
+      if (order.status === "CANCELLED") continue;
+
       const orderTotal = parseFloat(order.total) || 0;
-      const pts = Math.floor(orderTotal / 10);
+      const pts = Math.floor(orderTotal / earnRate);
       if (pts > 0) {
         const isDelivered = order.status === "DELIVERED";
         if (isDelivered) totalFromOrders += pts;
@@ -285,10 +293,33 @@ export const getPointsHistory = async (req, res, next) => {
           date: order.createdAt,
         });
       }
+
+      // Check if points were redeemed on this order
+      const metaMatch = (order.notes || "").match(/LIMELEAF_META:(\{.*\})/);
+      if (metaMatch) {
+        try {
+          const meta = JSON.parse(metaMatch[1]);
+          if (meta.pointsUsed && Number(meta.pointsUsed) > 0) {
+            const usedPts = Number(meta.pointsUsed);
+            totalSpentPoints += usedPts;
+            history.push({
+              id: `order-spent-${order.id}`,
+              type: "used",
+              title: `ใช้แต้มแลกส่วนลด #${order.id.slice(-6).toUpperCase()}`,
+              titleEn: `Points Redeemed #${order.id.slice(-6).toUpperCase()}`,
+              points: -usedPts,
+              amount: Number(meta.pointsDiscount || 0),
+              status: "completed",
+              date: order.createdAt,
+            });
+          }
+        } catch {}
+      }
     }
 
     const currentPoints = user.points || 0;
-    const diff = currentPoints - totalFromOrders;
+    const netCalculated = totalFromOrders - totalSpentPoints;
+    const diff = currentPoints - netCalculated;
     if (diff > 0) {
       history.push({
         id: `bonus-${user.id}`,
@@ -306,8 +337,8 @@ export const getPointsHistory = async (req, res, next) => {
 
     res.json({
       currentPoints,
-      totalEarned: currentPoints,
-      totalSpent: 0,
+      totalEarned: totalFromOrders + (diff > 0 ? diff : 0),
+      totalSpent: totalSpentPoints,
       history,
     });
   } catch (error) {

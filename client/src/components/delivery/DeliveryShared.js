@@ -60,6 +60,8 @@ export const normalizeJob = raw => {
         })),
         riderName: raw.rider?.user?.name ?? raw.riderName ?? '',
         riderPhone: raw.rider?.user?.phone ?? raw.riderPhone ?? '',
+        proofImageUrl: raw.proofImageUrl ?? order.proofImageUrl ?? order.meta?.proofImageUrl ?? null,
+        paymentProofUrl: raw.paymentProofUrl ?? order.paymentProofUrl ?? order.meta?.paymentProofUrl ?? order.meta?.slipUrl ?? null,
         order: raw.order ?? raw,
     }
 }

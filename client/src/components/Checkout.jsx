@@ -9,8 +9,8 @@ import { CheckoutPaymentSection } from './checkout/CheckoutPaymentSection'
 export const SERVER_DELIVERY_FEE = Number(import.meta.env.VITE_DELIVERY_FEE || 35)
 export const SERVER_FREE_DELIVERY_THRESHOLD = Number(import.meta.env.VITE_FREE_DELIVERY_THRESHOLD || 300)
 
-export function CheckoutModal({ cart, products, itemNotes = {}, onClose, onDone }) {
-    const { profile } = useAuth()
+export function CheckoutModal({ cart, products, itemNotes = {}, onClose, onDone, pointsToUse = 0, setPointsToUse }) {
+    const { profile, settings } = useAuth()
     const { isEn, t } = useLanguage()
     const [orderMode, setOrderMode] = useState('takeaway') // 'takeaway' | 'dine-in'
     const [takeawayMethod, setTakeawayMethod] = useState('delivery') // 'delivery' | 'pickup'
@@ -57,7 +57,10 @@ export function CheckoutModal({ cart, products, itemNotes = {}, onClose, onDone 
     const items = products.filter(product => cart[product.id])
     const subtotal = items.reduce((sum, product) => sum + product.price * cart[product.id], 0)
     const fee = deliveryType === 'ให้จัดส่ง' ? (subtotal >= SERVER_FREE_DELIVERY_THRESHOLD ? 0 : SERVER_DELIVERY_FEE) : 0
-    const discount = appliedPromotion?.discount || 0
+    const promoDiscount = appliedPromotion?.discount || 0
+    const redeemRate = Number(settings?.pointsRedeemRate || 10)
+    const pointsDiscount = pointsToUse > 0 ? Math.floor(pointsToUse / redeemRate) : 0
+    const discount = promoDiscount + pointsDiscount
     const total = Math.max(0, subtotal - discount + fee)
 
     useEffect(() => {
@@ -144,7 +147,7 @@ export function CheckoutModal({ cart, products, itemNotes = {}, onClose, onDone 
         const paymentDetail = paymentMethod === 'บัตรเครดิต/เดบิต'
             ? (cardData.maskedCard || 'บัตรเครดิต')
             : paymentMethod === 'พร้อมเพย์'
-                ? (isQrPaid ? `สแกนคิวอาร์ (PromptPay จำลองสำเร็จ - REF: ${qrData?.refCode || ''}${qrData?.paymentIntentId ? ` | Stripe: ${qrData.paymentIntentId}` : ''})` : 'สแกนคิวอาร์ (PromptPay)')
+                ? (isQrPaid ? `สแกนคิวอาร์ (PromptPay - REF: ${qrData?.refCode || ''}${qrData?.paymentIntentId ? ` | Stripe: ${qrData.paymentIntentId}` : ''})` : 'สแกนคิวอาร์ (PromptPay)')
                 : paymentMethod
 
         setIsSubmitting(true)
@@ -173,6 +176,7 @@ export function CheckoutModal({ cart, products, itemNotes = {}, onClose, onDone 
                 reservationGuests: orderMode === 'dine-in' ? Number(reservationGuests || 2) : null,
                 tableNumber: dineInTable || '',
                 promotionCode: appliedPromotion?.code || null,
+                pointsUsed: pointsToUse,
                 recipientName,
                 recipientPhone,
                 itemNotes: finalItemNotes,
@@ -325,7 +329,9 @@ export function CheckoutModal({ cart, products, itemNotes = {}, onClose, onDone 
                     itemNotes={itemNotes}
                     subtotal={subtotal}
                     fee={fee}
-                    discount={discount}
+                    discount={promoDiscount}
+                    pointsToUse={pointsToUse}
+                    pointsDiscount={pointsDiscount}
                     total={total}
                 />
             </div>

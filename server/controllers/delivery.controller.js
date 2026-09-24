@@ -150,8 +150,8 @@ export const dispatchToExternal = async (req, res, next) => {
 // PUT /deliveries/:id/status — admin อัปเดตสถานะ
 export const updateStatus = async (req, res, next) => {
   try {
-    const { status, lat, lng, note } = req.body;
-    const delivery = await updateDeliveryStatus(req.params.id, status, lat, lng, note);
+    const { status, lat, lng, note, proofImageUrl } = req.body;
+    const delivery = await updateDeliveryStatus(req.params.id, status, lat, lng, note, proofImageUrl);
     res.json(delivery);
   } catch (err) { next(err); }
 };
@@ -374,7 +374,7 @@ export const getMyDeliveries = async (req, res, next) => {
 // PUT /riders/deliveries/:id/status — rider อัปเดตสถานะ
 export const riderUpdateStatus = async (req, res, next) => {
   try {
-    const { status, lat, lng, note } = req.body;
+    const { status, lat, lng, note, proofImageUrl } = req.body;
     const allowed = ["PICKED_UP", "ON_THE_WAY", "ARRIVED", "DELIVERED", "FAILED"];
     if (!allowed.includes(status)) {
       return res.status(400).json({ message: `Status must be one of: ${allowed.join(", ")}` });
@@ -384,22 +384,80 @@ export const riderUpdateStatus = async (req, res, next) => {
     const delivery = await prisma.delivery.findFirst({ where });
     if (!delivery) return res.status(404).json({ message: "Delivery not found or not yours" });
 
-    const updated = await updateDeliveryStatus(delivery.id, status, lat, lng, note);
+    const updated = await updateDeliveryStatus(delivery.id, status, lat, lng, note, proofImageUrl);
     res.json(updated);
   } catch (err) { next(err); }
 };
 
-// POST /riders/deliveries/:id/proof — อัปโหลดหลักฐานการส่ง
+// POST /riders/deliveries/:id/proof — อัปโหลดหลักฐานการส่งมอบหรือสลิปการชำระเงิน
 export const uploadProof = async (req, res, next) => {
   try {
-    if (!req.file) return res.status(400).json({ message: "No image uploaded" });
-    const delivery = await prisma.delivery.findUnique({ where: { id: req.params.id } });
-    if (delivery?.proofImageUrl) await deleteImage(delivery.proofImageUrl);
-    const updated = await prisma.delivery.update({
+    const imagePath = req.file ? req.file.path : req.body.proofUrl || req.body.imageUrl;
+    if (!imagePath) return res.status(400).json({ message: "No image uploaded" });
+
+    let delivery = await prisma.delivery.findUnique({
       where: { id: req.params.id },
-      data: { proofImageUrl: req.file.path },
+      include: { order: true },
     });
-    res.json({ proofImageUrl: updated.proofImageUrl });
+    if (!delivery) {
+      delivery = await prisma.delivery.findUnique({
+        where: { orderId: req.params.id },
+        include: { order: true },
+      });
+    }
+
+    const type = req.body.type || req.query.type || 'delivery';
+    if (type === 'payment') {
+      const orderId = delivery?.orderId || req.params.id;
+      const order = delivery?.order || (orderId ? await prisma.order.findUnique({ where: { id: orderId } }) : null);
+      if (order) {
+        let updatedNotes = order.notes || "";
+        const match = updatedNotes.match(/LIMELEAF_META:(\{.*\})/);
+        if (match) {
+          try {
+            const meta = JSON.parse(match[1]);
+            meta.paymentProofUrl = imagePath;
+            updatedNotes = updatedNotes.replace(match[0], `LIMELEAF_META:${JSON.stringify(meta)}`);
+          } catch {}
+        } else {
+          updatedNotes += ` LIMELEAF_META:{"paymentProofUrl":"${imagePath}"}`;
+        }
+        await prisma.order.update({
+          where: { id: order.id },
+          data: { notes: updatedNotes },
+        });
+      }
+      return res.json({ success: true, type: 'payment', url: imagePath, paymentProofUrl: imagePath });
+    }
+
+    // Default: delivery proof image
+    if (delivery?.proofImageUrl && !delivery.proofImageUrl.startsWith('data:')) {
+      await deleteImage(delivery.proofImageUrl);
+    }
+    const targetDeliveryId = delivery ? delivery.id : req.params.id;
+    const updated = await prisma.delivery.update({
+      where: { id: targetDeliveryId },
+      data: { proofImageUrl: imagePath },
+    });
+
+    // Also mirror to order notes for easy retrieval in orders view
+    if (delivery?.orderId) {
+      const order = delivery.order || await prisma.order.findUnique({ where: { id: delivery.orderId } });
+      if (order) {
+        let updatedNotes = order.notes || "";
+        const match = updatedNotes.match(/LIMELEAF_META:(\{.*\})/);
+        if (match) {
+          try {
+            const meta = JSON.parse(match[1]);
+            meta.proofImageUrl = imagePath;
+            updatedNotes = updatedNotes.replace(match[0], `LIMELEAF_META:${JSON.stringify(meta)}`);
+            await prisma.order.update({ where: { id: order.id }, data: { notes: updatedNotes } });
+          } catch {}
+        }
+      }
+    }
+
+    res.json({ success: true, type: 'delivery', url: updated.proofImageUrl, proofImageUrl: updated.proofImageUrl });
   } catch (err) { next(err); }
 };
 

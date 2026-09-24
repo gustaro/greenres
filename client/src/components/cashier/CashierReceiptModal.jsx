@@ -1,4 +1,4 @@
-import { groupOrderItems, money, orderCode } from '../StaffShared'
+import { groupOrderItems, money, orderCode, formatCashierPaymentMethod } from '../StaffShared'
 
 export function CashierReceiptModal({
     receipt,
@@ -65,7 +65,7 @@ export function CashierReceiptModal({
                 </div>
                 {receipt.isPaid && (
                     <div className="thermal-payment-type">
-                        <span>{receipt.paymentMethod || 'เงินสด'}</span>
+                        <span>{formatCashierPaymentMethod(receipt.paymentMethod, receipt) || 'เงินสด'}</span>
                         <span>{money(receipt.totalAmount)}</span>
                     </div>
                 )}

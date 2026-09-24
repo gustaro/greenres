@@ -4,6 +4,7 @@ import { settingsApi } from '../lib/database'
 import { PageHead } from './AdminDashboard'
 import { WebSettingsMapSection } from './settings/WebSettingsMapSection'
 import { WebSettingsStripeSection } from './settings/WebSettingsStripeSection'
+import { WebSettingsPointsSection } from './settings/WebSettingsPointsSection'
 
 export function WebSettings({ notify, fail }) {
     const { settings, setSettings } = useAuth()
@@ -151,6 +152,7 @@ export function WebSettings({ notify, fail }) {
                     </footer>
                 </section>
 
+                <WebSettingsPointsSection settings={settings} setSettings={setSettings} notify={notify} fail={fail} />
                 <WebSettingsMapSection settings={settings} setSettings={setSettings} notify={notify} fail={fail} />
                 <WebSettingsStripeSection settings={settings} setSettings={setSettings} notify={notify} fail={fail} />
             </div>

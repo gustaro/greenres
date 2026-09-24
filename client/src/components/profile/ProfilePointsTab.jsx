@@ -1,23 +1,45 @@
 import { useState, useMemo } from 'react'
 import { useLanguage } from '../../lib/LanguageContext'
+import { useAuth } from '../../lib/AuthContext'
 
 export function ProfilePointsTab({ profile, orders = [], money, onOrderMore }) {
     const { isEn, t } = useLanguage()
+    const { settings } = useAuth()
     const [filter, setFilter] = useState('all') // 'all' | 'earned' | 'used'
+
+    const earnRate = Number(settings?.pointsEarnRate || 10)
+    const redeemRate = Number(settings?.pointsRedeemRate || 10)
 
     // Compute point transactions from orders and member bonus
     const transactions = useMemo(() => {
         const list = []
         let totalFromOrders = 0
+        let totalPointsUsed = 0
 
         // Process orders
         for (const order of orders) {
-            if (order.foodStatus === 'ยกเลิก') continue
+            if (order.foodStatus === 'ยกเลิก' || order.status === 'CANCELLED') continue
 
             const total = Number(order.totalAmount || order.total || 0)
-            const pts = Math.floor(total / 10)
+            const pts = Math.floor(total / earnRate)
+            const isCompleted = ['จัดส่งเสร็จสิ้น', 'ทำเสร็จแล้ว', 'เสร็จสิ้น'].includes(order.foodStatus) || order.status === 'DELIVERED'
+
+            // Check if points were used in this order
+            const usedPts = Number(order.pointsUsed || order.meta?.pointsUsed || 0)
+            if (usedPts > 0) {
+                totalPointsUsed += usedPts
+                list.push({
+                    id: `order-used-${order.id}`,
+                    type: 'used',
+                    title: isEn ? `Redeemed for Order #${order.orderNumber || order.id?.slice(-6).toUpperCase()}` : `ใช้แต้มแลกส่วนลด ออเดอร์ #${order.orderNumber || order.id?.slice(-6).toUpperCase()}`,
+                    desc: isEn ? `Discount value ฿${Math.floor(usedPts / redeemRate)}` : `แลกรับส่วนลดมูลค่า ฿${Math.floor(usedPts / redeemRate)}`,
+                    points: usedPts,
+                    date: order.createdAt || new Date().toISOString(),
+                    status: 'completed',
+                })
+            }
+
             if (pts > 0) {
-                const isCompleted = ['จัดส่งเสร็จสิ้น', 'ทำเสร็จแล้ว', 'เสร็จสิ้น'].includes(order.foodStatus) || order.status === 'DELIVERED'
                 if (isCompleted) totalFromOrders += pts
 
                 list.push({
@@ -34,7 +56,7 @@ export function ProfilePointsTab({ profile, orders = [], money, onOrderMore }) {
 
         // Calculate member/welcome bonus if current points exceed orders
         const currentPoints = Number(profile?.points || 0)
-        const bonusPoints = currentPoints - totalFromOrders
+        const bonusPoints = (currentPoints + totalPointsUsed) - totalFromOrders
         if (bonusPoints > 0) {
             list.push({
                 id: 'member-welcome-bonus',
@@ -49,7 +71,7 @@ export function ProfilePointsTab({ profile, orders = [], money, onOrderMore }) {
 
         // Sort descending by date
         return list.sort((a, b) => new Date(b.date) - new Date(a.date))
-    }, [orders, profile?.points, profile?.createdAt, isEn, money, t])
+    }, [orders, profile?.points, profile?.createdAt, isEn, money, t, earnRate, redeemRate])
 
     const filteredList = useMemo(() => {
         if (filter === 'earned') return transactions.filter(t => t.type === 'earned')
@@ -57,8 +79,11 @@ export function ProfilePointsTab({ profile, orders = [], money, onOrderMore }) {
         return transactions
     }, [transactions, filter])
 
+    const earnedCount = useMemo(() => transactions.filter(t => t.type === 'earned').length, [transactions])
+    const usedCount = useMemo(() => transactions.filter(t => t.type === 'used').length, [transactions])
+
     const currentPoints = Number(profile?.points || 0)
-    const discountValue = Math.floor(currentPoints / 10)
+    const discountValue = Math.floor(currentPoints / redeemRate)
 
     return (
         <div className="pf-points-tab">
@@ -103,7 +128,7 @@ export function ProfilePointsTab({ profile, orders = [], money, onOrderMore }) {
                         <i className="bi bi-bag-heart-fill" />
                     </div>
                     <div>
-                        <strong>{isEn ? 'Spend ฿10 = 1 Pt' : 'ทุก 10 บาท = 1 แต้ม'}</strong>
+                        <strong>{isEn ? `Spend ฿${earnRate} = 1 Pt` : `ทุก ${earnRate} บาท = 1 แต้ม`}</strong>
                         <p>{t('profileEarnRule1')}</p>
                     </div>
                 </div>
@@ -141,13 +166,13 @@ export function ProfilePointsTab({ profile, orders = [], money, onOrderMore }) {
                         className={filter === 'earned' ? 'active' : ''}
                         onClick={() => setFilter('earned')}
                     >
-                        {t('profilePointsFilterEarned')}
+                        {t('profilePointsFilterEarned')} ({earnedCount})
                     </button>
                     <button
                         className={filter === 'used' ? 'active' : ''}
                         onClick={() => setFilter('used')}
                     >
-                        {t('profilePointsFilterUsed')} (0)
+                        {t('profilePointsFilterUsed')} ({usedCount})
                     </button>
                 </div>
             </div>

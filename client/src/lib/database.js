@@ -200,6 +200,10 @@ export const mapOrder = row => {
         reservationTime: meta.reservationTime || meta.scheduledAt || null,
         reservationGuests: meta.reservationGuests || null,
         rawNotes: notes,
+        pointsUsed: Number(meta.pointsUsed || 0),
+        pointsDiscount: Number(meta.pointsDiscount || 0),
+        proofImageUrl: meta.proofImageUrl || row.delivery?.proofImageUrl || null,
+        paymentProofUrl: meta.paymentProofUrl || meta.slipUrl || null,
         meta,
     }
 }
@@ -230,6 +234,8 @@ export const mapDelivery = row => {
         rider: row.rider,
         estimatedMinutes: row.estimatedMinutes,
         deliveryFee: Number(row.deliveryFee ?? mappedOrder.deliveryFee ?? 0),
+        proofImageUrl: row.proofImageUrl || mappedOrder.proofImageUrl || mappedOrder.meta?.proofImageUrl || null,
+        paymentProofUrl: mappedOrder.paymentProofUrl || mappedOrder.meta?.paymentProofUrl || mappedOrder.meta?.slipUrl || null,
         order: { ...mappedOrder, ...order, deliveryAddress: finalAddress, dropAddress: finalAddress },
     }
 }
@@ -324,6 +330,7 @@ export async function placeOrder({
     newAddressObj,
     itemNotes,
     stripePaymentId = null,
+    pointsUsed = 0,
 }) {
     const overrideItems = Object.entries(cart)
         .filter(([_, q]) => Number(q) > 0)
@@ -362,6 +369,7 @@ export async function placeOrder({
         reservationGuests: reservationGuests || null,
         paymentMethodDetail: paymentDetail || paymentMethod,
         stripePaymentId: stripePaymentId || null,
+        pointsUsed: Number(pointsUsed || 0),
     })}`
 
     const serverPaymentMethod = (paymentMethod === 'บัตรเครดิต/เดบิต' || (paymentMethod === 'พร้อมเพย์' && stripePaymentId)) ? 'STRIPE' : 'CASH'
@@ -375,6 +383,7 @@ export async function placeOrder({
             itemNotes,
             overrideItems,
             stripePaymentId: stripePaymentId || null,
+            pointsUsed: Number(pointsUsed || 0),
         }),
     })
 
@@ -390,9 +399,9 @@ export async function placeOrder({
     return { order: mapOrder(order), payment: null }
 }
 
-export const markOrderPaid = (id, paymentMethod = 'CASH', paymentDetail = '', stripePaymentId = null) => api(`/orders/${id}/payment`, {
+export const markOrderPaid = (id, paymentMethod = 'CASH', paymentDetail = '', stripePaymentId = null, paymentProofUrl = null) => api(`/orders/${id}/payment`, {
     method: 'PUT',
-    body: JSON.stringify({ paymentMethod, paymentDetail, stripePaymentId }),
+    body: JSON.stringify({ paymentMethod, paymentDetail, stripePaymentId, paymentProofUrl }),
 })
 
 export const cancelOwnOrder = id => api(`/orders/${id}/cancel`, { method: 'PUT', body: JSON.stringify({}) })
@@ -567,6 +576,22 @@ export const deliveryApi = {
         method: 'PUT',
         body: JSON.stringify({ status, ...extra }),
     }),
+    uploadProof: async (deliveryId, fileOrBlob, type = 'delivery') => {
+        const formData = new FormData()
+        formData.append('proof', fileOrBlob)
+        formData.append('type', type)
+        try {
+            return await api(`/delivery/rider/deliveries/${deliveryId}/proof`, {
+                method: 'POST',
+                body: formData,
+            })
+        } catch {
+            return await api(`/delivery/${deliveryId}/proof`, {
+                method: 'POST',
+                body: formData,
+            })
+        }
+    },
     autoAssign: id => api(`/delivery/${id}/auto`, { method: 'POST', body: JSON.stringify({}) }),
 }
 

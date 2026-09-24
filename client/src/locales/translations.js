@@ -156,6 +156,21 @@ export const translations = {
         profilePointsPending: 'รอยืนยันแต้ม',
         profilePointsCompleted: 'รับแต้มสำเร็จ',
 
+        // Cart Points Redemption
+        cartPointsTitle: 'ใช้แต้มสะสมแลกส่วนลด',
+        cartPointsBalance: 'แต้มสะสมของคุณ',
+        cartPointsPlaceholder: 'กรอกแต้มที่ต้องการใช้',
+        cartPointsUseMax: 'ใช้แต้มสูงสุด',
+        cartPointsClear: 'ยกเลิก',
+        cartPointsDiscount: 'ส่วนลดจากแต้มสะสม',
+        cartPointsDiscountRateDesc: '{rate} แต้ม = ส่วนลด 1 บาท',
+        cartPointsMinRequired: 'แลกขั้นต่ำ {min} แต้ม',
+        cartPointsNotEnough: 'แต้มสะสมไม่เพียงพอ',
+        cartPointsLoginPrompt: 'เข้าสู่ระบบเพื่อใช้แต้มสะสมเป็นส่วนลด',
+        cartPointsDisabled: 'ระบบแต้มสะสมปิดปรับปรุงชั่วคราว',
+        checkoutPointsDiscount: 'ส่วนลดจากแต้มสะสม',
+        checkoutPointsUsed: 'แต้มที่ใช้',
+
         // Auth Modal
         authSignIn: 'เข้าสู่ระบบ',
         authSignUp: 'สมัครสมาชิก',
@@ -437,6 +452,21 @@ export const translations = {
         profilePointsOrderDesc: 'Delivered order, amount',
         profilePointsPending: 'Points Pending',
         profilePointsCompleted: 'Points Earned',
+
+        // Cart Points Redemption
+        cartPointsTitle: 'Redeem Reward Points',
+        cartPointsBalance: 'Your Point Balance',
+        cartPointsPlaceholder: 'Enter points to use',
+        cartPointsUseMax: 'Use Max',
+        cartPointsClear: 'Clear',
+        cartPointsDiscount: 'Points Discount',
+        cartPointsDiscountRateDesc: '{rate} Points = ฿1 Discount',
+        cartPointsMinRequired: 'Minimum {min} points required',
+        cartPointsNotEnough: 'Insufficient points',
+        cartPointsLoginPrompt: 'Sign in to redeem reward points for discounts',
+        cartPointsDisabled: 'Points redemption temporarily unavailable',
+        checkoutPointsDiscount: 'Points Discount',
+        checkoutPointsUsed: 'Points used',
 
         // Auth Modal
         authSignIn: 'Sign In',

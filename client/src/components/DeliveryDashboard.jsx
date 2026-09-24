@@ -9,6 +9,8 @@ import { DeliveryRiderBar } from './delivery/DeliveryRiderBar'
 import { DeliveryJobCard } from './delivery/DeliveryJobCard'
 import { DeliveryRiderProfileModal } from './delivery/DeliveryRiderProfileModal'
 import { DeliveryCashModal } from './delivery/DeliveryCashModal'
+import { DeliveryCompleteModal } from './delivery/DeliveryCompleteModal'
+import { DeliveryImageLightbox } from './delivery/DeliveryImageLightbox'
 
 export function DeliveryDashboard({ setOrders }) {
     const { profile, session } = useAuth()
@@ -20,10 +22,13 @@ export function DeliveryDashboard({ setOrders }) {
     const [error, setError] = useState('')
     const [expanded, setExpanded] = useState(null)
     const [cashConfirm, setCashConfirm] = useState(null)
+    const [activeDeliveryJob, setActiveDeliveryJob] = useState(null)
+    const [lightboxImage, setLightboxImage] = useState(null)
     const [notice, setNotice] = useState('')
     const [showProfileModal, setShowProfileModal] = useState(false)
     const [advancingJobId, setAdvancingJobId] = useState(null)
     const [cashConfirming, setCashConfirming] = useState(false)
+    const [modalSubmitting, setModalSubmitting] = useState(false)
 
     const loadRequestRef = useRef(null)
 
@@ -120,6 +125,12 @@ export function DeliveryDashboard({ setOrders }) {
         if (!flow) return
         const [nextStatus] = flow
 
+        // When moving to DELIVERED, require proof photo & payment via modal!
+        if (nextStatus === 'DELIVERED') {
+            setActiveDeliveryJob(job)
+            return
+        }
+
         const targetId = job.deliveryId ?? job.id
         setAdvancingJobId(targetId)
         try {
@@ -128,12 +139,6 @@ export function DeliveryDashboard({ setOrders }) {
                     ? { ...j, status: nextStatus, serverDeliveryStatus: nextStatus, foodStatus: DELIVERY_STATUS_LABEL[nextStatus] ?? nextStatus }
                     : j
             ))
-            if (nextStatus === 'DELIVERED') {
-                const oid = job.orderId ?? job.order?.id
-                if (oid && setOrders) {
-                    setOrders(current => current.map(o => o.id === oid ? { ...o, foodStatus: 'จัดส่งเสร็จสิ้น', serverStatus: 'DELIVERED' } : o))
-                }
-            }
 
             if (isAdmin) await deliveryApi.updateStatus(job.deliveryId ?? job.id, nextStatus)
             else await deliveryApi.updateRiderDelivery(job.deliveryId ?? job.id, nextStatus)
@@ -148,29 +153,78 @@ export function DeliveryDashboard({ setOrders }) {
         }
     }
 
-    const confirmCashPayment = async job => {
+    const handleCompleteDelivery = async ({
+        job,
+        deliveryProofFile,
+        deliveryProofUrl,
+        paymentMode,
+        paymentProofFile,
+        paymentProofUrl,
+        isQrPaid,
+        stripePaymentId,
+    }) => {
+        const targetId = job.deliveryId ?? job.id
         const orderId = job.orderId ?? job.order?.id
-        if (!orderId) return window.alert('ไม่พบ Order ID')
-        setCashConfirming(true)
+        setModalSubmitting(true)
         try {
-            if (setOrders) {
-                setOrders(current => current.map(o => o.id === orderId ? { ...o, isPaid: true, paymentStatus: 'PAID' } : o))
-            }
-            setJobs(current => current.map(j =>
-                (j.id === job.id || j.deliveryId === job.deliveryId)
-                    ? { ...j, order: { ...j.order, isPaid: true } }
-                    : j
-            ))
-            setCashConfirm(null)
+            let finalProofUrl = deliveryProofUrl
+            let finalPaymentProofUrl = paymentProofUrl
 
-            await markOrderPaid(orderId)
-            notify('บันทึกรับเงินสดแล้ว')
+            // 1. Upload proof of delivery if file provided
+            if (deliveryProofFile) {
+                try {
+                    const res = await deliveryApi.uploadProof(targetId, deliveryProofFile, 'delivery')
+                    if (res?.url || res?.proofImageUrl) finalProofUrl = res.url || res.proofImageUrl
+                } catch (err) {
+                    console.warn('Delivery proof upload error:', err.message)
+                }
+            }
+
+            // 2. Upload payment proof if file provided
+            if (paymentProofFile) {
+                try {
+                    const res = await deliveryApi.uploadProof(targetId, paymentProofFile, 'payment')
+                    if (res?.url || res?.paymentProofUrl) finalPaymentProofUrl = res.url || res.paymentProofUrl
+                } catch (err) {
+                    console.warn('Payment proof upload error:', err.message)
+                }
+            }
+
+            // 3. Mark payment paid if job was unpaid or QR paid
+            if (!job.isPaid && orderId) {
+                const method = isQrPaid ? 'PROMPTPAY_STRIPE' : 'CASH'
+                const detail = isQrPaid ? 'สแกนคิวอาร์ (PromptPay)' : (paymentMode === 'cash_transfer' ? 'เงินสด/โอนตรง' : 'เงินสด')
+                await markOrderPaid(orderId, method, detail, stripePaymentId, finalPaymentProofUrl).catch(err => {
+                    console.warn('Mark order paid error:', err.message)
+                })
+                if (setOrders) {
+                    setOrders(current => current.map(o => o.id === orderId ? { ...o, isPaid: true, paymentStatus: 'PAID' } : o))
+                }
+            }
+
+            // 4. Advance delivery status to DELIVERED with proofImageUrl
+            const nextStatus = 'DELIVERED'
+            if (isAdmin) await deliveryApi.updateStatus(targetId, nextStatus, { proofImageUrl: finalProofUrl })
+            else await deliveryApi.updateRiderDelivery(targetId, nextStatus, { proofImageUrl: finalProofUrl })
+
+            if (orderId && setOrders) {
+                setOrders(current => current.map(o => o.id === orderId ? { ...o, foodStatus: 'จัดส่งเสร็จสิ้น', serverStatus: 'DELIVERED', isPaid: true } : o))
+            }
+
+            notify('ส่งมอบสินค้าและบันทึกข้อมูลเรียบร้อยแล้ว')
+            setActiveDeliveryJob(null)
+            setCashConfirm(null)
+            load(true)
         } catch (err) {
-            window.alert('Error updating payment: ' + err.message)
+            window.alert('เกิดข้อผิดพลาดในการบันทึกข้อมูล: ' + err.message)
             load(true)
         } finally {
-            setCashConfirming(false)
+            setModalSubmitting(false)
         }
+    }
+
+    const confirmCashPayment = async data => {
+        await handleCompleteDelivery(data)
     }
 
     const openCardRef = useRef(null)
@@ -245,7 +299,8 @@ export function DeliveryDashboard({ setOrders }) {
                                     onToggle={() => setExpanded(job.id)}
                                     advance={advance}
                                     advancingJobId={advancingJobId}
-                                    onConfirmCash={setCashConfirm}
+                                    onConfirmCash={setActiveDeliveryJob}
+                                    onViewImage={(url, title, subtitle) => setLightboxImage({ url, title, subtitle })}
                                 />
                             ))}
                         </div>
@@ -274,7 +329,8 @@ export function DeliveryDashboard({ setOrders }) {
                                         onToggle={() => setExpanded(null)}
                                         advance={advance}
                                         advancingJobId={advancingJobId}
-                                        onConfirmCash={setCashConfirm}
+                                        onConfirmCash={setActiveDeliveryJob}
+                                        onViewImage={(url, title, subtitle) => setLightboxImage({ url, title, subtitle })}
                                     />
                                 </div>
                             </div>
@@ -291,12 +347,23 @@ export function DeliveryDashboard({ setOrders }) {
                 notify={notify}
             />
 
-            <DeliveryCashModal
-                cashConfirm={cashConfirm}
-                setCashConfirm={setCashConfirm}
-                cashConfirming={cashConfirming}
-                confirmCashPayment={confirmCashPayment}
-            />
+            {activeDeliveryJob && (
+                <DeliveryCompleteModal
+                    job={activeDeliveryJob}
+                    onClose={() => setActiveDeliveryJob(null)}
+                    onConfirm={handleCompleteDelivery}
+                    isSubmitting={modalSubmitting}
+                />
+            )}
+
+            {lightboxImage && (
+                <DeliveryImageLightbox
+                    image={lightboxImage.url}
+                    title={lightboxImage.title}
+                    subtitle={lightboxImage.subtitle}
+                    onClose={() => setLightboxImage(null)}
+                />
+            )}
 
             {notice && <div className="ad-toast"><i className="bi bi-check2-circle me-1" />{notice}</div>}
         </StaffShell>

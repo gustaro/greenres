@@ -18,6 +18,8 @@ export const roleNames = {
     delivery: 'ไรเดอร์ / จัดส่ง',
 }
 
+export { formatPaymentOverview, formatCashierPaymentMethod } from '../StaffShared'
+
 export const money = value => new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB', maximumFractionDigits: 0 }).format(value || 0)
 
 export function PageHead({ eyebrow, title, description, children }) {

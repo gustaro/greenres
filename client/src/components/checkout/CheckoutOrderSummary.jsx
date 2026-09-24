@@ -1,6 +1,6 @@
 import { useLanguage } from '../../lib/LanguageContext'
 
-export function CheckoutOrderSummary({ items, cart, orderMode, takeawayItemMap, itemNotes, subtotal, fee, discount, total }) {
+export function CheckoutOrderSummary({ items, cart, orderMode, takeawayItemMap, itemNotes, subtotal, fee, discount, pointsToUse = 0, pointsDiscount = 0, total }) {
     const { isEn, t } = useLanguage()
     return (
         <aside>
@@ -38,10 +38,24 @@ export function CheckoutOrderSummary({ items, cart, orderMode, takeawayItemMap, 
                     <span>{t('deliveryFee')}</span>
                     <span>{fee ? `฿${fee}` : (isEn ? 'FREE' : 'ฟรี')}</span>
                 </div>
-                <div className="sum-row" style={{ fontSize: 12 }}>
-                    <span>{t('discount')}</span>
-                    <span style={{ color: discount ? 'var(--brand-primary)' : 'inherit' }}>{discount ? `-฿${discount}` : '฿0'}</span>
-                </div>
+                {discount > 0 && (
+                    <div className="sum-row" style={{ fontSize: 12 }}>
+                        <span>{isEn ? 'Promo Code Discount' : 'ส่วนลดโค้ดโปรโมชั่น'}</span>
+                        <span style={{ color: 'var(--brand-primary)', fontWeight: 600 }}>-฿{discount}</span>
+                    </div>
+                )}
+                {pointsDiscount > 0 && (
+                    <div className="sum-row" style={{ fontSize: 12 }}>
+                        <span>{t('checkoutPointsDiscount')} ({pointsToUse} {t('profilePointsUnit')})</span>
+                        <span style={{ color: 'var(--brand-primary)', fontWeight: 600 }}>-฿{pointsDiscount}</span>
+                    </div>
+                )}
+                {!discount && !pointsDiscount && (
+                    <div className="sum-row" style={{ fontSize: 12 }}>
+                        <span>{t('discount')}</span>
+                        <span>฿0</span>
+                    </div>
+                )}
 
                 <div className="sum-total" style={{ borderTop: 0, marginTop: 25, paddingTop: 0 }}>
                     <span style={{ fontSize: 18, fontWeight: 900, color: '#000' }}>{t('netTotal')}</span>

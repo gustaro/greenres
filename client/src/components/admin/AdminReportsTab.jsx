@@ -1,8 +1,24 @@
-import { PageHead, money } from './AdminShared'
+import { useMemo } from 'react'
+import { PageHead, money, formatPaymentOverview, formatCashierPaymentMethod } from './AdminShared'
 import { exportPdf, PDF_BASE_CSS } from '../../lib/exportPdf'
 
 export function AdminReportsTab({ orders, paidOrders, revenue, averageOrder, productSales, products, notify }) {
     const maxSold = Math.max(...productSales.map(product => product.sold), 1)
+
+    // Group payment methods into clean overview categories (e.g. "จ่ายด้วย QR", "เงินสด", etc.)
+    const paymentMethodsSummary = useMemo(() => {
+        const map = {}
+        orders.forEach(order => {
+            const method = formatPaymentOverview(order.paymentMethod)
+            map[method] = (map[method] || 0) + 1
+        })
+        const total = Math.max(orders.length, 1)
+        return Object.entries(map).map(([method, count]) => ({
+            method,
+            count,
+            percent: (count / total) * 100,
+        })).sort((a, b) => b.count - a.count)
+    }, [orders])
 
     // Weekly sales: group paid orders by weekday for the current week
     const DAYS = ['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส']
@@ -49,7 +65,7 @@ export function AdminReportsTab({ orders, paidOrders, revenue, averageOrder, pro
                 order.orderNumber || order.id, date, time,
                 sourceLabel(order.orderSource), order.customerId || '-',
                 itemsSummary, itemCount,
-                order.paymentMethod || '-', order.couponCode || '-', order.discountAmount || 0,
+                formatCashierPaymentMethod(order.paymentMethod, order) || '-', order.couponCode || '-', order.discountAmount || 0,
                 order.totalAmount, order.isPaid ? 'ชำระแล้ว' : 'ยังไม่ชำระ',
                 order.foodStatus, order.deliveryType || '-',
             ]
@@ -89,7 +105,7 @@ export function AdminReportsTab({ orders, paidOrders, revenue, averageOrder, pro
         // Payment breakdown
         const paymentMap = {}
         paidOrders.forEach(o => {
-            const k = o.paymentMethod || 'ไม่ระบุ'
+            const k = formatPaymentOverview(o.paymentMethod)
             paymentMap[k] = (paymentMap[k] || { count: 0, total: 0 })
             paymentMap[k].count++
             paymentMap[k].total += o.totalAmount
@@ -112,7 +128,7 @@ export function AdminReportsTab({ orders, paidOrders, revenue, averageOrder, pro
                 <td>${sourceLabel(order.orderSource)}</td>
                 <td>${order.customerId || 'ลูกค้าทั่วไป'}</td>
                 <td>${itemsSummary || '—'}</td>
-                <td>${order.paymentMethod || '—'}</td>
+                <td>${formatCashierPaymentMethod(order.paymentMethod, order) || '—'}</td>
                 <td class="amount">${(order.totalAmount || 0).toLocaleString('th-TH')} ฿</td>
                 <td>${order.isPaid ? '✓' : '—'}</td>
             </tr>`
@@ -226,16 +242,13 @@ export function AdminReportsTab({ orders, paidOrders, revenue, averageOrder, pro
                         </div>
                     </div>
                     <div className="admin-payment-list">
-                        {[...new Set(orders.map(order => order.paymentMethod))].map(method => {
-                            const count = orders.filter(order => order.paymentMethod === method).length
-                            return (
-                                <div key={method}>
-                                    <span>{method}</span>
-                                    <b>{count} ออเดอร์</b>
-                                    <i style={{ width: `${(count / Math.max(orders.length, 1)) * 100}%` }} />
-                                </div>
-                            )
-                        })}
+                        {paymentMethodsSummary.map(({ method, count, percent }) => (
+                            <div key={method}>
+                                <span>{method}</span>
+                                <b>{count} ออเดอร์</b>
+                                <i style={{ width: `${percent}%` }} />
+                            </div>
+                        ))}
                     </div>
                 </section>
             </div>

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { updateOrder, kitchenApi } from '../../lib/database'
-import { orderCode } from '../StaffShared'
+import { orderCode, formatCashierPaymentMethod, formatPaymentOverview } from '../StaffShared'
 import { playNotificationChime } from '../ToastNotification'
 import { useCashierCounter } from './useCashierCounter'
 import { useCashierOperations } from './useCashierOperations'
@@ -135,7 +135,9 @@ export function useCashierDashboard(orders, setOrders, refreshOrders) {
         const code = String(orderCode(order)).toLowerCase()
         const customer = String(customerLabel(order)).toLowerCase()
         const time = new Date(order.paidAt || order.createdAt).toLocaleString('th-TH').toLowerCase()
-        const channel = (String(order.paymentMethod || '') + ' ' + String(order.deliveryType || '')).toLowerCase()
+        const cashierMethod = formatCashierPaymentMethod(order.paymentMethod, order).toLowerCase()
+        const overviewMethod = formatPaymentOverview(order.paymentMethod).toLowerCase()
+        const channel = (String(order.paymentMethod || '') + ' ' + cashierMethod + ' ' + overviewMethod + ' ' + String(order.deliveryType || '')).toLowerCase()
         const amount = String(order.totalAmount || '')
         const table = String(order.tableNumber || '').toLowerCase()
 
@@ -158,7 +160,7 @@ export function useCashierDashboard(orders, setOrders, refreshOrders) {
     const periodOrders = paidOrders.filter(order => period === 'all' || new Date(order.paidAt || order.updatedAt || order.createdAt) >= periodStart)
     const revenue = periodOrders.reduce((sum, order) => sum + order.totalAmount, 0)
     const paymentMethods = useMemo(() => Object.entries(periodOrders.reduce((result, order) => {
-        const key = order.paymentMethod || 'ไม่ระบุ'
+        const key = formatPaymentOverview(order.paymentMethod)
         result[key] ||= []
         result[key].push(order)
         return result
@@ -222,12 +224,12 @@ export function useCashierDashboard(orders, setOrders, refreshOrders) {
             const items = order.items || []
 
             if (items.length === 0) {
-                sections.push(row(code, date, customer, table, order.deliveryType, order.paymentMethod, '', '', '', '', order.totalAmount))
+                sections.push(row(code, date, customer, table, order.deliveryType, formatCashierPaymentMethod(order.paymentMethod, order), '', '', '', '', order.totalAmount))
             } else {
                 items.forEach((item, index) => {
                     const itemTotal = (item.priceAtTime || 0) * (item.quantity || 1)
                     if (index === 0) {
-                        sections.push(row(code, date, customer, table, order.deliveryType, order.paymentMethod, item.productName || '', item.quantity, item.priceAtTime ?? '', itemTotal, order.totalAmount))
+                        sections.push(row(code, date, customer, table, order.deliveryType, formatCashierPaymentMethod(order.paymentMethod, order), item.productName || '', item.quantity, item.priceAtTime ?? '', itemTotal, order.totalAmount))
                     } else {
                         sections.push(row('', '', '', '', '', '', item.productName || '', item.quantity, item.priceAtTime ?? '', itemTotal, ''))
                     }
@@ -263,15 +265,16 @@ export function useCashierDashboard(orders, setOrders, refreshOrders) {
             const date = new Date(order.paidAt || order.createdAt).toLocaleString('th-TH')
             const customer = customerLabel(order)
             const table = order.deliveryType === 'ทานที่ร้าน' ? (order.tableNumber ? ` (โต๊ะ ${order.tableNumber})` : '') : ''
+            const cashierMethod = formatCashierPaymentMethod(order.paymentMethod, order)
             const items = (order.items || [])
             let rows = ''
             if (items.length === 0) {
-                rows = `<tr><td><b>${code}</b></td><td>${date}</td><td>${customer}${table}</td><td>${order.deliveryType || ''}</td><td>${order.paymentMethod || ''}</td><td></td><td class="amount">${order.totalAmount.toLocaleString('th-TH')} ฿</td></tr>`
+                rows = `<tr><td><b>${code}</b></td><td>${date}</td><td>${customer}${table}</td><td>${order.deliveryType || ''}</td><td>${cashierMethod}</td><td></td><td class="amount">${order.totalAmount.toLocaleString('th-TH')} ฿</td></tr>`
             } else {
                 items.forEach((item, i) => {
                     const itemTotal = ((item.priceAtTime || 0) * (item.quantity || 1)).toLocaleString('th-TH')
                     if (i === 0) {
-                        rows += `<tr><td><b>${code}</b></td><td>${date}</td><td>${customer}${table}</td><td>${order.deliveryType || ''}</td><td>${order.paymentMethod || ''}</td><td>${item.productName || ''} ×${item.quantity} (${itemTotal} ฿)</td><td class="amount">${order.totalAmount.toLocaleString('th-TH')} ฿</td></tr>`
+                        rows += `<tr><td><b>${code}</b></td><td>${date}</td><td>${customer}${table}</td><td>${order.deliveryType || ''}</td><td>${cashierMethod}</td><td>${item.productName || ''} ×${item.quantity} (${itemTotal} ฿)</td><td class="amount">${order.totalAmount.toLocaleString('th-TH')} ฿</td></tr>`
                     } else {
                         rows += `<tr class="continuation"><td></td><td></td><td></td><td></td><td></td><td>${item.productName || ''} ×${item.quantity} (${itemTotal} ฿)</td><td></td></tr>`
                     }

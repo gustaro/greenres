@@ -47,7 +47,7 @@ export function CashierPaymentModal({
             paymentDetail: selectedPaymentMethod === 'CARD'
                 ? (cardMode === 'manual' ? (cardData.maskedCard || 'บัตรเครดิต (Manual)') : 'บัตรเครดิต (เครื่อง EDC)')
                 : selectedPaymentMethod === 'QR'
-                    ? (isQrPaid ? `สแกนคิวอาร์ (PromptPay จำลองสำเร็จ - REF: ${qrData?.refCode || ''}${qrData?.paymentIntentId ? ` | Stripe: ${qrData.paymentIntentId}` : ''})` : 'สแกนคิวอาร์ (PromptPay)')
+                    ? (isQrPaid ? `สแกนคิวอาร์ (PromptPay - REF: ${qrData?.refCode || ''}${qrData?.paymentIntentId ? ` | Stripe: ${qrData.paymentIntentId}` : ''})` : 'สแกนคิวอาร์ (PromptPay)')
                     : 'เงินสด',
         })
     }

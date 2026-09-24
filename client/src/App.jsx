@@ -56,6 +56,7 @@ function MainApp() {
   const [auth, setAuth] = useState(false)
   const [drawer, setDrawer] = useState(false)
   const [checkout, setCheckout] = useState(false)
+  const [pointsToUse, setPointsToUse] = useState(0)
   const ordersRequestRef = useRef(null)
   const deliverySetupRef = useRef(new Map())
 
@@ -190,13 +191,14 @@ function MainApp() {
   const handlePlaceOrder = async details => {
     try {
       const validCart = Object.fromEntries(products.filter(product => cart[product.id] > 0).map(product => [product.id, cart[product.id]]))
-      await placeOrder({ cart: validCart, ...details, itemNotes })
+      await placeOrder({ cart: validCart, ...details, itemNotes, pointsUsed: details.pointsUsed !== undefined ? details.pointsUsed : pointsToUse })
       await refreshProfile()
       await refreshOrders()
       const catalog = await fetchCatalog()
       setProducts(catalog.products)
       setCheckout(false)
       setCart({})
+      setPointsToUse(0)
       navigate('/success')
     } catch (error) {
       console.error('[API] สร้างออเดอร์ไม่สำเร็จ', error)
@@ -224,7 +226,7 @@ function MainApp() {
     <>
       <Routes>
         <Route path="/" element={<HomePage onOrder={() => navigate('/order')} {...navProps} />} />
-        <Route path="/order" element={<OrderPage onHome={() => navigate('/')} {...navProps} products={products} categories={categories} cart={cart} setCart={setCart} itemNotes={itemNotes} setItemNotes={setItemNotes} onCheckout={openCheckout} />} />
+        <Route path="/order" element={<OrderPage onHome={() => navigate('/')} {...navProps} products={products} categories={categories} cart={cart} setCart={setCart} itemNotes={itemNotes} setItemNotes={setItemNotes} onCheckout={openCheckout} pointsToUse={pointsToUse} setPointsToUse={setPointsToUse} />} />
         <Route path="/map" element={<StoreMapPage {...navProps} onHome={() => navigate('/')} onOrder={() => navigate('/order')} />} />
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/success" element={<Success onHome={() => navigate('/')} />} />
@@ -234,8 +236,8 @@ function MainApp() {
         <Route path="/admin" element={<RoleRoute session={session} profile={profile} loading={loading} roles={['admin']} onAuth={() => setAuth(true)}><AdminDashboard orders={orders} setOrders={setOrders} products={products} setProducts={setProducts} categories={categories} setCategories={setCategories} /></RoleRoute>} />
       </Routes>
       {auth && <AuthModal onClose={() => setAuth(false)} onSuccess={handleLoginSuccess} />}
-      {drawer && <CartDrawer cart={cart} setCart={setCart} products={products} itemNotes={itemNotes} setItemNotes={setItemNotes} onClose={() => setDrawer(false)} onCheckout={openCheckout} />}
-      {checkout && <CheckoutModal cart={cart} products={products} itemNotes={itemNotes} onClose={() => setCheckout(false)} onDone={handlePlaceOrder} />}
+      {drawer && <CartDrawer cart={cart} setCart={setCart} products={products} itemNotes={itemNotes} setItemNotes={setItemNotes} onClose={() => setDrawer(false)} onCheckout={openCheckout} pointsToUse={pointsToUse} setPointsToUse={setPointsToUse} onAuth={() => { setDrawer(false); setAuth(true); }} />}
+      {checkout && <CheckoutModal cart={cart} products={products} itemNotes={itemNotes} onClose={() => setCheckout(false)} onDone={handlePlaceOrder} pointsToUse={pointsToUse} setPointsToUse={setPointsToUse} />}
       <ScrollToTop />
     </>
   )

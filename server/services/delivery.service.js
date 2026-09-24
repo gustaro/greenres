@@ -114,10 +114,11 @@ export const autoAssignRider = async (deliveryId) => {
 };
 
 // อัปเดตสถานะ delivery
-export const updateDeliveryStatus = async (deliveryId, status, lat, lng, note) => {
+export const updateDeliveryStatus = async (deliveryId, status, lat, lng, note, proofImageUrl) => {
   const data = { status };
   if (status === "PICKED_UP") data.pickedUpAt = new Date();
   if (status === "DELIVERED") data.deliveredAt = new Date();
+  if (proofImageUrl) data.proofImageUrl = proofImageUrl;
 
   const delivery = await prisma.delivery.update({
     where: { id: deliveryId },

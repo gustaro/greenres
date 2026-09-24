@@ -33,6 +33,11 @@ export const getActiveSettings = () => {
         stripeTestSecretKey: settings.stripeTestSecretKey || env.STRIPE_SECRET_KEY || "",
         stripeLivePublishableKey: settings.stripeLivePublishableKey || "",
         stripeLiveSecretKey: settings.stripeLiveSecretKey || "",
+        pointsEnabled: settings.pointsEnabled ?? true,
+        pointsEarnRate: settings.pointsEarnRate !== undefined ? Math.max(1, parseFloat(settings.pointsEarnRate)) : 10,
+        pointsRedeemRate: settings.pointsRedeemRate !== undefined ? Math.max(1, parseFloat(settings.pointsRedeemRate)) : 10,
+        pointsMinRedeem: settings.pointsMinRedeem !== undefined ? Math.max(0, parseInt(settings.pointsMinRedeem)) : 10,
+        pointsMaxDiscountPercent: settings.pointsMaxDiscountPercent !== undefined ? Math.min(100, Math.max(1, parseFloat(settings.pointsMaxDiscountPercent))) : 100,
         ...settings
     };
 };
@@ -76,6 +81,11 @@ export const updateSiteSettings = (req, res, next) => {
         if (payload.stripeTestSecretKey !== undefined) settings.stripeTestSecretKey = payload.stripeTestSecretKey;
         if (payload.stripeLivePublishableKey !== undefined) settings.stripeLivePublishableKey = payload.stripeLivePublishableKey;
         if (payload.stripeLiveSecretKey !== undefined) settings.stripeLiveSecretKey = payload.stripeLiveSecretKey;
+        if (payload.pointsEnabled !== undefined) settings.pointsEnabled = Boolean(payload.pointsEnabled);
+        if (payload.pointsEarnRate !== undefined) settings.pointsEarnRate = Math.max(1, parseFloat(payload.pointsEarnRate));
+        if (payload.pointsRedeemRate !== undefined) settings.pointsRedeemRate = Math.max(1, parseFloat(payload.pointsRedeemRate));
+        if (payload.pointsMinRedeem !== undefined) settings.pointsMinRedeem = Math.max(0, parseInt(payload.pointsMinRedeem));
+        if (payload.pointsMaxDiscountPercent !== undefined) settings.pointsMaxDiscountPercent = Math.min(100, Math.max(1, parseFloat(payload.pointsMaxDiscountPercent)));
 
         if (!fs.existsSync(configDir)) fs.mkdirSync(configDir, { recursive: true });
         fs.writeFileSync(configPath, JSON.stringify(settings, null, 2));

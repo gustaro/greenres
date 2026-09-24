@@ -1,4 +1,4 @@
-import { Empty, money, orderCode } from '../StaffShared'
+import { Empty, money, orderCode, formatCashierPaymentMethod } from '../StaffShared'
 
 export function CashierHistoryTab({
     paidOrders,
@@ -61,7 +61,7 @@ export function CashierHistoryTab({
                                 </td>
                                 <td>{new Date(order.paidAt || order.createdAt).toLocaleString('th-TH')}</td>
                                 <td>{customerLabel(order)}</td>
-                                <td><i className="status paid">{order.paymentMethod}</i></td>
+                                <td><i className="status paid">{formatCashierPaymentMethod(order.paymentMethod, order)}</i></td>
                                 <td><strong>{money(order.totalAmount)}</strong></td>
                                 <td>
                                     <button className="staff-link" onClick={() => onViewReceipt(order)}>

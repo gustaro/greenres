@@ -1,7 +1,7 @@
 import { DELIVERY_FLOW, DELIVERY_STATUS_LABEL, DELIVERY_STATUS_CLASS } from './DeliveryShared'
 import { money } from '../StaffShared'
 
-export function DeliveryJobCard({ job, isAdmin, tab, isOpen, onToggle, advance, advancingJobId, onConfirmCash }) {
+export function DeliveryJobCard({ job, isAdmin, tab, isOpen, onToggle, advance, advancingJobId, onConfirmCash, onViewImage }) {
     const flow = DELIVERY_FLOW[job.status]
     const isCash = ['ชำระเงินปลายทาง', 'CASH', 'เงินสด'].includes(job.paymentMethod)
     const needCash = isCash && !job.isPaid && job.status === 'DELIVERED'
@@ -101,6 +101,88 @@ export function DeliveryJobCard({ job, isAdmin, tab, isOpen, onToggle, advance, 
                             )}
                         </i>
                     </div>
+
+                    {/* Proof Images Section (Delivery photo & Payment slip) */}
+                    {(job.proofImageUrl || job.paymentProofUrl) && (
+                        <div
+                            style={{
+                                padding: '10px 12px',
+                                background: '#f0fdf4',
+                                border: '1px solid #bbf7d0',
+                                borderRadius: 10,
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: 8,
+                            }}
+                        >
+                            <small style={{ fontSize: 11, fontWeight: 800, color: '#166534', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                                <i className="bi bi-shield-check me-1" />
+                                หลักฐานการจัดส่งและชำระเงิน (ตรวจสอบย้อนหลัง)
+                            </small>
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
+                                {job.proofImageUrl && (
+                                    <button
+                                        type="button"
+                                        onClick={(e) => {
+                                            e.stopPropagation()
+                                            onViewImage?.(job.proofImageUrl, 'ภาพถ่ายตอนส่งของสำเร็จ', `ออเดอร์ ${job.orderNumber}`)
+                                        }}
+                                        style={{
+                                            display: 'inline-flex',
+                                            alignItems: 'center',
+                                            gap: 8,
+                                            padding: '6px 10px',
+                                            background: '#ffffff',
+                                            border: '1px solid #86efac',
+                                            borderRadius: 8,
+                                            cursor: 'pointer',
+                                            color: '#15803d',
+                                            fontWeight: 700,
+                                            fontSize: 12,
+                                        }}
+                                    >
+                                        <img
+                                            src={job.proofImageUrl}
+                                            alt="Proof"
+                                            style={{ width: 28, height: 28, borderRadius: 4, objectFit: 'cover' }}
+                                        />
+                                        <span><i className="bi bi-camera-fill me-1" />รูปส่งของสำเร็จ</span>
+                                        <i className="bi bi-box-arrow-up-right ms-1 text-muted" style={{ fontSize: 10 }} />
+                                    </button>
+                                )}
+                                {job.paymentProofUrl && (
+                                    <button
+                                        type="button"
+                                        onClick={(e) => {
+                                            e.stopPropagation()
+                                            onViewImage?.(job.paymentProofUrl, 'หลักฐานการชำระเงิน (เงินสด/สลิป)', `ออเดอร์ ${job.orderNumber} · ${money(job.totalAmount)}`)
+                                        }}
+                                        style={{
+                                            display: 'inline-flex',
+                                            alignItems: 'center',
+                                            gap: 8,
+                                            padding: '6px 10px',
+                                            background: '#ffffff',
+                                            border: '1px solid #fdba74',
+                                            borderRadius: 8,
+                                            cursor: 'pointer',
+                                            color: '#c2410c',
+                                            fontWeight: 700,
+                                            fontSize: 12,
+                                        }}
+                                    >
+                                        <img
+                                            src={job.paymentProofUrl}
+                                            alt="Payment Slip/Cash"
+                                            style={{ width: 28, height: 28, borderRadius: 4, objectFit: 'cover' }}
+                                        />
+                                        <span><i className="bi bi-receipt me-1" />สลิป/รูปเงินสด</span>
+                                        <i className="bi bi-box-arrow-up-right ms-1 text-muted" style={{ fontSize: 10 }} />
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+                    )}
 
                     {/* Status progress bar */}
                     <div className="delivery-progress">

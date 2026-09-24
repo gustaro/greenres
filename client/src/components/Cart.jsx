@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../lib/AuthContext'
 import { useLanguage } from '../lib/LanguageContext'
 import { validatePromotion } from '../lib/database'
+import { CartPointsWidget } from './cart/CartPointsWidget'
 
 export const SERVER_DELIVERY_FEE = Number(import.meta.env.VITE_DELIVERY_FEE || 35)
 export const SERVER_FREE_DELIVERY_THRESHOLD = Number(import.meta.env.VITE_FREE_DELIVERY_THRESHOLD || 300)
@@ -19,10 +20,14 @@ const formatSavedAddress = address => {
 }
 
 // ─── Cart Drawer (Global Header Cart) ───────────────────────────────────────
-export function CartDrawer({ cart, setCart, products, itemNotes, setItemNotes, onClose, onCheckout }) {
+export function CartDrawer({ cart, setCart, products, itemNotes, setItemNotes, onClose, onCheckout, pointsToUse = 0, setPointsToUse, onAuth }) {
     const { isEn, t } = useLanguage()
     const items = products.filter(p => cart[p.id])
+    const { settings } = useAuth()
     const total = items.reduce((s, p) => s + p.price * cart[p.id], 0)
+    const redeemRate = Number(settings?.pointsRedeemRate || 10)
+    const pointsDiscount = pointsToUse > 0 ? Math.floor(pointsToUse / redeemRate) : 0
+    const netTotal = Math.max(0, total - pointsDiscount)
 
     return (
         <div className="drawer-backdrop" onMouseDown={onClose}>
@@ -70,9 +75,28 @@ export function CartDrawer({ cart, setCart, products, itemNotes, setItemNotes, o
                                 </div>
                             ))}
                         </div>
+                        <CartPointsWidget
+                            subtotal={total}
+                            pointsToUse={pointsToUse}
+                            setPointsToUse={setPointsToUse}
+                            onAuth={onAuth}
+                            compact
+                        />
+                        {pointsDiscount > 0 && (
+                            <>
+                                <div className="drawer-total" style={{ fontSize: 13, marginBottom: 2, color: 'var(--brand-muted)' }}>
+                                    <span>{t('subtotal')}</span>
+                                    <span>฿{total}</span>
+                                </div>
+                                <div className="drawer-total" style={{ fontSize: 13, marginBottom: 6, color: 'var(--brand-primary)', fontWeight: 600 }}>
+                                    <span>{t('cartPointsDiscount')} ({pointsToUse} {t('profilePointsUnit')})</span>
+                                    <span>-฿{pointsDiscount}</span>
+                                </div>
+                            </>
+                        )}
                         <div className="drawer-total">
                             <span>{t('netTotal')}</span>
-                            <b>฿{total}</b>
+                            <b>฿{netTotal}</b>
                         </div>
                         <button className="primary" onClick={onCheckout}>{t('proceedToCheckout')} ›</button>
                     </>
@@ -83,12 +107,15 @@ export function CartDrawer({ cart, setCart, products, itemNotes, setItemNotes, o
 }
 
 // ─── Cart Sidebar (Order Page) ──────────────────────────────────────────────
-export function CartSidebar({ cart, setCart, products, itemNotes, setItemNotes, onCheckout, onAuth }) {
+export function CartSidebar({ cart, setCart, products, itemNotes, setItemNotes, onCheckout, onAuth, pointsToUse = 0, setPointsToUse }) {
     const { isEn, t } = useLanguage()
-    const { session, profile, addAddress } = useAuth()
+    const { session, profile, addAddress, settings } = useAuth()
     const navigate = useNavigate()
     const cartItems = products.filter(p => cart[p.id])
     const total = cartItems.reduce((s, p) => s + p.price * cart[p.id], 0)
+    const redeemRate = Number(settings?.pointsRedeemRate || 10)
+    const pointsDiscount = pointsToUse > 0 ? Math.floor(pointsToUse / redeemRate) : 0
+    const netTotal = Math.max(0, total - pointsDiscount)
     const count = cartItems.reduce((s, p) => s + cart[p.id], 0)
     const savedAddresses = profile?.addresses || []
     const defaultAddress = savedAddresses.find(address => address.isDefault) || savedAddresses[0]
@@ -222,9 +249,33 @@ export function CartSidebar({ cart, setCart, products, itemNotes, setItemNotes, 
                 <div className="op-cart-empty">{t('cartEmpty')}</div>
             )}
 
+            {cartItems.length > 0 && (
+                <div style={{ padding: '0 18px' }}>
+                    <CartPointsWidget
+                        subtotal={total}
+                        pointsToUse={pointsToUse}
+                        setPointsToUse={setPointsToUse}
+                        onAuth={onAuth}
+                    />
+                </div>
+            )}
+
+            {pointsDiscount > 0 && (
+                <>
+                    <div className="op-cart-total-row" style={{ fontSize: 13, color: 'var(--brand-muted)', padding: '4px 18px' }}>
+                        <span>{t('subtotal')}</span>
+                        <span>฿{total}</span>
+                    </div>
+                    <div className="op-cart-total-row" style={{ fontSize: 13, color: 'var(--brand-primary)', fontWeight: 600, padding: '4px 18px' }}>
+                        <span>{t('cartPointsDiscount')} ({pointsToUse} {t('profilePointsUnit')})</span>
+                        <span>-฿{pointsDiscount}</span>
+                    </div>
+                </>
+            )}
+
             <div className="op-cart-total-row">
                 <span>{t('netTotal')}</span>
-                <b className="op-total-num">฿{total}</b>
+                <b className="op-total-num">฿{netTotal}</b>
             </div>
             <div className="op-checkout-wrapper">
                 <button

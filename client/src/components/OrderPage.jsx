@@ -5,7 +5,7 @@ import { useLanguage } from '../lib/LanguageContext'
 import { categoryNameTranslations } from '../locales/translations'
 import './OrderPage.css'
 
-export function OrderPage({ onHome, user, onAuth, onLogout, products, categories, cart, setCart, itemNotes, setItemNotes, onCheckout }) {
+export function OrderPage({ onHome, user, onAuth, onLogout, products, categories, cart, setCart, itemNotes, setItemNotes, onCheckout, pointsToUse, setPointsToUse }) {
     const { lang, isEn, t } = useLanguage()
     const [query, setQuery] = useState('')
     const [cat, setCat] = useState('promo')
@@ -117,6 +117,8 @@ export function OrderPage({ onHome, user, onAuth, onLogout, products, categories
                     setItemNotes={setItemNotes}
                     onCheckout={onCheckout}
                     onAuth={onAuth}
+                    pointsToUse={pointsToUse}
+                    setPointsToUse={setPointsToUse}
                 />
             </div>
         </div>

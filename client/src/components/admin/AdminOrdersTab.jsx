@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { PageHead, Empty, money } from './AdminShared'
+import { PageHead, Empty, money, formatCashierPaymentMethod } from './AdminShared'
+import { DeliveryImageLightbox } from '../delivery/DeliveryImageLightbox'
 
 export function AdminOrdersTab({
     pendingOrders = [],
@@ -9,6 +10,7 @@ export function AdminOrdersTab({
     cancelOrder,
 }) {
     const [actionLoading, setActionLoading] = useState(null)
+    const [lightboxImage, setLightboxImage] = useState(null)
 
     const handleCancel = async (orderId) => {
         if (!cancelOrder) return
@@ -49,7 +51,7 @@ export function AdminOrdersTab({
                             <p>
                                 ลูกค้า: {order.customerId} · {order.deliveryType}
                                 {order.deliveryScheduleType === 'ระบุเวลา' && order.scheduledAt ? ` (${new Date(order.scheduledAt).toLocaleString('th-TH')})` : order.deliveryType === 'ให้จัดส่ง' ? ' (ทันที)' : ''}
-                                {' · '}{order.paymentMethod}
+                                {' · '}{formatCashierPaymentMethod(order.paymentMethod, order)}
                             </p>
                             <ul>
                                 {order.items.map(item => (
@@ -91,12 +93,19 @@ export function AdminOrdersTab({
             </div>
             <section className="admin-panel admin-history">
                 <div className="admin-panel-head">
-                    <div><h2>ประวัติคำสั่งซื้อ</h2><p>รายการที่ผ่านการตรวจสอบแล้ว</p></div>
+                    <div><h2>ประวัติคำสั่งซื้อ</h2><p>รายการที่ผ่านการตรวจสอบแล้ว พร้อมหลักฐานการจัดส่งและชำระเงิน</p></div>
                 </div>
                 <div className="admin-table-wrap">
                     <table>
                         <thead>
-                            <tr><th>เลขออเดอร์</th><th>ลูกค้า</th><th>ช่องทาง</th><th>ยอดรวม</th><th>สถานะ</th></tr>
+                            <tr>
+                                <th>เลขออเดอร์</th>
+                                <th>ลูกค้า</th>
+                                <th>ช่องทาง</th>
+                                <th>ยอดรวม</th>
+                                <th>สถานะ</th>
+                                <th>หลักฐาน (รูปภาพ)</th>
+                            </tr>
                         </thead>
                         <tbody>
                             {orders.filter(order => order.serverStatus !== 'PENDING').map(order => (
@@ -110,12 +119,78 @@ export function AdminOrdersTab({
                                     </td>
                                     <td>{money(order.totalAmount)}</td>
                                     <td><i className="admin-badge">{order.foodStatus}</i></td>
+                                    <td>
+                                        <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                                            {order.proofImageUrl && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setLightboxImage({
+                                                        url: order.proofImageUrl,
+                                                        title: 'ภาพถ่ายตอนส่งของสำเร็จ',
+                                                        subtitle: `ออเดอร์ ${order.orderNumber || order.id} · ${order.customerId}`,
+                                                    })}
+                                                    style={{
+                                                        padding: '4px 8px',
+                                                        borderRadius: 6,
+                                                        border: '1px solid #86efac',
+                                                        background: '#f0fdf4',
+                                                        color: '#15803d',
+                                                        fontSize: 11,
+                                                        fontWeight: 700,
+                                                        cursor: 'pointer',
+                                                        display: 'inline-flex',
+                                                        alignItems: 'center',
+                                                        gap: 4,
+                                                    }}
+                                                >
+                                                    <i className="bi bi-camera-fill" /> ส่งของ
+                                                </button>
+                                            )}
+                                            {order.paymentProofUrl && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setLightboxImage({
+                                                        url: order.paymentProofUrl,
+                                                        title: 'หลักฐานการชำระเงิน (สลิป/เงินสด)',
+                                                        subtitle: `ออเดอร์ ${order.orderNumber || order.id} · ${money(order.totalAmount)}`,
+                                                    })}
+                                                    style={{
+                                                        padding: '4px 8px',
+                                                        borderRadius: 6,
+                                                        border: '1px solid #fdba74',
+                                                        background: '#fff7ed',
+                                                        color: '#c2410c',
+                                                        fontSize: 11,
+                                                        fontWeight: 700,
+                                                        cursor: 'pointer',
+                                                        display: 'inline-flex',
+                                                        alignItems: 'center',
+                                                        gap: 4,
+                                                    }}
+                                                >
+                                                    <i className="bi bi-receipt" /> สลิป/เงิน
+                                                </button>
+                                            )}
+                                            {!order.proofImageUrl && !order.paymentProofUrl && (
+                                                <span style={{ color: '#9ca3af', fontSize: 12 }}>-</span>
+                                            )}
+                                        </div>
+                                    </td>
                                 </tr>
                             ))}
                         </tbody>
                     </table>
                 </div>
             </section>
+
+            {lightboxImage && (
+                <DeliveryImageLightbox
+                    image={lightboxImage.url}
+                    title={lightboxImage.title}
+                    subtitle={lightboxImage.subtitle}
+                    onClose={() => setLightboxImage(null)}
+                />
+            )}
         </>
     )
 }

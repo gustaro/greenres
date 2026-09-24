@@ -1,4 +1,4 @@
-import { Empty, money, orderCode } from '../StaffShared'
+import { Empty, money, orderCode, formatCashierPaymentMethod } from '../StaffShared'
 
 export function CashierReadyTab({
     readyOrders,
@@ -94,7 +94,7 @@ export function CashierReadyTab({
                                         )}
                                         {order.isPaid ? (
                                             <span className="status paid" style={{ fontSize: 11, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                                                <i className="bi bi-check2"></i> ชำระแล้ว ({order.paymentMethod || 'เงินสด'})
+                                                <i className="bi bi-check2"></i> ชำระแล้ว ({formatCashierPaymentMethod(order.paymentMethod, order)})
                                             </span>
                                         ) : (
                                             <span className="status pending" style={{ fontSize: 11, display: 'inline-flex', alignItems: 'center', gap: 4 }}>

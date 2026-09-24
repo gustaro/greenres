@@ -30,6 +30,7 @@ router.put ("/rider/me/location",                authenticate, isRiderOrAdmin, u
 router.get ("/rider/me/deliveries",              authenticate, isRiderOrAdmin, getMyDeliveries);
 router.put ("/rider/deliveries/:id/status",      authenticate, isRiderOrAdmin, riderUpdateStatus);
 router.post("/rider/deliveries/:id/proof",       authenticate, isRiderOrAdmin, upload.single("proof"), uploadProof);
+router.post("/rider/deliveries/:id/payment-proof", authenticate, isRiderOrAdmin, upload.single("proof"), uploadProof);
 
 // ── Customer ─────────────────────────────────────────────────
 router.get("/order/:orderId", authenticate, getDeliveryByOrder);
@@ -43,6 +44,8 @@ router.get   ("/",          authenticate, isStaffOrAdmin, getDeliveries);
 router.post  ("/",          authenticate, isStaffOrAdmin, createDeliveryForOrder);
 router.get   ("/:id",       authenticate, isStaffOrAdmin, getDeliveryById);
 router.put   ("/:id/status",authenticate, isStaffOrAdmin, updateStatus);
+router.post  ("/:id/proof", authenticate, isStaffOrAdmin, upload.single("proof"), uploadProof);
+router.post  ("/:id/payment-proof", authenticate, isStaffOrAdmin, upload.single("proof"), uploadProof);
 router.post  ("/:id/assign",authenticate, isStaffOrAdmin, assignRiderToDelivery);
 router.post  ("/:id/auto",  authenticate, isStaffOrAdmin, autoAssign);
 router.post  ("/:id/external", authenticate, isStaffOrAdmin, dispatchToExternal);
