@@ -128,11 +128,22 @@ export const updateDeliveryStatus = async (deliveryId, status, lat, lng, note, p
 
   await addTrackingEvent(deliveryId, status, lat, lng, note);
 
-  // ถ้าส่งแล้ว → คืน rider เป็น AVAILABLE (ถ้ามี) + อัป order status
+  // ถ้าส่งแล้ว → คืน rider เป็น AVAILABLE (ถ้ามี) + อัป order status + คำนวณแต้มสะสมให้ลูกค้า
   if (status === "DELIVERED") {
     const ops = [prisma.order.update({ where: { id: delivery.orderId }, data: { status: "DELIVERED" } })];
     if (delivery.riderId) {
       ops.push(prisma.rider.update({ where: { id: delivery.riderId }, data: { status: "AVAILABLE", totalDeliveries: { increment: 1 } } }));
+    }
+    const activeSettings = getActiveSettings();
+    if (activeSettings.pointsEnabled !== false && delivery.order?.userId) {
+      const earnRate = activeSettings.pointsEarnRate || 10;
+      const pts = Math.floor(parseFloat(delivery.order.total) / earnRate);
+      if (pts > 0) {
+        ops.push(prisma.user.update({
+          where: { id: delivery.order.userId },
+          data: { points: { increment: pts } },
+        }));
+      }
     }
     await prisma.$transaction(ops);
   }

@@ -1,7 +1,7 @@
 import { Router } from "express";
 import {
   getAllUsers, getUserById, updateProfile, changePassword,
-  updateUserRole, updateUserStatus, deleteUser, addAddress, updateAddress, deleteAddress, createUser,
+  updateUserRole, updateUserStatus, updateUserPoints, deleteUser, addAddress, updateAddress, deleteAddress, createUser,
   getPointsHistory, uploadAvatar,
 } from "../controllers/user.controller.js";
 import { authenticate } from "../middleware/auth.js";
@@ -30,6 +30,7 @@ router.post("/", isAdmin, createUser);
 router.get("/:id", isAdmin, getUserById);
 router.put("/:id/role", isAdmin, updateUserRole);
 router.put("/:id/status", isAdmin, updateUserStatus);
+router.put("/:id/points", isAdmin, updateUserPoints);
 router.delete("/:id", isAdmin, deleteUser);
 
 export default router;

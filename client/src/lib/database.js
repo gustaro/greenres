@@ -653,6 +653,10 @@ export const adminApi = {
         method: 'PUT',
         body: JSON.stringify({ isActive: isActive === true || isActive === 'true' }),
     }),
+    updateUserPoints: (id, points) => api(`/users/${id}/points`, {
+        method: 'PUT',
+        body: JSON.stringify({ points }),
+    }),
     deleteUser: id => api(`/users/${id}`, { method: 'DELETE' }),
     createUser: data => api('/users', { method: 'POST', body: JSON.stringify(data) }),
     coupons: async () => (await api('/coupons')).map(mapPromotion),

@@ -6,6 +6,27 @@ export function AdminUsersTab({ users, setUsers, notify, fail }) {
     const [isAdding, setIsAdding] = useState(false)
     const [updatingStatusId, setUpdatingStatusId] = useState(null)
     const [updatingRoleId, setUpdatingRoleId] = useState(null)
+    const [updatingPointsId, setUpdatingPointsId] = useState(null)
+
+    const handleEditPoints = async (user) => {
+        const current = Number(user.points || 0)
+        const promptVal = window.prompt(`ระบุจำนวนแต้มสะสมใหม่สำหรับ ${user.name || user.email}:`, String(current))
+        if (promptVal === null) return
+        const newPoints = parseInt(promptVal.trim(), 10)
+        if (isNaN(newPoints) || newPoints < 0) {
+            return notify('กรุณาระบุจำนวนแต้มที่ถูกต้อง (ตัวเลขจำนวนเต็มตั้งแต่ 0 ขึ้นไป)')
+        }
+        setUpdatingPointsId(user.id)
+        try {
+            await adminApi.updateUserPoints(user.id, newPoints)
+            setUsers(currentList => currentList.map(item => item.id === user.id ? { ...item, points: newPoints } : item))
+            notify(`อัปเดตแต้มของ ${user.name || user.email} เป็น ${newPoints.toLocaleString()} แต้มแล้ว`)
+        } catch (error) {
+            fail(error)
+        } finally {
+            setUpdatingPointsId(null)
+        }
+    }
 
     const updateUserRole = async (id, role) => {
         setUpdatingRoleId(id)
@@ -83,6 +104,7 @@ export function AdminUsersTab({ users, setUsers, notify, fail }) {
                         <thead>
                             <tr>
                                 <th>ผู้ใช้งาน</th>
+                                <th>แต้มสะสม</th>
                                 <th>บทบาท</th>
                                 <th>สถานะ</th>
                                 <th>การจัดการสิทธิ์</th>
@@ -101,6 +123,49 @@ export function AdminUsersTab({ users, setUsers, notify, fail }) {
                                                     <b>{user.name || 'ยังไม่ได้ตั้งชื่อ'}</b>
                                                     <small>{user.email}</small>
                                                 </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                                                <span style={{
+                                                    display: 'inline-flex',
+                                                    alignItems: 'center',
+                                                    gap: 5,
+                                                    fontWeight: 700,
+                                                    color: 'var(--brand-primary-dark, #075c1b)',
+                                                    background: 'rgba(18, 133, 47, 0.08)',
+                                                    border: '1px solid rgba(18, 133, 47, 0.2)',
+                                                    padding: '3px 8px',
+                                                    borderRadius: 14,
+                                                    fontSize: 12,
+                                                }}>
+                                                    <i className="bi bi-coin text-warning"></i>
+                                                    {Number(user.points || 0).toLocaleString()} แต้ม
+                                                </span>
+                                                <button
+                                                    type="button"
+                                                    title="แก้ไขแต้มสะสม"
+                                                    disabled={updatingPointsId === user.id}
+                                                    style={{
+                                                        border: '1px solid #d1d5db',
+                                                        background: '#fff',
+                                                        color: '#4b5563',
+                                                        cursor: 'pointer',
+                                                        padding: '2px 6px',
+                                                        borderRadius: 4,
+                                                        fontSize: 11,
+                                                        display: 'inline-flex',
+                                                        alignItems: 'center',
+                                                        gap: 3,
+                                                    }}
+                                                    onClick={() => handleEditPoints(user)}
+                                                >
+                                                    {updatingPointsId === user.id ? (
+                                                        <i className="bi bi-arrow-repeat spin" />
+                                                    ) : (
+                                                        <><i className="bi bi-pencil-fill" style={{ fontSize: 9 }}></i> แก้ไข</>
+                                                    )}
+                                                </button>
                                             </div>
                                         </td>
                                         <td>

@@ -184,6 +184,24 @@ export const deleteUser = async (req, res, next) => {
   }
 };
 
+export const updateUserPoints = async (req, res, next) => {
+  try {
+    const { points } = req.body;
+    const parsedPoints = parseInt(points, 10);
+    if (isNaN(parsedPoints) || parsedPoints < 0) {
+      return res.status(400).json({ message: "แต้มสะสมต้องเป็นตัวเลขจำนวนเต็มบวกตั้งแต่ 0 ขึ้นไป" });
+    }
+    const user = await prisma.user.update({
+      where: { id: req.params.id },
+      data: { points: parsedPoints },
+      select: { id: true, email: true, name: true, role: true, isActive: true, points: true },
+    });
+    res.json(user);
+  } catch (error) {
+    next(error);
+  }
+};
+
 // Addresses
 export const addAddress = async (req, res, next) => {
   try {
