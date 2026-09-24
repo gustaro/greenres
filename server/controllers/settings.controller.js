@@ -11,6 +11,7 @@ const tmpMessagesPath = path.join(os.tmpdir(), "limeleaf_contact_messages.json")
 
 // In-memory cache for ultra-fast access and serverless resiliency
 let inMemorySettings = null;
+let lastSettingsLoadedAt = 0;
 let isTableInitialized = false;
 
 const ensureSettingsTable = async () => {
@@ -133,11 +134,8 @@ export const getActiveSettings = () => {
 
 export const getSiteSettings = async (req, res) => {
     try {
-        if (!inMemorySettings) {
-            const dbSettings = await loadSettingsFromDb();
-            if (dbSettings) inMemorySettings = dbSettings;
-        }
-        res.set("Cache-Control", "public, max-age=10, s-maxage=30, stale-while-revalidate=60");
+        await ensureLoadedSettings(true);
+        res.set("Cache-Control", "no-cache, no-store, must-revalidate");
         res.json(getActiveSettings());
     } catch (err) {
         console.warn("[Settings] getSiteSettings fallback:", err?.message || err);
@@ -226,30 +224,38 @@ export const updateLogo = async (req, res, next) => {
 
 const saveSettings = async (settings) => {
     inMemorySettings = settings;
+    lastSettingsLoadedAt = Date.now();
     await saveSettingsToDb(settings);
     saveSettingsToFile(settings);
 };
 
-const ensureLoadedSettings = async () => {
-    if (!inMemorySettings) {
+const ensureLoadedSettings = async (force = false) => {
+    const now = Date.now();
+    if (!inMemorySettings || force || (now - lastSettingsLoadedAt > 2000)) {
         const dbSettings = await loadSettingsFromDb();
-        inMemorySettings = dbSettings || getLocalFileSettings();
+        if (dbSettings) {
+            inMemorySettings = dbSettings;
+            lastSettingsLoadedAt = now;
+        } else if (!inMemorySettings) {
+            inMemorySettings = getLocalFileSettings();
+            lastSettingsLoadedAt = now;
+        }
     }
     return inMemorySettings;
 };
 
 export const getHeroSlides = async (req, res, next) => {
     try {
-        await ensureLoadedSettings();
+        await ensureLoadedSettings(true);
         const settings = getSettings();
-        res.set("Cache-Control", "public, max-age=10, s-maxage=30, stale-while-revalidate=60");
+        res.set("Cache-Control", "no-cache, no-store, must-revalidate");
         res.json(Array.isArray(settings.heroSlides) ? settings.heroSlides : []);
     } catch (err) { next(err); }
 };
 
 export const createHeroSlide = async (req, res, next) => {
     try {
-        await ensureLoadedSettings();
+        await ensureLoadedSettings(true);
         const settings = { ...(inMemorySettings || getLocalFileSettings()) };
         if (!Array.isArray(settings.heroSlides)) settings.heroSlides = [];
         
@@ -283,13 +289,14 @@ export const createHeroSlide = async (req, res, next) => {
         settings.heroSlides.push(slide);
         settings.heroSlides.sort((a, b) => a.sortOrder - b.sortOrder);
         await saveSettings(settings);
+        res.set("Cache-Control", "no-cache, no-store, must-revalidate");
         res.status(201).json(slide);
     } catch (err) { next(err); }
 };
 
 export const updateHeroSlide = async (req, res, next) => {
     try {
-        await ensureLoadedSettings();
+        await ensureLoadedSettings(true);
         const settings = { ...(inMemorySettings || getLocalFileSettings()) };
         if (!Array.isArray(settings.heroSlides)) settings.heroSlides = [];
         
@@ -313,6 +320,7 @@ export const updateHeroSlide = async (req, res, next) => {
             settings.heroSlides.push(newSlide);
             settings.heroSlides.sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
             await saveSettings(settings);
+            res.set("Cache-Control", "no-cache, no-store, must-revalidate");
             return res.json(newSlide);
         }
 
@@ -328,17 +336,19 @@ export const updateHeroSlide = async (req, res, next) => {
         };
         settings.heroSlides.sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
         await saveSettings(settings);
+        res.set("Cache-Control", "no-cache, no-store, must-revalidate");
         res.json(settings.heroSlides[idx]);
     } catch (err) { next(err); }
 };
 
 export const deleteHeroSlide = async (req, res, next) => {
     try {
-        await ensureLoadedSettings();
+        await ensureLoadedSettings(true);
         const settings = { ...(inMemorySettings || getLocalFileSettings()) };
         if (!Array.isArray(settings.heroSlides)) return res.status(404).json({ message: 'not found' });
         settings.heroSlides = settings.heroSlides.filter(s => String(s.id) !== String(req.params.id));
         await saveSettings(settings);
+        res.set("Cache-Control", "no-cache, no-store, must-revalidate");
         res.json({ ok: true });
     } catch (err) { next(err); }
 };

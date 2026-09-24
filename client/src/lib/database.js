@@ -290,7 +290,7 @@ export async function fetchNewProducts(limit = 4) {
 export async function fetchMarketing() {
     try {
         const [heroSlides, coupons] = await Promise.all([
-            api('/settings/hero').catch(() => []),
+            api('/settings/hero', { skipCache: true }).catch(() => []),
             hasSessionToken() ? api('/coupons').catch(() => []) : Promise.resolve([])
         ])
         const activeHero = Array.isArray(heroSlides) ? heroSlides.filter(s => s.isActive !== false) : []
@@ -707,7 +707,7 @@ export const settingsApi = {
 }
 
 export const heroApi = {
-    list: () => api('/settings/hero'),
+    list: () => api('/settings/hero', { skipCache: true }),
     create: payload => api('/settings/hero', {
         method: 'POST',
         body: payload instanceof FormData ? payload : JSON.stringify(payload)

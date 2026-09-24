@@ -26,8 +26,7 @@ const isPublicCacheablePath = (path) => {
     const cleanPath = path.split('?')[0]
     return (
         cleanPath.startsWith('/categories') ||
-        cleanPath.startsWith('/products') ||
-        cleanPath.startsWith('/settings')
+        cleanPath.startsWith('/products')
     )
 }
 
