@@ -108,7 +108,7 @@ export function DeliveryCompleteModal({
                 <header
                     style={{
                         padding: '16px 20px',
-                        background: 'linear-gradient(135deg, #12852f 0%, #085d1d 100%)',
+                        background: 'linear-gradient(135deg, var(--brand-primary, #12852f) 0%, var(--brand-primary-dark, #085d1d) 100%)',
                         color: '#ffffff',
                         display: 'flex',
                         alignItems: 'center',
@@ -119,8 +119,8 @@ export function DeliveryCompleteModal({
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                             <span
                                 style={{
-                                    background: '#b8ff35',
-                                    color: '#075c1b',
+                                    background: 'var(--brand-accent, #b8ff35)',
+                                    color: 'var(--brand-primary-dark, #075c1b)',
                                     padding: '2px 8px',
                                     borderRadius: 6,
                                     fontSize: 11,
@@ -182,7 +182,7 @@ export function DeliveryCompleteModal({
                             <small style={{ color: '#556958', fontSize: 12, display: 'block' }}>
                                 ยอดที่ต้องเรียกเก็บจากลูกค้า
                             </small>
-                            <div style={{ fontSize: 28, fontWeight: 900, color: '#12852f', lineHeight: 1.1 }}>
+                            <div style={{ fontSize: 28, fontWeight: 900, color: 'var(--brand-primary, #12852f)', lineHeight: 1.1 }}>
                                 {money(job.totalAmount)}
                             </div>
                         </div>
@@ -369,9 +369,9 @@ export function DeliveryCompleteModal({
                                     style={{
                                         padding: '10px 8px',
                                         borderRadius: 8,
-                                        border: paymentMode === 'cash_transfer' ? '2px solid #12852f' : '1px solid #d1d5db',
-                                        background: paymentMode === 'cash_transfer' ? '#effbdc' : '#ffffff',
-                                        color: paymentMode === 'cash_transfer' ? '#075c1b' : '#374151',
+                                        border: paymentMode === 'cash_transfer' ? '2px solid var(--brand-primary, #12852f)' : '1px solid #d1d5db',
+                                        background: paymentMode === 'cash_transfer' ? 'var(--brand-accent-soft, #effbdc)' : '#ffffff',
+                                        color: paymentMode === 'cash_transfer' ? 'var(--brand-primary-dark, #075c1b)' : '#374151',
                                         fontWeight: 700,
                                         fontSize: 12,
                                         cursor: 'pointer',

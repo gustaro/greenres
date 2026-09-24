@@ -124,7 +124,7 @@ export function ProfilePointsTab({ profile, orders = [], money, onOrderMore }) {
             {/* Perks & Rules Grid */}
             <div className="pf-points-perks">
                 <div className="pf-perk-item">
-                    <div className="pf-perk-icon" style={{ color: '#12852f', background: '#effbdc' }}>
+                    <div className="pf-perk-icon" style={{ color: 'var(--brand-primary, #12852f)', background: 'var(--brand-accent-soft, #effbdc)' }}>
                         <i className="bi bi-bag-heart-fill" />
                     </div>
                     <div>

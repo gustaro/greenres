@@ -141,7 +141,7 @@ export function AdminUsersTab({ users, setUsers, notify, fail }) {
                                             {isOperational ? (
                                                 <small style={{ color: '#8898aa', fontWeight: 600 }}><i className="bi bi-shield-lock"></i> สิทธิ์ระดับปฏิบัติการ (Read-only)</small>
                                             ) : (
-                                                <small style={{ color: '#12852f', fontWeight: 600 }}><i className="bi bi-pencil-square"></i> แก้ไขบทบาท/เปิดปิดได้</small>
+                                                <small style={{ color: 'var(--brand-primary, #12852f)', fontWeight: 600 }}><i className="bi bi-pencil-square"></i> แก้ไขบทบาท/เปิดปิดได้</small>
                                             )}
                                         </td>
                                     </tr>

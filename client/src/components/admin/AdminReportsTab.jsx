@@ -198,11 +198,11 @@ export function AdminReportsTab({ orders, paidOrders, revenue, averageOrder, pro
                     <div style={{ display: 'flex', alignItems: 'end', gap: 10, height: 200 }}>
                         {DAYS.map((day, i) => (
                             <div key={day} style={{ flex: 1, display: 'grid', gap: 6, justifyItems: 'center', alignItems: 'end' }}>
-                                <b style={{ fontSize: 10, color: '#12852f', fontWeight: 800 }}>{weeklyRevenue[i] > 0 ? `฿${(weeklyRevenue[i] / 1000).toFixed(1)}k` : ''}</b>
+                                <b style={{ fontSize: 10, color: 'var(--brand-primary, #12852f)', fontWeight: 800 }}>{weeklyRevenue[i] > 0 ? `฿${(weeklyRevenue[i] / 1000).toFixed(1)}k` : ''}</b>
                                 <div
                                     style={{
                                         width: '100%',
-                                        background: i === now.getDay() ? '#12852f' : '#b8ff35',
+                                        background: i === now.getDay() ? 'var(--brand-primary, #12852f)' : 'var(--brand-accent, #b8ff35)',
                                         borderRadius: '5px 5px 0 0',
                                         minHeight: 4,
                                         height: `${Math.max((weeklyRevenue[i] / maxWeekly) * 160, weeklyRevenue[i] > 0 ? 8 : 4)}px`,
@@ -210,7 +210,7 @@ export function AdminReportsTab({ orders, paidOrders, revenue, averageOrder, pro
                                     }}
                                     title={money(weeklyRevenue[i])}
                                 />
-                                <small style={{ fontSize: 11, color: i === now.getDay() ? '#12852f' : '#869088', fontWeight: i === now.getDay() ? 900 : 500 }}>{day}</small>
+                                <small style={{ fontSize: 11, color: i === now.getDay() ? 'var(--brand-primary, #12852f)' : '#869088', fontWeight: i === now.getDay() ? 900 : 500 }}>{day}</small>
                             </div>
                         ))}
                     </div>

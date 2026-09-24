@@ -35,7 +35,7 @@ function LeafletViewer({ lat, lng, storeName, storeAddress }) {
                 <Marker position={position}>
                     <Popup>
                         <div style={{ padding: 4 }}>
-                            <strong style={{ color: '#075c1b', fontSize: 14, display: 'block', marginBottom: 4 }}>
+                            <strong style={{ color: 'var(--brand-primary-dark, #075c1b)', fontSize: 14, display: 'block', marginBottom: 4 }}>
                                 {storeName}
                             </strong>
                             <span style={{ fontSize: 12, color: '#444' }}>
@@ -56,8 +56,8 @@ function GoogleViewer({ apiKey, lat, lng, storeName }) {
     })
     const position = useMemo(() => ({ lat, lng }), [lat, lng])
 
-    if (loadError) return <div style={{ height: 380, display: 'grid', placeItems: 'center', background: '#f6faf2', color: '#888' }}>Error loading Google Maps</div>
-    if (!isLoaded) return <div style={{ height: 380, display: 'grid', placeItems: 'center', background: '#f6faf2', color: '#888' }}>Loading Map...</div>
+    if (loadError) return <div style={{ height: 380, display: 'grid', placeItems: 'center', background: 'var(--brand-surface, #f6faf2)', color: '#888' }}>Error loading Google Maps</div>
+    if (!isLoaded) return <div style={{ height: 380, display: 'grid', placeItems: 'center', background: 'var(--brand-surface, #f6faf2)', color: '#888' }}>Loading Map...</div>
 
     return (
         <div className="store-map-viewer-wrapper">

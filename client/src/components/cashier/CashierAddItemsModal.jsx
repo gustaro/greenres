@@ -35,8 +35,8 @@ export function CashierAddItemsModal({
                 </div>
 
                 {/* Dine-in vs Takeaway Batch Mode Quick Toggle */}
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#f6faf2', padding: '10px 14px', borderRadius: 8, marginBottom: 14, border: '1px solid #d8e7d2', flexWrap: 'wrap', gap: 8 }}>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: '#075c1b', display: 'flex', alignItems: 'center', gap: 6 }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'var(--brand-surface, #f6faf2)', padding: '10px 14px', borderRadius: 8, marginBottom: 14, border: '1px solid var(--brand-border, #d8e7d2)', flexWrap: 'wrap', gap: 8 }}>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--brand-primary-dark, #075c1b)', display: 'flex', alignItems: 'center', gap: 6 }}>
                         <i className="bi bi-sliders" style={{ color: 'var(--brand-primary, #12852f)' }}></i>
                         <span>กำหนดประเภทรายการที่เพิ่ม:</span>
                     </div>
@@ -52,8 +52,8 @@ export function CashierAddItemsModal({
                             }}
                             style={{
                                 border: 0,
-                                background: Object.values(addItemsTakeawayMap).filter(Boolean).length === 0 ? '#effbdc' : 'transparent',
-                                color: Object.values(addItemsTakeawayMap).filter(Boolean).length === 0 ? '#075c1b' : '#6d7b6e',
+                                background: Object.values(addItemsTakeawayMap).filter(Boolean).length === 0 ? 'var(--brand-accent-soft, #effbdc)' : 'transparent',
+                                color: Object.values(addItemsTakeawayMap).filter(Boolean).length === 0 ? 'var(--brand-primary-dark, #075c1b)' : '#6d7b6e',
                                 padding: '4px 12px',
                                 borderRadius: 16,
                                 fontSize: 12,
@@ -108,24 +108,24 @@ export function CashierAddItemsModal({
                         const qty = addItemsCart[p.id] || 0
                         const isTakeaway = Boolean(addItemsTakeawayMap[p.id])
                         return (
-                            <div key={p.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 12px', border: '1px solid #d8e7d2', borderRadius: 8, background: qty > 0 ? '#effbdc' : '#fff' }}>
+                            <div key={p.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 12px', border: '1px solid var(--brand-border, #d8e7d2)', borderRadius: 8, background: qty > 0 ? 'var(--brand-accent-soft, #effbdc)' : '#fff' }}>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                                     <img src={p.img} alt={p.name} style={{ width: 44, height: 44, borderRadius: 6, objectFit: 'cover' }} />
                                     <div>
                                         <div style={{ fontWeight: 700, fontSize: 14 }}>{p.name}</div>
-                                        <div style={{ fontSize: 12, color: '#12852f', fontWeight: 600 }}>฿{p.price}</div>
+                                        <div style={{ fontSize: 12, color: 'var(--brand-primary, #12852f)', fontWeight: 600 }}>฿{p.price}</div>
                                     </div>
                                 </div>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                                     {qty > 0 && (
-                                        <div style={{ display: 'inline-flex', background: '#f6faf2', borderRadius: 20, padding: 2, border: '1px solid #d8e7d2' }}>
+                                        <div style={{ display: 'inline-flex', background: 'var(--brand-surface, #f6faf2)', borderRadius: 20, padding: 2, border: '1px solid var(--brand-border, #d8e7d2)' }}>
                                             <button
                                                 type="button"
                                                 onClick={() => setAddItemsTakeawayMap(prev => ({ ...prev, [p.id]: false }))}
                                                 style={{
                                                     border: 0,
-                                                    background: !isTakeaway ? '#effbdc' : 'transparent',
-                                                    color: !isTakeaway ? '#075c1b' : '#6d7b6e',
+                                                    background: !isTakeaway ? 'var(--brand-accent-soft, #effbdc)' : 'transparent',
+                                                    color: !isTakeaway ? 'var(--brand-primary-dark, #075c1b)' : '#6d7b6e',
                                                     padding: '4px 8px',
                                                     borderRadius: 18,
                                                     fontSize: 11,
@@ -175,7 +175,7 @@ export function CashierAddItemsModal({
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8, marginBottom: 10 }}>
                         <div>
                             <span style={{ fontSize: 13, color: '#666' }}>เมนูที่เพิ่ม: </span>
-                            <strong style={{ fontSize: 15, color: '#075c1b' }}>
+                            <strong style={{ fontSize: 15, color: 'var(--brand-primary-dark, #075c1b)' }}>
                                 {totalAddedCount} รายการ
                             </strong>
                         </div>

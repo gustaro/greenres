@@ -56,8 +56,8 @@ export function AuthModal({ onClose, onSuccess }) {
                 fontWeight: 800,
                 fontSize: 13,
                 cursor: 'pointer',
-                background: tab === mode ? '#12852f' : '#f0f4ec',
-                color: tab === mode ? '#b8ff35' : '#555'
+                background: tab === mode ? 'var(--brand-primary, #12852f)' : 'var(--brand-surface, #f0f4ec)',
+                color: tab === mode ? 'var(--brand-accent, #b8ff35)' : '#555'
               }}
             >
               {mode === 'login' ? t('authSignIn') : t('authSignUp')}

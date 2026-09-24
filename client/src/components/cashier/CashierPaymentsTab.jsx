@@ -64,7 +64,7 @@ export function CashierPaymentsTab({
                                     <span style={{ fontWeight: 700, color: 'var(--brand-primary-dark)', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
                                         {isDineIn ? <><i className="bi bi-shop"></i> ทานที่ร้าน</> : <><i className="bi bi-box2"></i> สั่งกลับบ้าน</>}
                                     </span>
-                                    {isDineIn && <span className="table-number-badge" style={{ background: '#b8ff35', color: '#075c1b', fontWeight: 800 }}>โต๊ะ {order.tableNumber || '—'}</span>}
+                                    {isDineIn && <span className="table-number-badge" style={{ background: 'var(--brand-accent, #b8ff35)', color: 'var(--brand-primary-dark, #075c1b)', fontWeight: 800 }}>โต๊ะ {order.tableNumber || '—'}</span>}
                                     <span>{customerLabel(order)}</span>
                                     {order.customerPhone && <span style={{ fontSize: 11, color: '#666' }}><i className="bi bi-telephone me-1"></i>{order.customerPhone}</span>}
                                     <span>{new Date(order.createdAt).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })}</span>
@@ -117,7 +117,7 @@ export function CashierPaymentsTab({
                                         type="button"
                                         className="staff-secondary"
                                         onClick={() => onAddItems(order)}
-                                        style={{ fontSize: 11, padding: '4px 8px', background: '#effbdc', borderColor: '#9fe51f', color: '#075c1b', display: 'inline-flex', alignItems: 'center', gap: 4 }}
+                                        style={{ fontSize: 11, padding: '4px 8px', background: 'var(--brand-accent-soft, #effbdc)', borderColor: 'var(--brand-accent, #9fe51f)', color: 'var(--brand-primary-dark, #075c1b)', display: 'inline-flex', alignItems: 'center', gap: 4 }}
                                     >
                                         <i className="bi bi-plus-circle"></i> เพิ่มเมนู
                                     </button>
@@ -130,7 +130,7 @@ export function CashierPaymentsTab({
                                     {!order.isPaid && (
                                         <button
                                             className="staff-primary"
-                                            style={{ flex: 1, minHeight: 44, fontSize: 14, fontWeight: 800, background: '#12852f', borderColor: '#075c1b', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
+                                            style={{ flex: 1, minHeight: 44, fontSize: 14, fontWeight: 800, background: 'var(--brand-primary, #12852f)', borderColor: 'var(--brand-primary-dark, #075c1b)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
                                             onClick={() => onOpenPaymentModal(order)}
                                         >
                                             <i className="bi bi-cash-coin"></i> รับชำระเงิน

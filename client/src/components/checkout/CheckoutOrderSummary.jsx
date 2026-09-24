@@ -14,7 +14,7 @@ export function CheckoutOrderSummary({ items, cart, orderMode, takeawayItemMap, 
                             <span>
                                 {displayName}
                                 {isItemTakeaway && (
-                                    <span style={{ marginLeft: 6, fontSize: 10, background: '#effbdc', color: '#075c1b', padding: '2px 6px', borderRadius: 4, fontWeight: 700 }}>
+                                    <span style={{ marginLeft: 6, fontSize: 10, background: 'var(--brand-accent-soft, #effbdc)', color: 'var(--brand-primary-dark, #075c1b)', padding: '2px 6px', borderRadius: 4, fontWeight: 700 }}>
                                         <i className="bi bi-bag-check me-1" />{isEn ? 'Takeaway' : 'กลับบ้าน'}
                                     </span>
                                 )}

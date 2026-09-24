@@ -103,7 +103,7 @@ export function CreditCardForm({
             {/* Visual Credit Card Preview */}
             <div style={{
                 position: 'relative',
-                background: 'linear-gradient(135deg, #075c1b 0%, #16943a 50%, #0d2818 100%)',
+                background: 'linear-gradient(135deg, var(--brand-primary-dark, #075c1b) 0%, var(--brand-primary, #16943a) 50%, var(--brand-primary-dark, #0d2818) 100%)',
                 color: '#fff',
                 borderRadius: 14,
                 padding: compact ? '16px' : '20px',
@@ -124,7 +124,7 @@ export function CreditCardForm({
                     width: 140,
                     height: 140,
                     borderRadius: '50%',
-                    background: 'radial-gradient(circle, rgba(184, 255, 53, 0.25) 0%, transparent 70%)',
+                    background: 'radial-gradient(circle, var(--brand-accent, rgba(184, 255, 53, 0.25)) 0%, transparent 70%)',
                     pointerEvents: 'none',
                 }} />
 
@@ -409,7 +409,7 @@ export function CreditCardForm({
                 fontSize: 11,
                 color: '#6b7280',
             }}>
-                <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: '#075c1b', fontWeight: 600 }}>
+                <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: 'var(--brand-primary-dark, #075c1b)', fontWeight: 600 }}>
                     <i className="bi bi-shield-check" style={{ fontSize: 16, color: 'var(--brand-primary, #12852f)' }} />
                     <span>256-Bit SSL Encrypted (ปลอดภัยระดับสากล)</span>
                 </div>

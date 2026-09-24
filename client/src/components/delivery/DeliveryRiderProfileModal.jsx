@@ -115,7 +115,7 @@ export function DeliveryRiderProfileModal({ showProfileModal, setShowProfileModa
                                         }}
                                     />
                                 ) : null}
-                                <i className="bi bi-person-fill" style={{ fontSize: 32, color: '#075c1b', display: editAvatarUrl ? 'none' : 'block' }} />
+                                <i className="bi bi-person-fill" style={{ fontSize: 32, color: 'var(--brand-primary-dark, #075c1b)', display: editAvatarUrl ? 'none' : 'block' }} />
                                 {uploadingAvatar && (
                                     <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'grid', placeItems: 'center', color: '#fff', fontSize: 18 }}>
                                         <i className="bi bi-arrow-repeat spin" />

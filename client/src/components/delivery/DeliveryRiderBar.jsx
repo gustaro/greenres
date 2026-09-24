@@ -11,10 +11,10 @@ export function DeliveryRiderBar({ rider, session, profile, isAdmin, toggleAvail
                 justifyContent: 'space-between',
                 flexWrap: 'wrap',
                 gap: 12,
-                background: '#effbdc',
-                border: '1.5px solid #9fe51f',
-                borderLeft: '5px solid #12852f',
-                color: '#075c1b',
+                background: 'var(--brand-accent-soft, #effbdc)',
+                border: '1.5px solid var(--brand-accent, #9fe51f)',
+                borderLeft: '5px solid var(--brand-primary, #12852f)',
+                color: 'var(--brand-primary-dark, #075c1b)',
                 borderRadius: 12,
                 padding: '14px 18px',
                 boxShadow: '0 2px 6px rgba(0, 193, 74, 0.1)'
@@ -32,7 +32,7 @@ export function DeliveryRiderBar({ rider, session, profile, isAdmin, toggleAvail
                         display: 'grid',
                         placeItems: 'center',
                         overflow: 'hidden',
-                        border: '2px solid #12852f',
+                        border: '2px solid var(--brand-primary, #12852f)',
                         flexShrink: 0,
                         cursor: 'pointer',
                         boxShadow: '0 2px 6px rgba(0, 193, 74, 0.2)'
@@ -55,7 +55,7 @@ export function DeliveryRiderBar({ rider, session, profile, isAdmin, toggleAvail
                         className="bi bi-person-fill"
                         style={{
                             fontSize: 24,
-                            color: '#075c1b',
+                            color: 'var(--brand-primary-dark, #075c1b)',
                             display: avatar ? 'none' : 'block'
                         }}
                     ></i>
@@ -73,7 +73,7 @@ export function DeliveryRiderBar({ rider, session, profile, isAdmin, toggleAvail
                         {rider?.vehicleType || 'มอเตอร์ไซค์'} {plate ? `· ทะเบียน: ${plate}` : ''}
                         {' · '}
                         {rider?.status === 'AVAILABLE' ? (
-                            <span style={{ color: '#12852f', display: 'inline-flex', alignItems: 'center', gap: 4, fontWeight: 700 }}>
+                            <span style={{ color: 'var(--brand-primary, #12852f)', display: 'inline-flex', alignItems: 'center', gap: 4, fontWeight: 700 }}>
                                 <i className="bi bi-circle-fill" style={{ fontSize: 8 }}></i> พร้อมรับงาน
                             </span>
                         ) : rider?.status === 'BUSY' ? (

@@ -49,9 +49,9 @@ export function KitchenQueueTab({
                         style={{
                             padding: '6px 12px',
                             borderRadius: 20,
-                            border: statusFilter === 'active' ? '2px solid var(--brand-primary, #12852f)' : '1px solid #d8e7d2',
-                            background: statusFilter === 'active' ? '#e8f5e9' : '#fff',
-                            color: statusFilter === 'active' ? '#12852f' : '#17351f',
+                            border: statusFilter === 'active' ? '2px solid var(--brand-primary, #12852f)' : '1px solid var(--brand-border, #d8e7d2)',
+                            background: statusFilter === 'active' ? 'var(--brand-accent-soft, #e8f5e9)' : '#fff',
+                            color: statusFilter === 'active' ? 'var(--brand-primary, #12852f)' : '#17351f',
                             fontWeight: 700,
                             fontSize: 12,
                             cursor: 'pointer'
@@ -99,9 +99,9 @@ export function KitchenQueueTab({
                         style={{
                             padding: '6px 12px',
                             borderRadius: 20,
-                            border: statusFilter === 'READY' ? '2px solid #12852f' : '1px solid #d8e7d2',
-                            background: statusFilter === 'READY' ? '#effbdc' : '#fff',
-                            color: statusFilter === 'READY' ? '#075c1b' : '#17351f',
+                            border: statusFilter === 'READY' ? '2px solid var(--brand-primary, #12852f)' : '1px solid var(--brand-border, #d8e7d2)',
+                            background: statusFilter === 'READY' ? 'var(--brand-accent-soft, #effbdc)' : '#fff',
+                            color: statusFilter === 'READY' ? 'var(--brand-primary-dark, #075c1b)' : '#17351f',
                             fontWeight: 700,
                             fontSize: 12,
                             cursor: 'pointer'
@@ -134,7 +134,7 @@ export function KitchenQueueTab({
                 <div className="staff-metrics">
                     <article><small>รอเริ่มทำ</small><strong style={{ color: '#b45309' }}>{stats.confirmed ?? waiting.length}</strong></article>
                     <article><small>กำลังทำ</small><strong style={{ color: '#1d4ed8' }}>{stats.preparing ?? preparing.length}</strong></article>
-                    <article><small>พร้อมเสิร์ฟ</small><strong style={{ color: '#075c1b' }}>{ready.length}</strong></article>
+                    <article><small>พร้อมเสิร์ฟ</small><strong style={{ color: 'var(--brand-primary-dark, #075c1b)' }}>{ready.length}</strong></article>
                     <article><small>คิวทั้งหมด</small><strong>{queue.length}</strong></article>
                 </div>
             )}

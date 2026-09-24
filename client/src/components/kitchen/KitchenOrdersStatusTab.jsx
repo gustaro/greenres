@@ -76,9 +76,9 @@ export function KitchenOrdersStatusTab() {
 
     const dateBtnStyle = active => ({
         padding: '6px 14px', borderRadius: 20, cursor: 'pointer', fontWeight: 800, fontSize: 13,
-        border: active ? '2px solid #12852f' : '1px solid #d8e7d2',
-        background: active ? '#effbdc' : '#ffffff',
-        color: active ? '#075c1b' : '#6d7b6e'
+        border: active ? '2px solid var(--brand-primary, #12852f)' : '1px solid var(--brand-border, #d8e7d2)',
+        background: active ? 'var(--brand-accent-soft, #effbdc)' : '#ffffff',
+        color: active ? 'var(--brand-primary-dark, #075c1b)' : '#6d7b6e'
     })
 
     return (
@@ -107,9 +107,9 @@ export function KitchenOrdersStatusTab() {
                     <small>ออเดอร์ทั้งหมด</small>
                     <strong>{metrics.total}</strong>
                 </article>
-                <article style={{ borderLeft: '4px solid #12852f' }}>
+                <article style={{ borderLeft: '4px solid var(--brand-primary, #12852f)' }}>
                     <small>ทำสำเร็จ</small>
-                    <strong style={{ color: '#075c1b' }}>{metrics.completed}</strong>
+                    <strong style={{ color: 'var(--brand-primary-dark, #075c1b)' }}>{metrics.completed}</strong>
                 </article>
                 <article style={{ borderLeft: '4px solid #ef4444' }}>
                     <small>ยกเลิก</small>
@@ -122,7 +122,7 @@ export function KitchenOrdersStatusTab() {
             </div>
 
             {/* Filter Controls Bar */}
-            <div style={{ background: '#ffffff', padding: '14px 18px', borderRadius: 16, border: '2px solid #d8e7d2', marginBottom: 20, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
+            <div style={{ background: '#ffffff', padding: '14px 18px', borderRadius: 16, border: '2px solid var(--brand-border, #d8e7d2)', marginBottom: 20, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
                 {/* Date Filters */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
                     <span style={{ fontSize: 13, fontWeight: 800, color: '#17351f', marginRight: 2 }}>
@@ -143,7 +143,7 @@ export function KitchenOrdersStatusTab() {
                         onClick={() => setStatusFilter('all')}
                         style={{
                             padding: '6px 12px', borderRadius: 8, cursor: 'pointer', fontWeight: 700, fontSize: 12.5,
-                            border: statusFilter === 'all' ? '2px solid #17351f' : '1px solid #d8e7d2',
+                            border: statusFilter === 'all' ? '2px solid #17351f' : '1px solid var(--brand-border, #d8e7d2)',
                             background: statusFilter === 'all' ? '#17351f' : '#ffffff',
                             color: statusFilter === 'all' ? '#ffffff' : '#17351f'
                         }}
@@ -155,9 +155,9 @@ export function KitchenOrdersStatusTab() {
                         onClick={() => setStatusFilter('DELIVERED')}
                         style={{
                             padding: '6px 12px', borderRadius: 8, cursor: 'pointer', fontWeight: 700, fontSize: 12.5,
-                            border: statusFilter === 'DELIVERED' ? '2px solid #12852f' : '1px solid #b8ff35',
-                            background: statusFilter === 'DELIVERED' ? '#075c1b' : '#effbdc',
-                            color: statusFilter === 'DELIVERED' ? '#ffffff' : '#075c1b'
+                            border: statusFilter === 'DELIVERED' ? '2px solid var(--brand-primary, #12852f)' : '1px solid var(--brand-accent, #b8ff35)',
+                            background: statusFilter === 'DELIVERED' ? 'var(--brand-primary-dark, #075c1b)' : 'var(--brand-accent-soft, #effbdc)',
+                            color: statusFilter === 'DELIVERED' ? '#ffffff' : 'var(--brand-primary-dark, #075c1b)'
                         }}
                     >
                         <i className="bi bi-check2-circle me-1"></i> ทำสำเร็จ ({metrics.completed})
@@ -206,8 +206,8 @@ export function KitchenOrdersStatusTab() {
                                     key={order.id}
                                     style={{
                                         background: '#ffffff',
-                                        border: `2px solid ${isComp ? '#9fe51f' : isCanc ? '#fca5a5' : '#93c5fd'}`,
-                                        borderTop: `5px solid ${isComp ? '#12852f' : isCanc ? '#dc2626' : '#2563eb'}`,
+                                        border: `2px solid ${isComp ? 'var(--brand-accent, #9fe51f)' : isCanc ? '#fca5a5' : '#93c5fd'}`,
+                                        borderTop: `5px solid ${isComp ? 'var(--brand-primary, #12852f)' : isCanc ? '#dc2626' : '#2563eb'}`,
                                         borderRadius: 16,
                                         padding: 16,
                                         boxShadow: '0 4px 14px rgba(18, 63, 39, 0.06)',
@@ -220,7 +220,7 @@ export function KitchenOrdersStatusTab() {
                                         <div>
                                             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
                                                 {isDineIn ? (
-                                                    <span style={{ background: '#b8ff35', color: '#075c1b', fontWeight: 900, fontSize: 13, padding: '3px 10px', borderRadius: 8, border: '1.5px solid #b8ff35' }}>
+                                                    <span style={{ background: 'var(--brand-accent, #b8ff35)', color: 'var(--brand-primary-dark, #075c1b)', fontWeight: 900, fontSize: 13, padding: '3px 10px', borderRadius: 8, border: '1.5px solid var(--brand-accent, #b8ff35)' }}>
                                                         โต๊ะ {order.tableNumber || '—'}
                                                     </span>
                                                 ) : (
@@ -241,9 +241,9 @@ export function KitchenOrdersStatusTab() {
                                         <span style={{
                                             padding: '4px 10px', borderRadius: 20, fontSize: 12, fontWeight: 800,
                                             display: 'inline-flex', alignItems: 'center', gap: 4,
-                                            background: isComp ? '#effbdc' : isCanc ? '#fee2e2' : '#eff6ff',
-                                            color: isComp ? '#075c1b' : isCanc ? '#b91c1c' : '#1d4ed8',
-                                            border: `1px solid ${isComp ? '#9fe51f' : isCanc ? '#fca5a5' : '#bfdbfe'}`
+                                            background: isComp ? 'var(--brand-accent-soft, #effbdc)' : isCanc ? '#fee2e2' : '#eff6ff',
+                                            color: isComp ? 'var(--brand-primary-dark, #075c1b)' : isCanc ? '#b91c1c' : '#1d4ed8',
+                                            border: `1px solid ${isComp ? 'var(--brand-accent, #9fe51f)' : isCanc ? '#fca5a5' : '#bfdbfe'}`
                                         }}>
                                             {isComp ? <><i className="bi bi-check-circle-fill"></i> ทำสำเร็จ</> :
                                              isCanc ? <><i className="bi bi-x-circle-fill"></i> ยกเลิก</> :
@@ -258,7 +258,7 @@ export function KitchenOrdersStatusTab() {
                                             {(order.items || []).map(item => (
                                                 <li key={item.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 13, color: isCanc ? '#9ca3af' : '#17351f', textDecoration: isCanc ? 'line-through' : 'none' }}>
                                                     <span>
-                                                        <span style={{ color: isComp ? '#12852f' : isCanc ? '#dc2626' : '#2563eb', marginRight: 6, display: 'inline-flex' }}>
+                                                        <span style={{ color: isComp ? 'var(--brand-primary, #12852f)' : isCanc ? '#dc2626' : '#2563eb', marginRight: 6, display: 'inline-flex' }}>
                                                             {isComp ? <i className="bi bi-check2" /> : isCanc ? <i className="bi bi-x" /> : <i className="bi bi-circle-fill" style={{ fontSize: 5 }} />}
                                                         </span>
                                                         <strong>{item.productName || item.displayName || 'สินค้า'}</strong>
@@ -268,7 +268,7 @@ export function KitchenOrdersStatusTab() {
                                                             </span>
                                                         )}
                                                     </span>
-                                                    <strong style={{ color: '#075c1b' }}>×{item.quantity}</strong>
+                                                    <strong style={{ color: 'var(--brand-primary-dark, #075c1b)' }}>×{item.quantity}</strong>
                                                 </li>
                                             ))}
                                         </ul>
@@ -280,7 +280,7 @@ export function KitchenOrdersStatusTab() {
                                             ยอดรวม: <strong style={{ color: '#17351f', fontSize: 14 }}>{money(order.totalAmount)}</strong>
                                         </span>
                                         <span style={{ fontSize: 11, color: '#6d7b6e' }}>
-                                            {order.isPaid ? <><i className="bi bi-check-circle-fill" style={{ color: '#12852f', marginRight: 4 }} />ชำระแล้ว</> : 'ยังไม่ชำระ'}
+                                            {order.isPaid ? <><i className="bi bi-check-circle-fill" style={{ color: 'var(--brand-primary, #12852f)', marginRight: 4 }} />ชำระแล้ว</> : 'ยังไม่ชำระ'}
                                         </span>
                                     </div>
                                 </article>

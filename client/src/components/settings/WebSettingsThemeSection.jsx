@@ -132,7 +132,7 @@ export function WebSettingsThemeSection({ settings, setSettings, notify, fail })
                                                     fontWeight: 900,
                                                     padding: '2px 8px',
                                                     borderRadius: 12,
-                                                    background: '#12852f',
+                                                    background: 'var(--brand-primary, #12852f)',
                                                     color: '#fff'
                                                 }}>
                                                     ใช้งานบนเว็บ

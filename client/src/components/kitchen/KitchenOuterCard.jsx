@@ -79,7 +79,7 @@ export function KitchenOuterCard({
             <div className="kitchen-progress-box">
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, fontWeight: 700, marginBottom: 4, color: '#17351f' }}>
                     <span>ความคืบหน้าอาหาร</span>
-                    <span style={{ color: isAllReady ? '#12852f' : '#1d4ed8' }}>
+                    <span style={{ color: isAllReady ? 'var(--brand-primary, #12852f)' : '#1d4ed8' }}>
                         เสร็จแล้ว {readyItems.length}/{items.length} รายการ ({progressPercent}%)
                     </span>
                 </div>
@@ -122,7 +122,7 @@ export function KitchenOuterCard({
                                 }}
                             >
                                 <span style={{ display: 'inline-flex', alignItems: 'center', gap: 7 }}>
-                                    <span style={{ color: isDone ? '#12852f' : '#f59e0b', fontSize: 13, display: 'inline-flex' }}>
+                                    <span style={{ color: isDone ? 'var(--brand-primary, #12852f)' : '#f59e0b', fontSize: 13, display: 'inline-flex' }}>
                                         {isDone ? <i className="bi bi-check2" /> : <i className="bi bi-circle-fill" style={{ fontSize: 6 }} />}
                                     </span>
                                     <span style={{ fontWeight: isDone ? 500 : 700 }}>

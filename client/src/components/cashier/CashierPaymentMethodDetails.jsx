@@ -24,7 +24,7 @@ export function CashierPaymentMethodDetails({
     if (selectedPaymentMethod === 'CASH') {
         const cash = Number(cashReceived) || 0
         return (
-            <div style={{ background: '#f6faf2', borderRadius: 12, padding: 16, border: '1px solid #d8e7d2', marginBottom: 20 }}>
+            <div style={{ background: 'var(--brand-surface, #f6faf2)', borderRadius: 12, padding: 16, border: '1px solid var(--brand-border, #d8e7d2)', marginBottom: 20 }}>
                 <label style={{ display: 'grid', gap: 6, fontSize: 13, fontWeight: 700, color: '#17351f' }}>
                     <span>จำนวนเงินสดที่รับมา (บาท):</span>
                     <div style={{ position: 'relative' }}>
@@ -35,7 +35,7 @@ export function CashierPaymentMethodDetails({
                             value={cashReceived}
                             onChange={e => setCashReceived(e.target.value)}
                             placeholder="0.00"
-                            style={{ width: '100%', padding: '12px 14px 12px 36px', borderRadius: 10, border: isCashShort ? '2px solid #f59e0b' : '2px solid #12852f', fontSize: 20, fontWeight: 800, outline: 'none', background: '#fff' }}
+                            style={{ width: '100%', padding: '12px 14px 12px 36px', borderRadius: 10, border: isCashShort ? '2px solid #f59e0b' : '2px solid var(--brand-primary, #12852f)', fontSize: 20, fontWeight: 800, outline: 'none', background: '#fff' }}
                             onKeyDown={e => {
                                 if (e.key === 'Enter' && !isCashShort) onConfirm()
                             }}
@@ -48,7 +48,7 @@ export function CashierPaymentMethodDetails({
                     <button
                         type="button"
                         onClick={() => setCashReceived(String(Math.ceil(total)))}
-                        style={{ border: '1px solid #12852f', background: '#effbdc', color: '#075c1b', fontSize: 12, fontWeight: 800, padding: '5px 12px', borderRadius: 8, cursor: 'pointer' }}
+                        style={{ border: '1px solid var(--brand-primary, #12852f)', background: 'var(--brand-accent-soft, #effbdc)', color: 'var(--brand-primary-dark, #075c1b)', fontSize: 12, fontWeight: 800, padding: '5px 12px', borderRadius: 8, cursor: 'pointer' }}
                     >
                         ยอดพอดี ({money(total)})
                     </button>
@@ -76,9 +76,9 @@ export function CashierPaymentMethodDetails({
                 {/* Change Calculation Box */}
                 <div style={{ marginTop: 14, paddingTop: 12, borderTop: '1px dashed #d8e7d2' }}>
                     {!isCashShort ? (
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#effbdc', padding: '10px 14px', borderRadius: 8, border: '1px solid #9fe51f' }}>
-                            <span style={{ fontSize: 14, fontWeight: 800, color: '#075c1b' }}>เงินทอน (Change):</span>
-                            <span style={{ fontSize: 22, fontWeight: 900, color: '#075c1b' }}>{money(change)}</span>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--brand-accent-soft, #effbdc)', padding: '10px 14px', borderRadius: 8, border: '1px solid var(--brand-accent, #9fe51f)' }}>
+                            <span style={{ fontSize: 14, fontWeight: 800, color: 'var(--brand-primary-dark, #075c1b)' }}>เงินทอน (Change):</span>
+                            <span style={{ fontSize: 22, fontWeight: 900, color: 'var(--brand-primary-dark, #075c1b)' }}>{money(change)}</span>
                         </div>
                     ) : (
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#fffbeb', padding: '10px 14px', borderRadius: 8, border: '1px solid #fde68a' }}>
@@ -203,11 +203,11 @@ export function CashierPaymentMethodDetails({
                         <div style={{ fontSize: 15, fontWeight: 800, color: '#17351f' }}>
                             แตะบัตร (Tap to Pay) หรือเสียบบัตรที่เครื่อง EDC
                         </div>
-                        <div style={{ fontSize: 24, fontWeight: 900, color: '#075c1b', margin: '6px 0' }}>
+                        <div style={{ fontSize: 24, fontWeight: 900, color: 'var(--brand-primary-dark, #075c1b)', margin: '6px 0' }}>
                             {money(total)}
                         </div>
-                        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#effbdc', color: '#075c1b', padding: '4px 12px', borderRadius: 20, fontSize: 12, fontWeight: 700 }}>
-                            <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#12852f', display: 'inline-block' }}></span>
+                        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'var(--brand-accent-soft, #effbdc)', color: 'var(--brand-primary-dark, #075c1b)', padding: '4px 12px', borderRadius: 20, fontSize: 12, fontWeight: 700 }}>
+                            <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--brand-primary, #12852f)', display: 'inline-block' }}></span>
                             เครื่อง EDC พร้อมทำรายการ
                         </div>
                         <p style={{ fontSize: 12, color: '#6d7b6e', margin: '10px 0 0' }}>

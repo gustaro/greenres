@@ -59,16 +59,16 @@ export function CashierReadyTab({
                         const progressPct = items.length > 0 ? Math.round((totalCompleted / items.length) * 100) : 100
 
                         return (
-                            <article className="staff-order-card cashier-order ready-order-card" key={order.id} style={{ position: 'relative', borderColor: isAllCompleted ? '#84cc16' : '#38bdf8', boxShadow: '0 6px 20px rgba(18, 63, 39, 0.08)' }}>
-                                <header style={{ background: isAllCompleted ? 'rgba(132, 204, 22, 0.14)' : 'rgba(56, 189, 248, 0.12)', padding: '12px 14px', borderRadius: '8px 8px 0 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <article className="staff-order-card cashier-order ready-order-card" key={order.id} style={{ position: 'relative', borderColor: isAllCompleted ? 'var(--brand-primary, #84cc16)' : '#38bdf8', boxShadow: '0 6px 20px rgba(18, 63, 39, 0.08)' }}>
+                                <header style={{ background: isAllCompleted ? 'var(--brand-accent-soft, rgba(132, 204, 22, 0.14))' : 'rgba(56, 189, 248, 0.12)', padding: '12px 14px', borderRadius: '8px 8px 0 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                     <div>
-                                        <small style={{ color: isAllCompleted ? '#3f6212' : '#0369a1', fontWeight: 800 }}>
+                                        <small style={{ color: isAllCompleted ? 'var(--brand-primary-dark, #3f6212)' : '#0369a1', fontWeight: 800 }}>
                                             {isAllCompleted ? 'READY TO SERVE (ครบแล้ว)' : 'PARTIAL READY (ทยอยเสิร์ฟ)'}
                                         </small>
                                         <h3 style={{ margin: 0, fontSize: 18 }}>{orderCode(order)}</h3>
                                     </div>
                                     {isAllCompleted ? (
-                                        <span className="status ready" style={{ background: '#12852f', color: '#fff', padding: '4px 10px', borderRadius: 20, fontSize: 12, fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                                        <span className="status ready" style={{ background: 'var(--brand-primary, #12852f)', color: '#fff', padding: '4px 10px', borderRadius: 20, fontSize: 12, fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
                                             <i className="bi bi-check2-all"></i> ครัวทำเสร็จครบแล้ว
                                         </span>
                                     ) : readyToServeItems.length > 0 ? (
@@ -88,7 +88,7 @@ export function CashierReadyTab({
                                             {isDineIn ? <><i className="bi bi-shop"></i> ทานที่ร้าน</> : <><i className="bi bi-box2"></i> สั่งกลับบ้าน</>}
                                         </span>
                                         {isDineIn && (
-                                            <span className="table-number-badge" style={{ background: '#b8ff35', color: '#075c1b', fontWeight: 900, padding: '4px 12px', borderRadius: 8, fontSize: 14, border: '1.5px solid #b8ff35' }}>
+                                            <span className="table-number-badge" style={{ background: 'var(--brand-accent, #b8ff35)', color: 'var(--brand-primary-dark, #075c1b)', fontWeight: 900, padding: '4px 12px', borderRadius: 8, fontSize: 14, border: '1.5px solid var(--brand-accent, #b8ff35)' }}>
                                                 โต๊ะ {order.tableNumber || '—'}
                                             </span>
                                         )}
@@ -110,15 +110,15 @@ export function CashierReadyTab({
                                 </div>
 
                                 {/* Serving Progress Bar */}
-                                <div style={{ margin: '0 14px 10px', background: '#f6faf2', padding: '8px 12px', borderRadius: 8, border: '1px solid #d8e7d2' }}>
+                                <div style={{ margin: '0 14px 10px', background: 'var(--brand-surface, #f6faf2)', padding: '8px 12px', borderRadius: 8, border: '1px solid var(--brand-border, #d8e7d2)' }}>
                                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, fontWeight: 700, marginBottom: 4 }}>
                                         <span>ความคืบหน้าอาหาร</span>
-                                        <span style={{ color: isAllCompleted ? '#075c1b' : '#0369a1' }}>
+                                        <span style={{ color: isAllCompleted ? 'var(--brand-primary-dark, #075c1b)' : '#0369a1' }}>
                                             {isAllCompleted ? `ครบแล้ว (${items.length}/${items.length})` : `เสร็จ ${totalCompleted}/${items.length} รายการ (${progressPct}%)`}
                                         </span>
                                     </div>
-                                    <div style={{ width: '100%', height: 6, background: '#d8e7d2', borderRadius: 6, overflow: 'hidden' }}>
-                                        <div style={{ width: `${progressPct}%`, height: '100%', background: isAllCompleted ? '#12852f' : '#0284c7', borderRadius: 6, transition: 'width 0.3s ease' }} />
+                                    <div style={{ width: '100%', height: 6, background: 'var(--brand-border, #d8e7d2)', borderRadius: 6, overflow: 'hidden' }}>
+                                        <div style={{ width: `${progressPct}%`, height: '100%', background: isAllCompleted ? 'var(--brand-primary, #12852f)' : '#0284c7', borderRadius: 6, transition: 'width 0.3s ease' }} />
                                     </div>
                                 </div>
 
@@ -127,26 +127,26 @@ export function CashierReadyTab({
                                     {/* Ready To Serve Items */}
                                     {readyToServeItems.length > 0 && (
                                         <div>
-                                            <div style={{ fontSize: 11, fontWeight: 800, color: '#075c1b', marginBottom: 4, display: 'flex', alignItems: 'center', gap: 4 }}>
+                                            <div style={{ fontSize: 11, fontWeight: 800, color: 'var(--brand-primary-dark, #075c1b)', marginBottom: 4, display: 'flex', alignItems: 'center', gap: 4 }}>
                                                 <i className="bi bi-bell-fill text-success"></i> พร้อมนำไปเสิร์ฟที่โต๊ะ ({readyToServeItems.length} รายการ)
                                             </div>
                                             <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 5 }}>
                                                 {readyToServeItems.map(item => (
-                                                    <li key={item.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#effbdc', border: '1.5px solid #9fe51f', padding: '6px 10px', borderRadius: 8, fontSize: 13 }}>
+                                                    <li key={item.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--brand-accent-soft, #effbdc)', border: '1.5px solid var(--brand-accent, #9fe51f)', padding: '6px 10px', borderRadius: 8, fontSize: 13 }}>
                                                         <div>
-                                                            <strong style={{ color: '#075c1b' }}>{item.productName || item.displayName || 'สินค้า'}</strong>
+                                                            <strong style={{ color: 'var(--brand-primary-dark, #075c1b)' }}>{item.productName || item.displayName || 'สินค้า'}</strong>
                                                             {item.isTakeaway && <span style={{ fontSize: 10, background: '#fef3c7', color: '#92400e', padding: '1px 5px', borderRadius: 4, marginLeft: 5, fontWeight: 700 }}>กลับบ้าน</span>}
                                                             {item.isAddedLater && <span style={{ fontSize: 10, background: '#fee2e2', color: '#b91c1c', padding: '1px 5px', borderRadius: 4, marginLeft: 5, fontWeight: 700 }}>สั่งเพิ่ม</span>}
                                                             {item.cleanNote && <small style={{ display: 'block', color: '#b45309', fontSize: 11 }}>{item.cleanNote}</small>}
                                                         </div>
                                                         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                                                            <strong style={{ color: '#075c1b', fontSize: 13 }}>×{item.quantity}</strong>
+                                                            <strong style={{ color: 'var(--brand-primary-dark, #075c1b)', fontSize: 13 }}>×{item.quantity}</strong>
                                                             {onServeItem && (
                                                                 <button
                                                                     type="button"
                                                                     onClick={() => onServeItem(order, item.id)}
                                                                     title="คลิกเมื่อนำรายการนี้ไปเสิร์ฟที่โต๊ะแล้ว"
-                                                                    style={{ padding: '3px 8px', fontSize: 11, fontWeight: 700, background: '#12852f', color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 3 }}
+                                                                    style={{ padding: '3px 8px', fontSize: 11, fontWeight: 700, background: 'var(--brand-primary, #12852f)', color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 3 }}
                                                                 >
                                                                     <i className="bi bi-check2"></i> เสิร์ฟแล้ว
                                                                 </button>
@@ -168,7 +168,7 @@ export function CashierReadyTab({
                                                 {alreadyServedItems.map(item => (
                                                     <li key={item.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#fafaf9', border: '1px solid #e7e5e4', padding: '4px 10px', borderRadius: 6, fontSize: 12, color: '#78716c' }}>
                                                         <span style={{ textDecoration: 'line-through' }}>{item.productName || item.displayName || 'สินค้า'}</span>
-                                                        <span style={{ color: '#12852f', fontSize: 11, fontWeight: 700 }}><i className="bi bi-check-circle-fill me-1" />เสิร์ฟแล้ว ×{item.quantity}</span>
+                                                        <span style={{ color: 'var(--brand-primary, #12852f)', fontSize: 11, fontWeight: 700 }}><i className="bi bi-check-circle-fill me-1" />เสิร์ฟแล้ว ×{item.quantity}</span>
                                                     </li>
                                                 ))}
                                             </ul>
@@ -207,7 +207,7 @@ export function CashierReadyTab({
                                             type="button"
                                             className="staff-secondary"
                                             onClick={() => onAddItems(order)}
-                                            style={{ background: '#effbdc', borderColor: '#9fe51f', color: '#075c1b', display: 'inline-flex', alignItems: 'center', gap: 4, fontWeight: 700 }}
+                                            style={{ background: 'var(--brand-accent-soft, #effbdc)', borderColor: 'var(--brand-accent, #9fe51f)', color: 'var(--brand-primary-dark, #075c1b)', display: 'inline-flex', alignItems: 'center', gap: 4, fontWeight: 700 }}
                                         >
                                             <i className="bi bi-plus-circle"></i> สั่งเพิ่ม
                                         </button>
@@ -224,7 +224,7 @@ export function CashierReadyTab({
                                     )}
                                     <button
                                         className="staff-primary"
-                                        style={{ flex: 1, minHeight: 44, fontSize: 13, fontWeight: 800, background: '#12852f', borderColor: '#075c1b', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
+                                        style={{ flex: 1, minHeight: 44, fontSize: 13, fontWeight: 800, background: 'var(--brand-primary, #12852f)', borderColor: 'var(--brand-primary-dark, #075c1b)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
                                         onClick={() => {
                                             if (cookingItems.length > 0) {
                                                 if (!window.confirm(`โต๊ะนี้ยังมีอีก ${cookingItems.length} รายการที่ครัวกำลังปรุงอยู่ ต้องการส่งมอบและปิดออเดอร์ทั้งหมดทันทีหรือไม่?`)) {

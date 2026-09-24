@@ -74,7 +74,7 @@ export function CashierDashboard({ orders = [], setOrders, refreshOrders }) {
             <ToastContainer toasts={toasts} onDismiss={dismissToast} />
             {tab === 'payments' && <div className="staff-alert">กด "ชำระเงินแล้ว" เมื่อลูกค้าชำระเงินสดหรือสแกนจ่ายเรียบร้อย</div>}
             {tab === 'ready' && <div className="staff-alert">ตรวจสอบรายการที่พร้อมเสิร์ฟ นำไปเสิร์ฟที่โต๊ะ และกด "ส่งมอบแล้ว"</div>}
-            {counterNotice && <div className="staff-alert" style={{ borderColor: '#12852f', color: '#12852f' }}><i className="bi bi-check-circle-fill me-2" />{counterNotice}</div>}
+            {counterNotice && <div className="staff-alert" style={{ borderColor: 'var(--brand-primary, #12852f)', color: 'var(--brand-primary, #12852f)' }}><i className="bi bi-check-circle-fill me-2" />{counterNotice}</div>}
 
             {tab === 'counter' && (
                 <CashierCounterTab

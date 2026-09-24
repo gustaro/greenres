@@ -78,7 +78,7 @@ export function KitchenItemModal({
                     <div className="kitchen-progress-box">
                         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, fontWeight: 700, marginBottom: 4, color: '#17351f' }}>
                             <span>ความคืบหน้าอาหาร (กดส่งทีละรายการได้ที่นี่)</span>
-                            <span style={{ color: isAllReady ? '#12852f' : '#1d4ed8' }}>
+                            <span style={{ color: isAllReady ? 'var(--brand-primary, #12852f)' : '#1d4ed8' }}>
                                 เสร็จแล้ว {readyItems.length}/{items.length} รายการ ({progressPercent}%)
                             </span>
                         </div>
@@ -121,7 +121,7 @@ export function KitchenItemModal({
                                 </ul>
                             </div>
                         ) : (
-                            <div style={{ textAlign: 'center', padding: '16px', background: '#effbdc', color: '#075c1b', borderRadius: 10, fontWeight: 700, fontSize: 14, border: '1.5px solid #9fe51f' }}>
+                            <div style={{ textAlign: 'center', padding: '16px', background: 'var(--brand-accent-soft, #effbdc)', color: 'var(--brand-primary-dark, #075c1b)', borderRadius: 10, fontWeight: 700, fontSize: 14, border: '1.5px solid var(--brand-accent, #9fe51f)' }}>
                                 <i className="bi bi-check2-all me-1" style={{ fontSize: 20 }}></i>
                                 <div>อาหารพร้อมเสิร์ฟครบทุกรายการแล้ว!</div>
                             </div>
@@ -136,10 +136,10 @@ export function KitchenItemModal({
                                     style={{
                                         width: '100%',
                                         padding: '8px 12px',
-                                        background: '#effbdc',
-                                        border: '1px dashed #9fe51f',
+                                        background: 'var(--brand-accent-soft, #effbdc)',
+                                        border: '1px dashed var(--brand-accent, #9fe51f)',
                                         borderRadius: 8,
-                                        color: '#075c1b',
+                                        color: 'var(--brand-primary-dark, #075c1b)',
                                         fontSize: 12,
                                         fontWeight: 700,
                                         cursor: 'pointer',

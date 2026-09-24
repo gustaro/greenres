@@ -95,7 +95,7 @@ export function WebSettingsMapSection({ settings, setSettings, notify, fail }) {
             </div>
             <div className="admin-settings-body admin-settings-map-body">
                 {/* Store Address & Contact */}
-                <label style={{ display: 'grid', gap: 6, fontSize: 13, fontWeight: 700, color: '#075c1b' }}>
+                <label style={{ display: 'grid', gap: 6, fontSize: 13, fontWeight: 700, color: 'var(--brand-primary-dark, #075c1b)' }}>
                     ที่อยู่หน้าร้าน (แสดงบนหน้าเว็บและในใบเสร็จ)
                     <textarea
                         placeholder="เช่น 128 ถนนสุขุมวิท แขวงคลองเตย เขตคลองเตย กรุงเทพฯ 10110"
@@ -106,7 +106,7 @@ export function WebSettingsMapSection({ settings, setSettings, notify, fail }) {
                 </label>
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 15 }}>
-                    <label style={{ display: 'grid', gap: 6, fontSize: 13, fontWeight: 700, color: '#075c1b' }}>
+                    <label style={{ display: 'grid', gap: 6, fontSize: 13, fontWeight: 700, color: 'var(--brand-primary-dark, #075c1b)' }}>
                         เบอร์โทรร้าน
                         <input
                             placeholder="02-123-4567"
@@ -115,7 +115,7 @@ export function WebSettingsMapSection({ settings, setSettings, notify, fail }) {
                             onChange={e => setTempPhone(e.target.value)}
                         />
                     </label>
-                    <label style={{ display: 'grid', gap: 6, fontSize: 13, fontWeight: 700, color: '#075c1b' }}>
+                    <label style={{ display: 'grid', gap: 6, fontSize: 13, fontWeight: 700, color: 'var(--brand-primary-dark, #075c1b)' }}>
                         เวลาทำการ
                         <input
                             placeholder="เช่น 10:00 - 22:00 น."
@@ -129,7 +129,7 @@ export function WebSettingsMapSection({ settings, setSettings, notify, fail }) {
                 <hr style={{ border: 0, borderTop: '1px solid #eee', margin: '2px 0' }} />
 
                 {/* Map Provider */}
-                <label style={{ display: 'grid', gap: 6, fontSize: 13, fontWeight: 700, color: '#075c1b' }}>
+                <label style={{ display: 'grid', gap: 6, fontSize: 13, fontWeight: 700, color: 'var(--brand-primary-dark, #075c1b)' }}>
                     ผู้ให้บริการแผนที่ (Map Provider)
                     <select
                         style={{ padding: 12, borderRadius: 8, border: '1px solid #d8e7d2', fontFamily: 'inherit' }}
@@ -142,7 +142,7 @@ export function WebSettingsMapSection({ settings, setSettings, notify, fail }) {
                 </label>
 
                 {tempMapProvider === 'google' && (
-                    <label style={{ display: 'grid', gap: 6, fontSize: 13, fontWeight: 700, color: '#075c1b' }}>
+                    <label style={{ display: 'grid', gap: 6, fontSize: 13, fontWeight: 700, color: 'var(--brand-primary-dark, #075c1b)' }}>
                         Google Maps API Key
                         <input
                             placeholder="AIzaSy..."
@@ -156,7 +156,7 @@ export function WebSettingsMapSection({ settings, setSettings, notify, fail }) {
                 {/* Coordinates */}
                 <div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                        <span style={{ fontSize: 13, fontWeight: 700, color: '#075c1b' }}>พิกัดที่ตั้งร้านบนแผนที่</span>
+                        <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--brand-primary-dark, #075c1b)' }}>พิกัดที่ตั้งร้านบนแผนที่</span>
                         <button
                             type="button"
                             className="admin-secondary"
@@ -203,7 +203,7 @@ export function WebSettingsMapSection({ settings, setSettings, notify, fail }) {
 
                 {/* Delivery Fees */}
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 15 }}>
-                    <label style={{ display: 'grid', gap: 6, fontSize: 13, fontWeight: 700, color: '#075c1b' }}>
+                    <label style={{ display: 'grid', gap: 6, fontSize: 13, fontWeight: 700, color: 'var(--brand-primary-dark, #075c1b)' }}>
                         ค่าจัดส่งพื้นฐาน (บาท)
                         <input
                             type="number"
@@ -213,7 +213,7 @@ export function WebSettingsMapSection({ settings, setSettings, notify, fail }) {
                             onChange={e => setTempDeliveryFee(e.target.value)}
                         />
                     </label>
-                    <label style={{ display: 'grid', gap: 6, fontSize: 13, fontWeight: 700, color: '#075c1b' }}>
+                    <label style={{ display: 'grid', gap: 6, fontSize: 13, fontWeight: 700, color: 'var(--brand-primary-dark, #075c1b)' }}>
                         ยอดสั่งซื้อขั้นต่ำ ส่งฟรี (บาท)
                         <input
                             type="number"

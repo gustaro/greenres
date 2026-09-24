@@ -61,7 +61,7 @@ export function ProfileInfoTab({
             <div className="pf-grid" style={{ gridTemplateColumns: '1fr 1fr' }}>
                 <div className="pf-field">
                     <label>{t('profileEmail')}</label>
-                    <input value={email || ''} disabled style={{ backgroundColor: '#f6faf2', color: '#888' }} />
+                    <input value={email || ''} disabled style={{ backgroundColor: 'var(--brand-surface, #f6faf2)', color: '#888' }} />
                 </div>
                 <div className="pf-field">
                     <label>{t('profilePhone')}</label>

@@ -54,7 +54,7 @@ export function CashierPaymentModal({
 
     return (
         <div className="overlay" style={{ zIndex: 1200, display: 'grid', placeItems: 'center', background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(3px)' }}>
-            <div style={{ background: '#fff', borderRadius: 16, padding: 24, width: '92%', maxWidth: 520, maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 25px 35px -5px rgba(0,0,0,0.25)', border: '1px solid #effbdc' }}>
+            <div style={{ background: '#fff', borderRadius: 16, padding: 24, width: '92%', maxWidth: 520, maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 25px 35px -5px rgba(0,0,0,0.25)', border: '1px solid var(--brand-accent-soft, #effbdc)' }}>
                 {/* Modal Header */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
                     <div>
@@ -76,14 +76,14 @@ export function CashierPaymentModal({
                 </div>
 
                 {/* Total Due Banner */}
-                <div style={{ background: 'linear-gradient(135deg, #effbdc 0%, #effbdc 100%)', borderRadius: 14, padding: '16px 20px', border: '1.5px solid #9fe51f', textAlign: 'center', marginBottom: 20 }}>
-                    <div style={{ fontSize: 12, color: '#075c1b', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                <div style={{ background: 'var(--brand-accent-soft, #effbdc)', borderRadius: 14, padding: '16px 20px', border: '1.5px solid var(--brand-accent, #9fe51f)', textAlign: 'center', marginBottom: 20 }}>
+                    <div style={{ fontSize: 12, color: 'var(--brand-primary-dark, #075c1b)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                         ยอดรวมที่ต้องชำระ (Total Amount)
                     </div>
-                    <div style={{ fontSize: 38, fontWeight: 900, color: '#075c1b', letterSpacing: '-0.5px', margin: '4px 0' }}>
+                    <div style={{ fontSize: 38, fontWeight: 900, color: 'var(--brand-primary-dark, #075c1b)', letterSpacing: '-0.5px', margin: '4px 0' }}>
                         {money(total)}
                     </div>
-                    <div style={{ fontSize: 12, color: '#12852f', fontWeight: 600 }}>
+                    <div style={{ fontSize: 12, color: 'var(--brand-primary, #12852f)', fontWeight: 600 }}>
                         {order.items?.length || 0} รายการสินค้า
                     </div>
                 </div>
@@ -106,8 +106,8 @@ export function CashierPaymentModal({
                                     type="button"
                                     onClick={() => setSelectedPaymentMethod(item.key)}
                                     style={{
-                                        border: isSel ? '2px solid #12852f' : '1.5px solid #d8e7d2',
-                                        background: isSel ? '#effbdc' : '#fff',
+                                        border: isSel ? '2px solid var(--brand-primary, #12852f)' : '1.5px solid var(--brand-border, #d8e7d2)',
+                                        background: isSel ? 'var(--brand-accent-soft, #effbdc)' : '#fff',
                                         borderRadius: 12,
                                         padding: '12px 8px',
                                         display: 'flex',
@@ -122,7 +122,7 @@ export function CashierPaymentModal({
                                         width: 40,
                                         height: 40,
                                         borderRadius: '50%',
-                                        background: isSel ? '#12852f' : '#f6faf2',
+                                        background: isSel ? 'var(--brand-primary, #12852f)' : 'var(--brand-surface, #f6faf2)',
                                         color: isSel ? '#fff' : '#6d7b6e',
                                         display: 'grid',
                                         placeItems: 'center',
@@ -130,7 +130,7 @@ export function CashierPaymentModal({
                                     }}>
                                         <i className={`bi ${item.icon}`}></i>
                                     </div>
-                                    <span style={{ fontSize: 13, fontWeight: 800, color: isSel ? '#075c1b' : '#17351f' }}>
+                                    <span style={{ fontSize: 13, fontWeight: 800, color: isSel ? 'var(--brand-primary-dark, #075c1b)' : '#17351f' }}>
                                         {item.label}
                                     </span>
                                     <span style={{ fontSize: 10, color: '#6d7b6e' }}>{item.sub}</span>

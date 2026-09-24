@@ -166,14 +166,14 @@ export function AdminProductsTab({ products, setProducts, categories, notify, fa
                                         <div className="admin-product-cell">
                                             <img src={product.img} alt="" />
                                             <span>
-                                                <small style={{ color: '#075c1b', fontWeight: 700, fontSize: 10 }}>ชื่อไทย:</small>
+                                                <small style={{ color: 'var(--brand-primary-dark, #075c1b)', fontWeight: 700, fontSize: 10 }}>ชื่อไทย:</small>
                                                 <input
                                                     className="admin-text-input"
                                                     defaultValue={product.name}
                                                     placeholder="ชื่อภาษาไทย"
                                                     onBlur={event => event.target.value.trim() !== product.name && updateProduct(product.id, { name: event.target.value.trim() })}
                                                 />
-                                                <small style={{ color: '#075c1b', fontWeight: 700, fontSize: 10, marginTop: 4, display: 'block' }}>English Name:</small>
+                                                <small style={{ color: 'var(--brand-primary-dark, #075c1b)', fontWeight: 700, fontSize: 10, marginTop: 4, display: 'block' }}>English Name:</small>
                                                 <input
                                                     className="admin-text-input small"
                                                     defaultValue={product.en}

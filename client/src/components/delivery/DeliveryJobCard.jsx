@@ -11,7 +11,7 @@ export function DeliveryJobCard({ job, isAdmin, tab, isOpen, onToggle, advance, 
         <article
             className={`delivery-card${isOpen ? ' expanded' : ''}`}
             style={{
-                borderLeft: '5px solid #12852f',
+                borderLeft: '5px solid var(--brand-primary, #12852f)',
                 borderRadius: 14,
                 boxShadow: '0 4px 14px rgba(0, 193, 74, 0.12)',
             }}
@@ -19,7 +19,7 @@ export function DeliveryJobCard({ job, isAdmin, tab, isOpen, onToggle, advance, 
             {/* Card Header */}
             <header onClick={onToggle} style={{ cursor: 'pointer' }}>
                 <div>
-                    <small style={{ color: '#12852f', fontWeight: 800 }}>DELIVERY · {job.provider}</small>
+                    <small style={{ color: 'var(--brand-primary, #12852f)', fontWeight: 800 }}>DELIVERY · {job.provider}</small>
                     <h3 style={{ margin: '3px 0' }}>{job.orderNumber}</h3>
                     <span style={{ fontSize: 12, color: '#6d7b6e', fontWeight: 600 }}>
                         {job.customerName}{job.customerPhone ? <span style={{ marginLeft: 6 }}><i className="bi bi-telephone me-1"></i>{job.customerPhone}</span> : ''}
@@ -27,7 +27,7 @@ export function DeliveryJobCard({ job, isAdmin, tab, isOpen, onToggle, advance, 
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'end', gap: 6 }}>
                     <i className={`status ${DELIVERY_STATUS_CLASS[job.status] ?? ''}`}>{DELIVERY_STATUS_LABEL[job.status] ?? job.status}</i>
-                    <span style={{ fontSize: 11, color: '#12852f', fontWeight: 700 }}>
+                    <span style={{ fontSize: 11, color: 'var(--brand-primary, #12852f)', fontWeight: 700 }}>
                         {isOpen ? <><i className="bi bi-chevron-up me-1"></i>ซ่อน</> : <><i className="bi bi-chevron-down me-1"></i>ดูรายละเอียด & นำทาง</>}
                     </span>
                 </div>
@@ -37,8 +37,8 @@ export function DeliveryJobCard({ job, isAdmin, tab, isOpen, onToggle, advance, 
             {isOpen && (
                 <>
                     {/* Address & Google Maps link */}
-                    <div className="delivery-address" style={{ background: '#f6faf2', padding: 12, borderRadius: 8, border: '1px solid #d8e7d2' }}>
-                        <span style={{ fontSize: 20, color: '#12852f' }}>
+                    <div className="delivery-address" style={{ background: 'var(--brand-surface, #f6faf2)', padding: 12, borderRadius: 8, border: '1px solid var(--brand-border, #d8e7d2)' }}>
+                        <span style={{ fontSize: 20, color: 'var(--brand-primary, #12852f)' }}>
                             <i className="bi bi-geo-alt"></i>
                         </span>
                         <div style={{ flex: 1 }}>
@@ -55,12 +55,12 @@ export function DeliveryJobCard({ job, isAdmin, tab, isOpen, onToggle, advance, 
                                         gap: 6,
                                         fontSize: 12,
                                         fontWeight: 700,
-                                        color: '#008a36',
-                                        background: '#effbdc',
+                                        color: 'var(--brand-primary-dark, #008a36)',
+                                        background: 'var(--brand-accent-soft, #effbdc)',
                                         padding: '6px 12px',
                                         borderRadius: 6,
                                         textDecoration: 'none',
-                                        border: '1px solid #9fe51f',
+                                        border: '1px solid var(--brand-accent, #9fe51f)',
                                     }}
                                 >
                                     <i className="bi bi-geo-alt-fill" style={{ color: '#e11d48' }}></i> เปิดนำทางบน Google Maps <i className="bi bi-box-arrow-up-right ms-1"></i>

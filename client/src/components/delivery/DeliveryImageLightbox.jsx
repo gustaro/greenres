@@ -33,7 +33,7 @@ export function DeliveryImageLightbox({ image, title = 'หลักฐานก
                 <header
                     style={{
                         padding: '14px 18px',
-                        background: 'linear-gradient(135deg, #12852f 0%, #0d6323 100%)',
+                        background: 'linear-gradient(135deg, var(--brand-primary, #12852f) 0%, var(--brand-primary-dark, #0d6323) 100%)',
                         color: '#ffffff',
                         display: 'flex',
                         alignItems: 'center',
@@ -99,7 +99,7 @@ export function DeliveryImageLightbox({ image, title = 'หลักฐานก
                         rel="noopener noreferrer"
                         style={{
                             fontSize: 13,
-                            color: '#12852f',
+                            color: 'var(--brand-primary, #12852f)',
                             fontWeight: 700,
                             textDecoration: 'none',
                             display: 'inline-flex',

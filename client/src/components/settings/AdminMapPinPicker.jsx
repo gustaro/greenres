@@ -81,7 +81,7 @@ export function AdminMapPinPicker({ lat, lng, onChange }) {
                 padding: '6px 10px',
                 borderRadius: 6,
                 fontSize: 12,
-                color: '#12852f',
+                color: 'var(--brand-primary, #12852f)',
                 fontWeight: 600,
                 zIndex: 1000,
                 boxShadow: '0 2px 6px rgba(0,0,0,0.12)',

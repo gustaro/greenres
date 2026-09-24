@@ -55,7 +55,7 @@ export function WebSettingsPointsSection({ settings, setSettings, notify, fail }
     return (
         <section className="admin-settings-card">
             <header className="admin-settings-card-head">
-                <div className="admin-settings-card-icon" style={{ background: 'rgba(18, 133, 47, 0.12)', color: 'var(--brand-primary, #12852f)' }}>
+                <div className="admin-settings-card-icon" style={{ background: 'var(--brand-accent-soft, rgba(18, 133, 47, 0.12))', color: 'var(--brand-primary, #12852f)' }}>
                     <i className="bi bi-coin" />
                 </div>
                 <div>
@@ -66,7 +66,7 @@ export function WebSettingsPointsSection({ settings, setSettings, notify, fail }
 
             <div className="admin-settings-body">
                 {/* Enable/Disable Toggle */}
-                <div className="admin-settings-section" style={{ background: pointsEnabled ? '#f3faf0' : '#fef2f2', border: `1px solid ${pointsEnabled ? '#b8ff35' : '#fecaca'}`, borderRadius: 8, padding: 16 }}>
+                <div className="admin-settings-section" style={{ background: pointsEnabled ? 'var(--brand-accent-soft, #f3faf0)' : '#fef2f2', border: `1px solid ${pointsEnabled ? 'var(--brand-accent, #b8ff35)' : '#fecaca'}`, borderRadius: 8, padding: 16 }}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
                         <div>
                             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
@@ -198,7 +198,7 @@ export function WebSettingsPointsSection({ settings, setSettings, notify, fail }
                 </div>
 
                 {/* Interactive Simulator Card */}
-                <div className="admin-settings-section" style={{ background: '#f8faf5', border: '1px dashed #72aa6e', borderRadius: 8, padding: 16 }}>
+                <div className="admin-settings-section" style={{ background: 'var(--brand-surface, #f8faf5)', border: '1px dashed var(--brand-border, #72aa6e)', borderRadius: 8, padding: 16 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
                         <i className="bi bi-calculator" style={{ fontSize: 16, color: 'var(--brand-primary, #12852f)' }} />
                         <b style={{ fontSize: 13, color: 'var(--brand-primary-dark, #075c1b)' }}>เครื่องมือคำนวณตัวอย่างจำลอง (Live Simulator)</b>

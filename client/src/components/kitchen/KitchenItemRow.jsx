@@ -19,15 +19,15 @@ export function KitchenItemRow({
                 padding: '10px 14px',
                 borderRadius: 10,
                 marginBottom: 8,
-                background: isReady ? '#effbdc' : isCooking ? '#eff6ff' : '#fafaf9',
-                border: isReady ? '1.5px solid #9fe51f' : isCooking ? '1.5px solid #93c5fd' : '1px solid #e7e5e4',
+                background: isReady ? 'var(--brand-accent-soft, #effbdc)' : isCooking ? '#eff6ff' : '#fafaf9',
+                border: isReady ? '1.5px solid var(--brand-accent, #9fe51f)' : isCooking ? '1.5px solid #93c5fd' : '1px solid #e7e5e4',
                 opacity: isReady ? 0.85 : 1,
                 transition: 'all 0.2s ease',
             }}
         >
             <div style={{ flex: 1, minWidth: 0, marginRight: 12 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-                    <span style={{ fontWeight: 700, fontSize: 14, color: isReady ? '#075c1b' : '#17351f' }}>
+                    <span style={{ fontWeight: 700, fontSize: 14, color: isReady ? 'var(--brand-primary-dark, #075c1b)' : '#17351f' }}>
                         {item.productName || item.displayName || 'สินค้า'}
                     </span>
                     {item.isTakeaway && (
@@ -49,7 +49,7 @@ export function KitchenItemRow({
                 )}
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
-                    <span style={{ fontSize: 11, fontWeight: 700, color: isReady ? '#075c1b' : isCooking ? '#1d4ed8' : '#b45309' }}>
+                    <span style={{ fontSize: 11, fontWeight: 700, color: isReady ? 'var(--brand-primary-dark, #075c1b)' : isCooking ? '#1d4ed8' : '#b45309' }}>
                         {isReady ? <><i className="bi bi-check-circle-fill text-success me-1" />พร้อมเสิร์ฟแล้ว</> : isCooking ? <><i className="bi bi-fire text-primary me-1" />กำลังปรุง</> : <><i className="bi bi-hourglass-split me-1" />รอทำ</>}
                     </span>
                 </div>
@@ -59,8 +59,8 @@ export function KitchenItemRow({
                 <span style={{
                     fontSize: 14,
                     fontWeight: 800,
-                    background: isReady ? '#effbdc' : isCooking ? '#dbeafe' : '#f5f5f4',
-                    color: isReady ? '#075c1b' : isCooking ? '#1e40af' : '#292524',
+                    background: isReady ? 'var(--brand-accent-soft, #effbdc)' : isCooking ? '#dbeafe' : '#f5f5f4',
+                    color: isReady ? 'var(--brand-primary-dark, #075c1b)' : isCooking ? '#1e40af' : '#292524',
                     padding: '3px 10px',
                     borderRadius: 12,
                     minWidth: 38,

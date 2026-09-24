@@ -183,15 +183,15 @@ export function KitchenInventoryTab({ inventory, setInventory }) {
                                         <td style={{ padding: '14px 16px' }}>
                                             <b style={{ fontSize: 14, color: '#17351f' }}>{item.ingredientName}</b>
                                             {item.ingredientNameEn && <small style={{ display: 'block', color: '#6d7b6e', marginTop: 2 }}>{item.ingredientNameEn}</small>}
-                                            <small style={{ display: 'block', color: '#12852f', marginTop: 3 }}>ใช้ใน {item.recipeCount || 0} สูตร</small>
+                                            <small style={{ display: 'block', color: 'var(--brand-primary, #12852f)', marginTop: 3 }}>ใช้ใน {item.recipeCount || 0} สูตร</small>
                                             {isChanged && (
-                                                <span style={{ marginLeft: 8, fontSize: 11, color: '#12852f', fontWeight: 800 }}>
+                                                <span style={{ marginLeft: 8, fontSize: 11, color: 'var(--brand-primary, #12852f)', fontWeight: 800 }}>
                                                     (เปลี่ยนจาก {item.quantity} → {currentDraft})
                                                 </span>
                                             )}
                                         </td>
                                         <td style={{ padding: '14px 16px' }}>
-                                            <strong style={{ fontSize: 14, color: isOut ? '#dc2626' : isLow ? '#d97706' : '#075c1b' }}>
+                                            <strong style={{ fontSize: 14, color: isOut ? '#dc2626' : isLow ? '#d97706' : 'var(--brand-primary-dark, #075c1b)' }}>
                                                 {item.quantity} {item.unit || 'ชิ้น'}
                                             </strong>
                                         </td>
@@ -199,11 +199,11 @@ export function KitchenInventoryTab({ inventory, setInventory }) {
                                             <span style={{
                                                 padding: '4px 10px', borderRadius: 20, fontSize: 12, fontWeight: 800,
                                                 display: 'inline-flex', alignItems: 'center', gap: 4,
-                                                background: isOut ? '#fee2e2' : isLow ? '#fef3c7' : '#effbdc',
-                                                color: isOut ? '#b91c1c' : isLow ? '#b45309' : '#075c1b',
-                                                border: `1px solid ${isOut ? '#fca5a5' : isLow ? '#fcd34d' : '#9fe51f'}`
+                                                background: isOut ? '#fee2e2' : isLow ? '#fef3c7' : 'var(--brand-accent-soft, #effbdc)',
+                                                color: isOut ? '#b91c1c' : isLow ? '#b45309' : 'var(--brand-primary-dark, #075c1b)',
+                                                border: `1px solid ${isOut ? '#fca5a5' : isLow ? '#fcd34d' : 'var(--brand-accent, #9fe51f)'}`
                                             }}>
-                                                <span style={{ width: 6, height: 6, borderRadius: '50%', background: isOut ? '#dc2626' : isLow ? '#f59e0b' : '#12852f' }}></span>
+                                                <span style={{ width: 6, height: 6, borderRadius: '50%', background: isOut ? '#dc2626' : isLow ? '#f59e0b' : 'var(--brand-primary, #12852f)' }}></span>
                                                 {isOut ? 'หมดสต๊อก' : isLow ? 'ใกล้หมด' : 'พร้อมใช้'}
                                             </span>
                                         </td>
