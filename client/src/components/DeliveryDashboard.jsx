@@ -49,8 +49,22 @@ export function DeliveryDashboard({ setOrders }) {
                     isAdmin ? deliveryApi.list() : deliveryApi.riderDeliveries(),
                 ])
 
-                if (riderResult) setRider(riderResult)
-                setJobs(deliveryResult?.deliveries ?? (Array.isArray(deliveryResult) ? deliveryResult : []))
+                const fetchedJobs = deliveryResult?.deliveries ?? (Array.isArray(deliveryResult) ? deliveryResult : [])
+                const normalizedFetched = fetchedJobs.map(normalizeJob)
+                const hasActive = normalizedFetched.some(j => !['DELIVERED', 'FAILED', 'CANCELLED'].includes(j.status))
+
+                let finalRider = riderResult
+                if (finalRider && finalRider.status === 'BUSY' && !hasActive) {
+                    try {
+                        const updated = await deliveryApi.setRiderStatus('AVAILABLE')
+                        finalRider = { ...finalRider, ...updated, status: 'AVAILABLE' }
+                    } catch {
+                        finalRider = { ...finalRider, status: 'AVAILABLE' }
+                    }
+                }
+
+                if (finalRider) setRider(finalRider)
+                setJobs(fetchedJobs)
             } catch (loadError) {
                 setError(loadError.message)
             } finally {
@@ -102,12 +116,12 @@ export function DeliveryDashboard({ setOrders }) {
         }
     }, [load])
 
-    const toggleAvailability = async () => {
+    const toggleAvailability = async (forcedStatus = null) => {
         if (!rider) return
-        const next = rider.status === 'AVAILABLE' ? 'OFFLINE' : 'AVAILABLE'
+        const next = forcedStatus || (rider.status === 'AVAILABLE' ? 'OFFLINE' : 'AVAILABLE')
         try {
             const updated = await deliveryApi.setRiderStatus(next)
-            setRider(current => ({ ...current, ...updated }))
+            setRider(current => ({ ...current, ...updated, status: next }))
             if (next === 'AVAILABLE' && navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(
                     pos => deliveryApi.updateRiderLocation(pos.coords.latitude, pos.coords.longitude).catch(() => { }),
@@ -263,6 +277,7 @@ export function DeliveryDashboard({ setOrders }) {
                 session={session}
                 profile={profile}
                 isAdmin={isAdmin}
+                activeJobsCount={activeJobs.length}
                 toggleAvailability={toggleAvailability}
                 setShowProfileModal={setShowProfileModal}
             />

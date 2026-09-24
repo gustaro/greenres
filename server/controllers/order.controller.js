@@ -367,6 +367,45 @@ export const updateOrderStatus = async (req, res, next) => {
       }
     }
 
+    // Sync related delivery & rider if order is delivered or cancelled
+    if (status === "DELIVERED" || status === "CANCELLED") {
+      try {
+        const relatedDelivery = await prisma.delivery.findUnique({ where: { orderId: req.params.id } });
+        if (relatedDelivery) {
+          const newDeliveryStatus = status === "DELIVERED" ? "DELIVERED" : "CANCELLED";
+          if (relatedDelivery.status !== newDeliveryStatus) {
+            await prisma.delivery.update({
+              where: { id: relatedDelivery.id },
+              data: {
+                status: newDeliveryStatus,
+                ...(status === "DELIVERED" && !relatedDelivery.deliveredAt ? { deliveredAt: new Date() } : {}),
+              },
+            });
+          }
+          if (relatedDelivery.riderId) {
+            const activeDeliveriesCount = await prisma.delivery.count({
+              where: {
+                riderId: relatedDelivery.riderId,
+                id: { not: relatedDelivery.id },
+                status: { in: ["ASSIGNED", "PICKED_UP", "ON_THE_WAY"] },
+              },
+            });
+            if (activeDeliveriesCount === 0) {
+              await prisma.rider.update({
+                where: { id: relatedDelivery.riderId },
+                data: {
+                  status: "AVAILABLE",
+                  ...(status === "DELIVERED" ? { totalDeliveries: { increment: 1 } } : {}),
+                },
+              });
+            }
+          }
+        }
+      } catch (e) {
+        console.warn("[updateOrderStatus] Delivery sync warning:", e.message);
+      }
+    }
+
     res.json(updated);
   } catch (error) {
     next(error);

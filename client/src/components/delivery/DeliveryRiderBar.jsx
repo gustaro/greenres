@@ -1,6 +1,9 @@
-export function DeliveryRiderBar({ rider, session, profile, isAdmin, toggleAvailability, setShowProfileModal }) {
+export function DeliveryRiderBar({ rider, session, profile, isAdmin, activeJobsCount = 0, toggleAvailability, setShowProfileModal }) {
     const avatar = rider?.user?.avatarUrl || profile?.avatarUrl
     const plate = rider?.vehiclePlate || rider?.licensePlate
+    const hasActiveJobs = activeJobsCount > 0
+    const isStuckBusy = rider?.status === 'BUSY' && !hasActiveJobs
+    const effectiveStatus = isStuckBusy ? 'AVAILABLE' : (rider?.status || 'OFFLINE')
 
     return (
         <div
@@ -72,13 +75,13 @@ export function DeliveryRiderBar({ rider, session, profile, isAdmin, toggleAvail
                     <small style={{ color: '#6d7b6e', display: 'block', marginTop: 2 }}>
                         {rider?.vehicleType || 'มอเตอร์ไซค์'} {plate ? `· ทะเบียน: ${plate}` : ''}
                         {' · '}
-                        {rider?.status === 'AVAILABLE' ? (
+                        {effectiveStatus === 'AVAILABLE' ? (
                             <span style={{ color: 'var(--brand-primary, #12852f)', display: 'inline-flex', alignItems: 'center', gap: 4, fontWeight: 700 }}>
                                 <i className="bi bi-circle-fill" style={{ fontSize: 8 }}></i> พร้อมรับงาน
                             </span>
-                        ) : rider?.status === 'BUSY' ? (
-                            <span style={{ color: '#d97706', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                                <i className="bi bi-circle-fill" style={{ fontSize: 8 }}></i> กำลังส่งงาน
+                        ) : effectiveStatus === 'BUSY' ? (
+                            <span style={{ color: '#d97706', display: 'inline-flex', alignItems: 'center', gap: 4, fontWeight: 700 }}>
+                                <i className="bi bi-circle-fill" style={{ fontSize: 8 }}></i> กำลังส่งงาน ({activeJobsCount} งาน)
                             </span>
                         ) : (
                             <span style={{ color: '#6d7b6e', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
@@ -89,7 +92,18 @@ export function DeliveryRiderBar({ rider, session, profile, isAdmin, toggleAvail
                 </div>
             </div>
 
-            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                {rider?.status === 'BUSY' && (
+                    <button
+                        type="button"
+                        className="staff-secondary"
+                        onClick={() => toggleAvailability('AVAILABLE')}
+                        style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, padding: '6px 12px', color: 'var(--brand-primary, #12852f)', borderColor: 'var(--brand-primary, #12852f)', background: '#fff' }}
+                        title="เคลียร์สถานะเป็นพร้อมรับงานทันที"
+                    >
+                        <i className="bi bi-arrow-repeat"></i> เคลียร์สถานะเป็นว่าง
+                    </button>
+                )}
                 <button
                     type="button"
                     className="staff-secondary"
@@ -101,11 +115,11 @@ export function DeliveryRiderBar({ rider, session, profile, isAdmin, toggleAvail
                 <button
                     type="button"
                     className="staff-primary"
-                    disabled={rider?.status === 'BUSY'}
-                    onClick={toggleAvailability}
+                    disabled={effectiveStatus === 'BUSY'}
+                    onClick={() => toggleAvailability()}
                     style={{ fontSize: 12, padding: '6px 14px' }}
                 >
-                    {rider?.status === 'BUSY' ? 'กำลังส่งงาน' : rider?.status === 'AVAILABLE' ? 'ตั้งเป็น OFFLINE' : 'พร้อมรับงาน'}
+                    {effectiveStatus === 'BUSY' ? 'กำลังส่งงาน' : effectiveStatus === 'AVAILABLE' ? 'ตั้งเป็น OFFLINE' : 'พร้อมรับงาน'}
                 </button>
             </div>
         </div>

@@ -299,6 +299,30 @@ export const getMyRiderProfile = async (req, res, next) => {
     }
 
     if (!rider) return res.status(404).json({ message: "Rider profile not found" });
+
+    // Auto-heal: If rider is marked BUSY but has no active deliveries, auto-update back to AVAILABLE
+    const activeDeliveriesCount = await prisma.delivery.count({
+      where: {
+        riderId: rider.id,
+        status: { in: ["ASSIGNED", "PICKED_UP", "ON_THE_WAY"] },
+      },
+    });
+
+    if (rider.status === "BUSY" && activeDeliveriesCount === 0) {
+      rider = await prisma.rider.update({
+        where: { id: rider.id },
+        data: { status: "AVAILABLE" },
+        include: {
+          user: { select: { id: true, name: true, phone: true, email: true, avatarUrl: true } },
+          deliveries: {
+            where: { status: { in: ["ASSIGNED", "PICKED_UP", "ON_THE_WAY"] } },
+            include: { order: { include: { user: { select: { name: true, phone: true } } } } },
+            take: 1,
+          },
+        },
+      });
+    }
+
     res.json(rider);
   } catch (err) { next(err); }
 };
@@ -407,6 +431,22 @@ export const getMyDeliveries = async (req, res, next) => {
         trackingEvents: { orderBy: { createdAt: "desc" }, take: 1 },
       },
     });
+
+    if (rider && rider.status === "BUSY") {
+      const activeCount = await prisma.delivery.count({
+        where: {
+          riderId: rider.id,
+          status: { in: ["ASSIGNED", "PICKED_UP", "ON_THE_WAY"] },
+        },
+      });
+      if (activeCount === 0) {
+        await prisma.rider.update({
+          where: { id: rider.id },
+          data: { status: "AVAILABLE" },
+        });
+      }
+    }
+
     res.json(deliveries);
   } catch (err) { next(err); }
 };
