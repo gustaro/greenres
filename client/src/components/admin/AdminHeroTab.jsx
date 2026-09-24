@@ -167,7 +167,7 @@ export function AdminHeroTab({ heroSlides, setHeroSlides, notify, fail }) {
                             ? 'linear-gradient(135deg, var(--brand-highlight, #edf38b) 0%, var(--brand-accent-soft, #effbdc) 100%)'
                             : 'linear-gradient(135deg, var(--brand-accent) 0%, var(--brand-accent-strong, var(--brand-accent)) 100%)'
                         return (
-                            <article key={hero.id} className={!hero.isActive ? 'inactive' : ''}>
+                            <article key={hero.id} className={`${!hero.isActive ? 'inactive' : ''} ${editingHero === hero.id ? 'is-editing' : ''}`}>
                                 <div className="admin-hero-preview" style={{ background: previewBg }}>
                                     <img src={hero.imageUrl} alt="" />
                                     <span>ลำดับที่ {hero.sortOrder} • {isAltTone ? 'โทน 2 (โกลเด้นไฮไลท์)' : 'โทน 1 (ไลม์สดใส)'}</span>
