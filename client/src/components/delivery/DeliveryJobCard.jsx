@@ -1,11 +1,18 @@
 import { DELIVERY_FLOW, DELIVERY_STATUS_LABEL, DELIVERY_STATUS_CLASS } from './DeliveryShared'
 import { money } from '../StaffShared'
+import { buildGoogleMapsNavUrl } from '../../lib/geo'
 
 export function DeliveryJobCard({ job, isAdmin, tab, isOpen, onToggle, advance, advancingJobId, onConfirmCash, onViewImage }) {
     const flow = DELIVERY_FLOW[job.status]
     const isCash = ['ชำระเงินปลายทาง', 'CASH', 'เงินสด'].includes(job.paymentMethod)
     const needCash = isCash && !job.isPaid && job.status === 'DELIVERED'
     const isAdvancing = advancingJobId === (job.deliveryId ?? job.id)
+    const hasCoords = job.dropLat != null && job.dropLng != null && !isNaN(Number(job.dropLat)) && !isNaN(Number(job.dropLng))
+    const googleMapsUrl = buildGoogleMapsNavUrl({
+        lat: job.dropLat,
+        lng: job.dropLng,
+        address: job.deliveryAddress,
+    })
 
     return (
         <article
@@ -44,27 +51,51 @@ export function DeliveryJobCard({ job, isAdmin, tab, isOpen, onToggle, advance, 
                         <div style={{ flex: 1 }}>
                             <small style={{ color: '#6d7b6e' }}>{job.estimatedMinutes ? `ประมาณ ${job.estimatedMinutes} นาที` : 'ระยะทางทั่วไป'}</small>
                             <p style={{ margin: '4px 0 8px', fontWeight: 600, color: '#17351f' }}>{job.deliveryAddress || 'ไม่ได้ระบุที่อยู่'}</p>
-                            {job.deliveryAddress && (
-                                <a
-                                    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(job.deliveryAddress)}`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    style={{
-                                        display: 'inline-flex',
-                                        alignItems: 'center',
-                                        gap: 6,
-                                        fontSize: 12,
-                                        fontWeight: 700,
-                                        color: 'var(--brand-primary-dark, #008a36)',
-                                        background: 'var(--brand-accent-soft, #effbdc)',
-                                        padding: '6px 12px',
-                                        borderRadius: 6,
-                                        textDecoration: 'none',
-                                        border: '1px solid var(--brand-accent, #9fe51f)',
-                                    }}
-                                >
-                                    <i className="bi bi-geo-alt-fill" style={{ color: '#e11d48' }}></i> เปิดนำทางบน Google Maps <i className="bi bi-box-arrow-up-right ms-1"></i>
-                                </a>
+                            {(job.deliveryAddress || hasCoords) && (
+                                <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8 }}>
+                                    <a
+                                        href={googleMapsUrl}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        style={{
+                                            display: 'inline-flex',
+                                            alignItems: 'center',
+                                            gap: 6,
+                                            fontSize: 12,
+                                            fontWeight: 700,
+                                            color: 'var(--brand-primary-dark, #008a36)',
+                                            background: 'var(--brand-accent-soft, #effbdc)',
+                                            padding: '7px 14px',
+                                            borderRadius: 8,
+                                            textDecoration: 'none',
+                                            border: '1px solid var(--brand-accent, #9fe51f)',
+                                            boxShadow: '0 2px 4px rgba(0,0,0,0.04)',
+                                        }}
+                                    >
+                                        <i className="bi bi-geo-alt-fill" style={{ color: '#e11d48' }}></i>
+                                        {hasCoords ? 'เปิดนำทางไปยังพิกัด GPS ปลายทาง' : 'เปิดนำทางบน Google Maps'}
+                                        <i className="bi bi-box-arrow-up-right ms-1"></i>
+                                    </a>
+                                    {hasCoords && (
+                                        <span
+                                            style={{
+                                                display: 'inline-flex',
+                                                alignItems: 'center',
+                                                gap: 4,
+                                                fontSize: 11,
+                                                fontWeight: 700,
+                                                color: 'var(--brand-primary, #12852f)',
+                                                background: '#fff',
+                                                padding: '5px 10px',
+                                                borderRadius: 6,
+                                                border: '1px solid var(--brand-border, #d8e7d2)',
+                                            }}
+                                        >
+                                            <i className="bi bi-pin-map-fill" style={{ color: 'var(--brand-primary, #12852f)' }}></i>
+                                            ปักหมุดพิกัด: {Number(job.dropLat).toFixed(5)}, {Number(job.dropLng).toFixed(5)}
+                                        </span>
+                                    )}
+                                </div>
                             )}
                         </div>
                     </div>

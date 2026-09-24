@@ -4,6 +4,7 @@ import { Navbar } from './Navbar'
 import { useAuth } from '../lib/AuthContext'
 import { useLanguage } from '../lib/LanguageContext'
 import { cancelOwnOrder, fetchOrderHistory } from '../lib/database'
+import { embedCoordinates, cacheAddressCoordinates } from '../lib/geo'
 import { ProfileInfoTab } from './profile/ProfileInfoTab'
 import { ProfileAddressTab } from './profile/ProfileAddressTab'
 import { ProfileOrdersTab } from './profile/ProfileOrdersTab'
@@ -106,12 +107,18 @@ export function ProfilePage({
         navigate('/')
     }
 
-    const addAddress = async ({ label, phone, street, province, zip }) => {
+    const addAddress = async ({ label, phone, street, province, zip, lat, lng }) => {
         if (!street?.trim()) return false
-        const { error } = await addSavedAddress({ label, phone, street, province, zip, isDefault: true })
+        const streetWithGeo = (lat != null && lng != null)
+            ? embedCoordinates(street, { lat, lng })
+            : street
+        const { data, error } = await addSavedAddress({ label, phone, street: streetWithGeo, province, zip, isDefault: true })
         if (error) {
             showToast(isEn ? 'Failed: ' + error.message : 'ขัดข้อง: ' + error.message, 'error')
             return false
+        }
+        if (data?.id && lat != null && lng != null) {
+            cacheAddressCoordinates(data.id, { lat, lng })
         }
         showToast(isEn ? 'Address added successfully' : 'เพิ่มที่อยู่สำเร็จ', 'success')
         return true

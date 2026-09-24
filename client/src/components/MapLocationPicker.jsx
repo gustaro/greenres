@@ -46,13 +46,30 @@ function LocationMarker({ position, setPosition, onLocationSelect }) {
                 const addressObj = {
                     street: streetStr || data.display_name.split(',').slice(0, 2).join(' '),
                     province: a.state || a.city || a.province || '',
-                    zip: a.postcode || ''
+                    zip: a.postcode || '',
+                    lat: pos[0],
+                    lng: pos[1],
                 };
 
                 onLocationSelect(addressObj, pos)
+            } else {
+                onLocationSelect({
+                    street: '',
+                    province: '',
+                    zip: '',
+                    lat: pos[0],
+                    lng: pos[1],
+                }, pos)
             }
         } catch (e) {
             console.error(e)
+            onLocationSelect({
+                street: '',
+                province: '',
+                zip: '',
+                lat: pos[0],
+                lng: pos[1],
+            }, pos)
         }
     }
 
@@ -77,15 +94,26 @@ function LocationMarker({ position, setPosition, onLocationSelect }) {
     )
 }
 
-function LeafletMapComponent({ onLocationSelect }) {
-    const [position, setPosition] = useState(defaultCenter)
-    const [positioned, setPositioned] = useState(false)
+function LeafletMapComponent({ onLocationSelect, initialCoords }) {
+    const startPos = (initialCoords?.lat && initialCoords?.lng)
+        ? [Number(initialCoords.lat), Number(initialCoords.lng)]
+        : defaultCenter
+    const [position, setPosition] = useState(startPos)
+    const [positioned, setPositioned] = useState(Boolean(initialCoords?.lat && initialCoords?.lng))
+
+    useEffect(() => {
+        if (initialCoords?.lat && initialCoords?.lng) {
+            setPosition([Number(initialCoords.lat), Number(initialCoords.lng)])
+            setPositioned(true)
+        }
+    }, [initialCoords?.lat, initialCoords?.lng])
 
     useEffect(() => {
         if (!positioned && navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(
                 (pos) => {
-                    setPosition([pos.coords.latitude, pos.coords.longitude]);
+                    const newPos = [pos.coords.latitude, pos.coords.longitude];
+                    setPosition(newPos);
                     setPositioned(true);
                 },
                 () => { setPositioned(true) }
@@ -94,25 +122,45 @@ function LeafletMapComponent({ onLocationSelect }) {
     }, [positioned])
 
     return (
-        <div style={{ height: '300px', width: '100%', borderRadius: '8px', overflow: 'hidden', border: '1px solid #d9d9d9', boxSizing: 'border-box', position: 'relative', zIndex: 1, isolation: 'isolate' }}>
-            <MapContainer center={position} zoom={15} scrollWheelZoom={true} style={{ height: '100%', width: '100%' }}>
-                <TileLayer
-                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                />
-                <LocationMarker position={position} setPosition={setPosition} onLocationSelect={onLocationSelect} />
-            </MapContainer>
+        <div style={{ width: '100%' }}>
+            <div style={{ height: '300px', width: '100%', borderRadius: '8px', overflow: 'hidden', border: '1px solid #d9d9d9', boxSizing: 'border-box', position: 'relative', zIndex: 1, isolation: 'isolate' }}>
+                <MapContainer center={position} zoom={15} scrollWheelZoom={true} style={{ height: '100%', width: '100%' }}>
+                    <TileLayer
+                        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                    />
+                    <LocationMarker position={position} setPosition={setPosition} onLocationSelect={onLocationSelect} />
+                </MapContainer>
+            </div>
+            <div style={{ marginTop: 6, display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 11, color: '#6d7b6e' }}>
+                <span><i className="bi bi-geo-alt-fill me-1" style={{ color: 'var(--brand-primary, #12852f)' }}></i>คลิกบนแผนที่หรือลากหมุดเพื่อปักพิกัดปลายทาง</span>
+                {position && (
+                    <span style={{ fontFamily: 'monospace', fontWeight: 600 }}>
+                        {Number(position[0]).toFixed(5)}, {Number(position[1]).toFixed(5)}
+                    </span>
+                )}
+            </div>
         </div>
     )
 }
 
-function GoogleMapComponent({ apiKey, onLocationSelect }) {
+function GoogleMapComponent({ apiKey, onLocationSelect, initialCoords }) {
     const { isLoaded, loadError } = useJsApiLoader({
         id: 'google-map-script',
         googleMapsApiKey: apiKey
     })
-    const [position, setPosition] = useState({ lat: defaultCenter[0], lng: defaultCenter[1] })
-    const [positioned, setPositioned] = useState(false)
+    const startPos = (initialCoords?.lat && initialCoords?.lng)
+        ? { lat: Number(initialCoords.lat), lng: Number(initialCoords.lng) }
+        : { lat: defaultCenter[0], lng: defaultCenter[1] }
+    const [position, setPosition] = useState(startPos)
+    const [positioned, setPositioned] = useState(Boolean(initialCoords?.lat && initialCoords?.lng))
+
+    useEffect(() => {
+        if (initialCoords?.lat && initialCoords?.lng) {
+            setPosition({ lat: Number(initialCoords.lat), lng: Number(initialCoords.lng) })
+            setPositioned(true)
+        }
+    }, [initialCoords?.lat, initialCoords?.lng])
 
     useEffect(() => {
         if (!positioned && navigator.geolocation) {
@@ -143,10 +191,13 @@ function GoogleMapComponent({ apiKey, onLocationSelect }) {
                     if (comp.types.includes('postal_code')) zip = comp.long_name;
                 });
 
-                onLocationSelect({ street, province, zip }, [lat, lng]);
+                onLocationSelect({ street, province, zip, lat, lng }, [lat, lng]);
+            } else {
+                onLocationSelect({ street: '', province: '', zip: '', lat, lng }, [lat, lng]);
             }
         } catch (e) {
             console.error("Geocoder failed due to: " + e)
+            onLocationSelect({ street: '', province: '', zip: '', lat, lng }, [lat, lng]);
         }
     }
 
@@ -154,35 +205,47 @@ function GoogleMapComponent({ apiKey, onLocationSelect }) {
     if (!isLoaded) return <div style={{ height: 300, background: '#f6faf2', display: 'grid', placeItems: 'center', color: '#aaa' }}>Loading Google Maps...</div>
 
     return (
-        <div style={{ height: '300px', width: '100%', borderRadius: '8px', overflow: 'hidden', border: '1px solid #d9d9d9', boxSizing: 'border-box', position: 'relative', zIndex: 1, isolation: 'isolate' }}>
-            <GoogleMap
-                mapContainerStyle={{ width: '100%', height: '100%' }}
-                center={position}
-                zoom={15}
-                onClick={e => {
-                    setPosition({ lat: e.latLng.lat(), lng: e.latLng.lng() })
-                    geocode(e.latLng.lat(), e.latLng.lng())
-                }}
-            >
-                <GoogleMarker
-                    position={position}
-                    draggable={true}
-                    onDragEnd={e => {
-                        setPosition({ lat: e.latLng.lat(), lng: e.latLng.lng() })
-                        geocode(e.latLng.lat(), e.latLng.lng())
+        <div style={{ width: '100%' }}>
+            <div style={{ height: '300px', width: '100%', borderRadius: '8px', overflow: 'hidden', border: '1px solid #d9d9d9', boxSizing: 'border-box', position: 'relative', zIndex: 1, isolation: 'isolate' }}>
+                <GoogleMap
+                    mapContainerStyle={{ width: '100%', height: '100%' }}
+                    center={position}
+                    zoom={15}
+                    onClick={e => {
+                        const newPos = { lat: e.latLng.lat(), lng: e.latLng.lng() }
+                        setPosition(newPos)
+                        geocode(newPos.lat, newPos.lng)
                     }}
-                />
-            </GoogleMap>
+                >
+                    <GoogleMarker
+                        position={position}
+                        draggable={true}
+                        onDragEnd={e => {
+                            const newPos = { lat: e.latLng.lat(), lng: e.latLng.lng() }
+                            setPosition(newPos)
+                            geocode(newPos.lat, newPos.lng)
+                        }}
+                    />
+                </GoogleMap>
+            </div>
+            <div style={{ marginTop: 6, display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 11, color: '#6d7b6e' }}>
+                <span><i className="bi bi-geo-alt-fill me-1" style={{ color: 'var(--brand-primary, #12852f)' }}></i>คลิกบนแผนที่หรือลากหมุดเพื่อปักพิกัดปลายทาง</span>
+                {position && (
+                    <span style={{ fontFamily: 'monospace', fontWeight: 600 }}>
+                        {Number(position.lat).toFixed(5)}, {Number(position.lng).toFixed(5)}
+                    </span>
+                )}
+            </div>
         </div>
     )
 }
 
-export function MapLocationPicker({ onLocationSelect }) {
+export function MapLocationPicker({ onLocationSelect, initialCoords }) {
     const { settings } = useAuth();
 
     if (settings?.mapProvider === 'google' && settings?.googleMapsApiKey) {
-        return <GoogleMapComponent apiKey={settings.googleMapsApiKey} onLocationSelect={onLocationSelect} />
+        return <GoogleMapComponent apiKey={settings.googleMapsApiKey} onLocationSelect={onLocationSelect} initialCoords={initialCoords} />
     }
 
-    return <LeafletMapComponent onLocationSelect={onLocationSelect} />
+    return <LeafletMapComponent onLocationSelect={onLocationSelect} initialCoords={initialCoords} />
 }

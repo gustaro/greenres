@@ -1,4 +1,5 @@
 import { api, ApiError, hasSessionToken } from './api'
+import { extractCoordinates, cleanAddressText, embedCoordinates, cacheAddressCoordinates } from './geo'
 
 const roleMap = {
     CUSTOMER: 'customer',
@@ -138,7 +139,11 @@ export const mapOrder = row => {
 
     const meta = readJsonMeta(remainingNotes, ORDER_META_PREFIX) || readOrderMeta(remainingNotes)
     const deliveryType = meta.deliveryType || (row.address ? 'ให้จัดส่ง' : orderSource === 'walkin' ? 'ทานที่ร้าน' : orderSource === 'takeaway' ? 'สั่งกลับบ้าน' : 'รับเองที่ร้าน')
-    const address = normalizeAddress(row.address) || meta.deliveryAddress || ''
+    const rawDeliveryAddress = normalizeAddress(row.address) || meta.deliveryAddress || ''
+    const coords = extractCoordinates(rawDeliveryAddress, { ...meta, address: row.address })
+    const dropLat = meta.dropLat ?? meta.lat ?? coords?.lat ?? null
+    const dropLng = meta.dropLng ?? meta.lng ?? coords?.lng ?? null
+    const address = cleanAddressText(rawDeliveryAddress)
     const foodStatus = statusLabel(row.status, deliveryType)
     const accountName = row.user?.name || row.user?.email || row.userId || ''
     const customerName = meta.customerName || meta.recipientName || (orderSource === 'online' ? accountName : '')
@@ -187,6 +192,8 @@ export const mapOrder = row => {
         stripePaymentId: row.stripePaymentId || meta.stripePaymentId || null,
         deliveryType,
         deliveryAddress: address,
+        dropLat: dropLat != null ? Number(dropLat) : null,
+        dropLng: dropLng != null ? Number(dropLng) : null,
         deliveryScheduleType: meta.deliveryScheduleType,
         scheduledAt: meta.scheduledAt,
         foodStatus,
@@ -204,7 +211,11 @@ export const mapOrder = row => {
         pointsDiscount: Number(meta.pointsDiscount || 0),
         proofImageUrl: meta.proofImageUrl || row.delivery?.proofImageUrl || null,
         paymentProofUrl: meta.paymentProofUrl || meta.slipUrl || null,
-        meta,
+        meta: {
+            ...meta,
+            dropLat: dropLat != null ? Number(dropLat) : null,
+            dropLng: dropLng != null ? Number(dropLng) : null,
+        },
     }
 }
 
@@ -217,7 +228,11 @@ export const mapDelivery = row => {
         address: order.address,
     })
 
-    const finalAddress = row.dropAddress || mappedOrder.deliveryAddress || ''
+    const rawFinalAddress = row.dropAddress || mappedOrder.deliveryAddress || ''
+    const coords = extractCoordinates(rawFinalAddress, { ...mappedOrder, ...row, address: order.address })
+    const dropLat = row.dropLat ?? mappedOrder.dropLat ?? coords?.lat ?? null
+    const dropLng = row.dropLng ?? mappedOrder.dropLng ?? coords?.lng ?? null
+    const finalAddress = cleanAddressText(rawFinalAddress)
 
     return {
         ...mappedOrder,
@@ -228,6 +243,8 @@ export const mapDelivery = row => {
         orderNumber: order.id ? `#${String(order.id).slice(-8).toUpperCase()}` : `#${String(row.orderId || row.id).slice(-8).toUpperCase()}`,
         deliveryAddress: finalAddress,
         dropAddress: finalAddress,
+        dropLat: dropLat != null ? Number(dropLat) : null,
+        dropLng: dropLng != null ? Number(dropLng) : null,
         foodStatus: deliveryStatusLabel(row.status),
         serverDeliveryStatus: row.status,
         provider: row.provider,
@@ -236,7 +253,14 @@ export const mapDelivery = row => {
         deliveryFee: Number(row.deliveryFee ?? mappedOrder.deliveryFee ?? 0),
         proofImageUrl: row.proofImageUrl || mappedOrder.proofImageUrl || mappedOrder.meta?.proofImageUrl || null,
         paymentProofUrl: mappedOrder.paymentProofUrl || mappedOrder.meta?.paymentProofUrl || mappedOrder.meta?.slipUrl || null,
-        order: { ...mappedOrder, ...order, deliveryAddress: finalAddress, dropAddress: finalAddress },
+        order: {
+            ...mappedOrder,
+            ...order,
+            deliveryAddress: finalAddress,
+            dropAddress: finalAddress,
+            dropLat: dropLat != null ? Number(dropLat) : null,
+            dropLng: dropLng != null ? Number(dropLng) : null,
+        },
     }
 }
 
@@ -331,19 +355,28 @@ export async function placeOrder({
     itemNotes,
     stripePaymentId = null,
     pointsUsed = 0,
+    dropLat = null,
+    dropLng = null,
 }) {
     const overrideItems = Object.entries(cart)
         .filter(([_, q]) => Number(q) > 0)
         .map(([productId, quantity]) => ({ productId, quantity: Number(quantity) }))
 
+    const finalDropLat = dropLat != null ? Number(dropLat) : (newAddressObj?.dropLat != null ? Number(newAddressObj.dropLat) : null)
+    const finalDropLng = dropLng != null ? Number(dropLng) : (newAddressObj?.dropLng != null ? Number(newAddressObj.dropLng) : null)
+
     let addressId = deliveryAddressId || null
     if (deliveryType === 'ให้จัดส่ง' && !addressId && deliveryAddress) {
         try {
+            const rawStreet = newAddressObj?.street || deliveryAddress
+            const streetWithGeo = (finalDropLat != null && finalDropLng != null)
+                ? embedCoordinates(rawStreet, { lat: finalDropLat, lng: finalDropLng })
+                : rawStreet
             const address = await api('/users/addresses', {
                 method: 'POST',
                 body: JSON.stringify({
                     label: newAddressObj?.label || 'Delivery',
-                    street: newAddressObj?.street || deliveryAddress,
+                    street: streetWithGeo,
                     city: newAddressObj?.city || 'Bangkok',
                     state: newAddressObj?.state || newAddressObj?.province || 'Bangkok',
                     zip: newAddressObj?.zip || '10110',
@@ -351,6 +384,9 @@ export async function placeOrder({
                 }),
             })
             addressId = address.id
+            if (finalDropLat != null && finalDropLng != null) {
+                cacheAddressCoordinates(address.id, { lat: finalDropLat, lng: finalDropLng })
+            }
         } catch (e) {
             console.warn('[placeOrder] could not save address to addressbook:', e.message)
         }
@@ -358,7 +394,7 @@ export async function placeOrder({
 
     const notes = `${ORDER_META_PREFIX}${JSON.stringify({
         deliveryType,
-        deliveryAddress,
+        deliveryAddress: cleanAddressText(deliveryAddress),
         deliveryScheduleType,
         scheduledAt,
         promotionCode,
@@ -370,6 +406,8 @@ export async function placeOrder({
         paymentMethodDetail: paymentDetail || paymentMethod,
         stripePaymentId: stripePaymentId || null,
         pointsUsed: Number(pointsUsed || 0),
+        dropLat: finalDropLat,
+        dropLng: finalDropLng,
     })}`
 
     const serverPaymentMethod = (paymentMethod === 'บัตรเครดิต/เดบิต' || (paymentMethod === 'พร้อมเพย์' && stripePaymentId)) ? 'STRIPE' : 'CASH'
@@ -506,11 +544,15 @@ export async function ensureDeliveryForOrder(order) {
     }
 
     try {
+        const dropLat = order.dropLat ?? order.meta?.dropLat ?? null
+        const dropLng = order.dropLng ?? order.meta?.dropLng ?? null
         return await api('/delivery', {
             method: 'POST',
             body: JSON.stringify({
                 orderId: order.id,
-                dropAddress: order.deliveryAddress,
+                dropAddress: cleanAddressText(order.deliveryAddress),
+                dropLat: dropLat != null ? Number(dropLat) : null,
+                dropLng: dropLng != null ? Number(dropLng) : null,
                 provider: 'INTERNAL',
             }),
         })

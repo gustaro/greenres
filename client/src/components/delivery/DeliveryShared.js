@@ -1,3 +1,5 @@
+import { extractCoordinates, cleanAddressText } from '../../lib/geo'
+
 export const DELIVERY_FLOW = {
     PENDING: ['ASSIGNED', 'รับงาน', 'bi-clipboard-check'],
     ASSIGNED: ['PICKED_UP', 'รับอาหารแล้ว', 'bi-bag-check'],
@@ -30,7 +32,11 @@ export const DELIVERY_STATUS_CLASS = {
 
 export const normalizeJob = raw => {
     const order = raw.order || raw || {}
-    const deliveryAddress = raw.deliveryAddress || raw.dropAddress || order.deliveryAddress || order.dropAddress || ''
+    const rawDeliveryAddress = raw.deliveryAddress || raw.dropAddress || order.deliveryAddress || order.dropAddress || ''
+    const coords = extractCoordinates(rawDeliveryAddress, { ...order, ...raw })
+    const dropLat = raw.dropLat ?? order.dropLat ?? order.meta?.dropLat ?? coords?.lat ?? null
+    const dropLng = raw.dropLng ?? order.dropLng ?? order.meta?.dropLng ?? coords?.lng ?? null
+    const deliveryAddress = cleanAddressText(rawDeliveryAddress)
     const customerName = raw.customerName || order.customerName || order.user?.name || order.customerId || 'ลูกค้า'
     const customerPhone = raw.customerPhone || order.customerPhone || order.user?.phone || ''
     const rawItems = (raw.items && raw.items.length > 0) ? raw.items : (order.items && order.items.length > 0) ? order.items : []
@@ -45,6 +51,8 @@ export const normalizeJob = raw => {
         foodStatus: DELIVERY_STATUS_LABEL[raw.status] ?? raw.status,
         deliveryAddress,
         dropAddress: deliveryAddress,
+        dropLat: dropLat != null ? Number(dropLat) : null,
+        dropLng: dropLng != null ? Number(dropLng) : null,
         provider: raw.provider ?? 'INTERNAL',
         estimatedMinutes: raw.estimatedMinutes ?? order.estimatedMinutes,
         totalAmount: raw.totalAmount ?? order.totalAmount ?? raw.total ?? 0,

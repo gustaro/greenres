@@ -79,14 +79,54 @@ export const getDeliveryByOrder = async (req, res, next) => {
 // POST /deliveries — สร้าง delivery จาก order
 export const createDeliveryForOrder = async (req, res, next) => {
   try {
-    const { orderId, dropAddress, dropLat, dropLng, provider = "INTERNAL" } = req.body;
+    let { orderId, dropAddress, dropLat, dropLng, provider = "INTERNAL" } = req.body;
     if (!orderId || !dropAddress) {
       return res.status(400).json({ message: "orderId and dropAddress required" });
     }
     const existing = await prisma.delivery.findUnique({ where: { orderId } });
     if (existing) return res.status(409).json({ message: "Delivery already exists for this order" });
 
-    const delivery = await createDelivery(orderId, dropAddress, dropLat, dropLng, provider);
+    // Fallback: If dropLat / dropLng not provided in request body, retrieve from order notes or address
+    if (dropLat == null || dropLng == null) {
+      const order = await prisma.order.findUnique({
+        where: { id: orderId },
+        include: { address: true },
+      });
+      if (order) {
+        if (order.notes && order.notes.startsWith("LIMELEAF_META:")) {
+          try {
+            const meta = JSON.parse(order.notes.replace("LIMELEAF_META:", ""));
+            if (meta.dropLat != null && meta.dropLng != null) {
+              dropLat = Number(meta.dropLat);
+              dropLng = Number(meta.dropLng);
+            }
+          } catch (_) {}
+        }
+        if ((dropLat == null || dropLng == null) && order.address?.street) {
+          const match = order.address.street.match(/(?:<!--geo:([0-9.-]+),([0-9.-]+)-->|\[geo:([0-9.-]+),([0-9.-]+)\])/);
+          if (match) {
+            const lat = match[1] || match[3];
+            const lng = match[2] || match[4];
+            if (lat && lng) {
+              dropLat = parseFloat(lat);
+              dropLng = parseFloat(lng);
+            }
+          }
+        }
+      }
+    }
+
+    const cleanDropAddress = typeof dropAddress === 'string'
+      ? dropAddress.replace(/<!--geo:[^>]+-->/g, '').replace(/\[geo:[^\]]+\]/g, '').trim()
+      : dropAddress;
+
+    const delivery = await createDelivery(
+      orderId,
+      cleanDropAddress || dropAddress,
+      dropLat != null && !isNaN(Number(dropLat)) ? Number(dropLat) : null,
+      dropLng != null && !isNaN(Number(dropLng)) ? Number(dropLng) : null,
+      provider
+    );
 
     // Auto-assign: ลอง internal rider ก่อน
     let result = delivery;

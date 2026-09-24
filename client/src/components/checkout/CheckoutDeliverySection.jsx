@@ -1,5 +1,6 @@
 import { useLanguage } from '../../lib/LanguageContext'
 import { MapLocationPicker } from '../MapLocationPicker'
+import { cleanAddressText } from '../../lib/geo'
 
 export function CheckoutDeliverySection({
     orderMode,
@@ -17,7 +18,10 @@ export function CheckoutDeliverySection({
     setNewZip,
     newLabel,
     setNewLabel,
+    manualAddress,
     setManualAddress,
+    deliveryCoords,
+    setDeliveryCoords,
     scheduleType,
     setScheduleType,
     reservationMode,
@@ -92,25 +96,47 @@ export function CheckoutDeliverySection({
                                     >
                                         {savedAddresses.map(a => (
                                             <option key={a.id} value={a.id}>
-                                                {a.label || (isEn ? 'Address' : 'ที่อยู่')} - {a.street} {a.state} {a.zip}
+                                                {a.label || (isEn ? 'Address' : 'ที่อยู่')} - {cleanAddressText(a.street)} {a.state} {a.zip}
                                             </option>
                                         ))}
                                         <option value="new">{t('checkoutAddNewAddressOption')}</option>
                                     </select>
+                                    {addressId !== 'new' && deliveryCoords && (
+                                        <div style={{ marginTop: 6, display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--brand-primary, #12852f)', fontWeight: 600 }}>
+                                            <i className="bi bi-pin-map-fill" />
+                                            <span>{isEn ? 'GPS Destination:' : 'พิกัด GPS ปลายทาง:'}</span>
+                                            <span style={{ fontFamily: 'monospace', background: 'var(--brand-accent-soft, #effbdc)', padding: '2px 8px', borderRadius: 4, border: '1px solid var(--brand-accent, #9fe51f)' }}>
+                                                {Number(deliveryCoords.lat).toFixed(5)}, {Number(deliveryCoords.lng).toFixed(5)}
+                                            </span>
+                                        </div>
+                                    )}
                                 </div>
                             )}
 
                             {addressId === 'new' && (
                                 <div className="chk-input-wrap" style={{ gridColumn: '1 / -1', background: '#f6faf2', padding: 14, borderRadius: 8, border: '1px solid #dce4d9' }}>
-                                    <label style={{ fontWeight: 700, color: 'var(--brand-primary-dark)' }}>{isEn ? 'Enter New Delivery Address' : 'ระบุที่อยู่จัดส่งใหม่'}</label>
+                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                                        <label style={{ fontWeight: 700, color: 'var(--brand-primary-dark)', margin: 0 }}>{isEn ? 'Enter New Delivery Address' : 'ระบุที่อยู่จัดส่งใหม่'}</label>
+                                        {deliveryCoords && (
+                                            <span style={{ fontSize: 11, color: 'var(--brand-primary, #12852f)', fontWeight: 700, background: 'var(--brand-accent-soft, #effbdc)', padding: '2px 8px', borderRadius: 4, border: '1px solid var(--brand-accent, #9fe51f)' }}>
+                                                <i className="bi bi-check-circle-fill me-1" /> ปักพิกัดแล้ว ({Number(deliveryCoords.lat).toFixed(4)}, {Number(deliveryCoords.lng).toFixed(4)})
+                                            </span>
+                                        )}
+                                    </div>
                                     <div style={{ marginBottom: 12 }}>
-                                        <MapLocationPicker onLocationSelect={(obj) => {
-                                            if (obj.street) setNewStreet(obj.street)
-                                            if (obj.province) setNewState(obj.province)
-                                            if (obj.zip) setNewZip(obj.zip)
-                                            const parts = [obj.street, obj.province, obj.zip].filter(Boolean)
-                                            setManualAddress(parts.join(' '))
-                                        }} />
+                                        <MapLocationPicker
+                                            initialCoords={deliveryCoords}
+                                            onLocationSelect={(obj) => {
+                                                if (obj.street) setNewStreet(obj.street)
+                                                if (obj.province) setNewState(obj.province)
+                                                if (obj.zip) setNewZip(obj.zip)
+                                                if (obj.lat != null && obj.lng != null && setDeliveryCoords) {
+                                                    setDeliveryCoords({ lat: obj.lat, lng: obj.lng })
+                                                }
+                                                const parts = [obj.street, obj.province, obj.zip].filter(Boolean)
+                                                setManualAddress(parts.join(' '))
+                                            }}
+                                        />
                                     </div>
                                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 10 }}>
                                         <div>

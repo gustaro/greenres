@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useAuth } from '../lib/AuthContext'
 import { useLanguage } from '../lib/LanguageContext'
 import { validatePromotion } from '../lib/database'
+import { extractCoordinates, cleanAddressText, embedCoordinates } from '../lib/geo'
 import { CheckoutOrderSummary } from './checkout/CheckoutOrderSummary'
 import { CheckoutDeliverySection } from './checkout/CheckoutDeliverySection'
 import { CheckoutPaymentSection } from './checkout/CheckoutPaymentSection'
@@ -37,6 +38,7 @@ export function CheckoutModal({ cart, products, itemNotes = {}, onClose, onDone,
     const [newZip, setNewZip] = useState('')
     const [newLabel, setNewLabel] = useState('บ้าน')
     const [manualAddress, setManualAddress] = useState(profile?.address || '')
+    const [deliveryCoords, setDeliveryCoords] = useState(null)
 
     // Dine-in / Table Reservation states
     const [reservationMode, setReservationMode] = useState('now') // 'now' | 'slot'
@@ -53,6 +55,16 @@ export function CheckoutModal({ cart, products, itemNotes = {}, onClose, onDone,
         if (!recipientPhone && profile?.phone) setRecipientPhone(profile.phone)
         if (addressId === 'new' && !manualAddress && defaultAddress) setAddressId(defaultAddress.id)
     }, [profile])
+
+    useEffect(() => {
+        if (addressId && addressId !== 'new') {
+            const selected = savedAddresses.find(a => String(a.id) === String(addressId))
+            if (selected) {
+                const coords = extractCoordinates(selected.street, selected)
+                setDeliveryCoords(coords || null)
+            }
+        }
+    }, [addressId, savedAddresses])
 
     const items = products.filter(product => cart[product.id])
     const subtotal = items.reduce((sum, product) => sum + product.price * cart[product.id], 0)
@@ -113,9 +125,11 @@ export function CheckoutModal({ cart, products, itemNotes = {}, onClose, onDone,
         const scheduledValue = form.get('scheduledAt')
 
         const selectedAddress = addressId === 'new' ? null : savedAddresses.find(a => String(a.id) === String(addressId))
-        const formattedNewAddress = [newStreet, newState, newZip].filter(Boolean).join(' ')
+        const cleanNewStreet = cleanAddressText(newStreet)
+        const formattedNewAddress = [cleanNewStreet, newState, newZip].filter(Boolean).join(' ')
+        const cleanSelectedStreet = selectedAddress ? cleanAddressText(selectedAddress.street) : ''
         const selectedAddressFormatted = selectedAddress
-            ? [selectedAddress.street, selectedAddress.city !== selectedAddress.state ? selectedAddress.city : null, selectedAddress.state, selectedAddress.zip].filter(Boolean).join(' ')
+            ? [cleanSelectedStreet, selectedAddress.city !== selectedAddress.state ? selectedAddress.city : null, selectedAddress.state, selectedAddress.zip].filter(Boolean).join(' ')
             : ''
         const deliveryAddressText = addressId === 'new'
             ? (formattedNewAddress || manualAddress)
@@ -155,12 +169,18 @@ export function CheckoutModal({ cart, products, itemNotes = {}, onClose, onDone,
             await onDone({
                 deliveryAddress: deliveryType === 'ให้จัดส่ง' ? deliveryAddressText : deliveryType === 'ทานที่ร้าน' ? (dineInTable ? `โต๊ะ ${dineInTable}` : 'ทานที่ร้าน') : '',
                 deliveryAddressId: deliveryType === 'ให้จัดส่ง' && addressId !== 'new' ? addressId : null,
+                dropLat: deliveryCoords?.lat != null ? Number(deliveryCoords.lat) : null,
+                dropLng: deliveryCoords?.lng != null ? Number(deliveryCoords.lng) : null,
                 newAddressObj: addressId === 'new' ? {
                     label: newLabel || 'บ้าน',
-                    street: newStreet || manualAddress,
+                    street: (deliveryCoords?.lat != null && deliveryCoords?.lng != null)
+                        ? embedCoordinates(newStreet || manualAddress, deliveryCoords)
+                        : (newStreet || manualAddress),
                     city: newState || 'กรุงเทพมหานคร',
                     state: newState || 'กรุงเทพมหานคร',
                     zip: newZip || '10110',
+                    dropLat: deliveryCoords?.lat != null ? Number(deliveryCoords.lat) : null,
+                    dropLng: deliveryCoords?.lng != null ? Number(deliveryCoords.lng) : null,
                 } : null,
                 paymentMethod,
                 paymentDetail,
@@ -237,6 +257,8 @@ export function CheckoutModal({ cart, products, itemNotes = {}, onClose, onDone,
                             setNewLabel={setNewLabel}
                             manualAddress={manualAddress}
                             setManualAddress={setManualAddress}
+                            deliveryCoords={deliveryCoords}
+                            setDeliveryCoords={setDeliveryCoords}
                             scheduleType={scheduleType}
                             setScheduleType={setScheduleType}
                             reservationMode={reservationMode}
