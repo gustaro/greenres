@@ -142,7 +142,9 @@ export function HomePage({ onOrder, user, onAuth, onLogout, cartCount, onCart })
                     </div>
                     <div className="hero-picture">
                         <span className="hero-picture-glow" />
-                        <img src={currentSlide.imageUrl || '/assets/hero-food.png'} alt={currentSlide.title} />
+                        <div className="hero-picture-frame">
+                            <img src={currentSlide.imageUrl || '/assets/hero-food.png'} alt={currentSlide.title} />
+                        </div>
                     </div>
                 </div>
                 {heroSlides.length > 1 && (

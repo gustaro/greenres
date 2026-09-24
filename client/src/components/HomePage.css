@@ -156,9 +156,57 @@
 .hero-copy button { min-width: 155px; min-height: 52px; padding: 0 22px; border: 0; border-radius: 4px; font-weight: 900; cursor: pointer; transition: all .2s ease }
 .hero-copy button b { margin-left: 10px; color: var(--chart); font-size: 18px }
 
-.hero-picture { height: 500px; position: relative; display: grid; place-items: center }
-.hero-picture-glow { position: absolute; width: min(420px, 70%); aspect-ratio: 1; border-radius: 50%; filter: blur(2px); transition: background .5s ease }
-.hero-picture img { position: relative; z-index: 1; width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 28px 24px rgba(64, 67, 12, .24)); transform: scale(1.08) }
+.hero-picture {
+    width: 100%;
+    min-height: 440px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.hero-picture-glow {
+    position: absolute;
+    width: min(540px, 92%);
+    height: min(360px, 82%);
+    border-radius: 36px;
+    filter: blur(32px);
+    transition: background .5s ease;
+    z-index: 0;
+    pointer-events: none;
+}
+
+.hero-picture-frame {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 560px;
+    aspect-ratio: 16 / 10;
+    border-radius: 24px;
+    overflow: hidden;
+    border: 3.5px solid rgba(255, 255, 255, 0.85);
+    background: rgba(255, 255, 255, 0.22);
+    box-shadow: 0 24px 50px -12px rgba(8, 48, 20, 0.28), 0 8px 18px rgba(0, 0, 0, 0.08);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.hero-picture-frame img,
+.hero-picture img {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    display: block;
+    transition: transform 0.5s cubic-bezier(0.2, 0, 0, 1);
+}
+
+.hero-picture-frame:hover img {
+    transform: scale(1.04);
+}
 
 .hero-arrow {
     position: absolute;
@@ -265,7 +313,8 @@
     .hero-home { min-height: 560px }
     .hero-slide { width: min(100% - 80px, 760px); min-height: 500px; grid-template-columns: 1fr 1fr; gap: 10px }
     .hero-copy h1 { font-size: clamp(44px, 8vw, 68px) }
-    .hero-picture { height: 390px }
+    .hero-picture { height: auto; min-height: 0 }
+    .hero-picture-frame { max-width: 440px; border-radius: 20px; border-width: 3px }
     .promotion-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) }
     .preview-grid { grid-template-columns: repeat(2, 1fr) }
     .menu-frame { padding-inline: 22px }
@@ -279,8 +328,10 @@
     .hero-copy h1 { margin: auto; font-size: 48px; letter-spacing: -2.5px }
     .hero-copy p { margin: 16px auto 20px; font-size: 15px }
     .hero-copy button { min-height: 46px }
-    .hero-picture { height: 250px; order: -1 }
-    .hero-picture img { transform: scale(1) }
+    .hero-picture { height: auto; min-height: 0; order: -1; margin-bottom: 20px }
+    .hero-picture-frame { max-width: 380px; aspect-ratio: 16 / 10; border-radius: 18px; border-width: 2.5px }
+    .hero-picture-frame img,
+    .hero-picture img { transform: none }
     .hero-arrow { width: 36px; height: 44px; font-size: 16px }
     .hero-arrow.previous { left: 7px }
     .hero-arrow.next { right: 7px }

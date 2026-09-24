@@ -149,6 +149,9 @@ export function AdminHeroTab({ heroSlides, setHeroSlides, notify, fail }) {
                 <label className="wide">
                     อัปโหลดรูปภาพแบนเนอร์ (ไม่เกิน 5 MB)
                     <input name="image" type="file" accept="image/*" />
+                    <span style={{ fontSize: '11px', color: 'var(--brand-muted)', marginTop: '4px', display: 'block' }}>
+                        * ขนาดมาตรฐานที่แนะนำ: อัตราส่วน 16:10 หรือ 16:9 (เช่น 1200×750px หรือ 960×600px) ระบบจะปรับและ Crop พอดีกรอบมาตรฐานของทุกแบนเนอร์ให้อัตโนมัติ
+                    </span>
                 </label>
                 <button className="admin-primary" disabled={isAdding}>
                     {isAdding ? <><i className="bi bi-arrow-repeat spin" /> กำลังเพิ่มแบนเนอร์...</> : '+ เพิ่มแบนเนอร์หน้าแรก'}
@@ -187,6 +190,9 @@ export function AdminHeroTab({ heroSlides, setHeroSlides, notify, fail }) {
                                         <label className="wide">
                                             เลือกเปลี่ยนรูปภาพใหม่ (ไม่เกิน 5 MB)
                                             <input name="image" type="file" accept="image/*" />
+                                            <span style={{ fontSize: '11px', color: 'var(--brand-muted)', marginTop: '4px', display: 'block' }}>
+                                                * ขนาดมาตรฐานที่แนะนำ: อัตราส่วน 16:10 หรือ 16:9 (ระบบจะ Crop พอดีกรอบมาตรฐานทุกแบนเนอร์ให้อัตโนมัติ)
+                                            </span>
                                         </label>
                                         <div className="admin-form-actions">
                                             <button type="button" onClick={() => setEditingHero(null)}>ยกเลิก</button>
