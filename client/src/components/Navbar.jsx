@@ -13,22 +13,25 @@ const navItems = [
     { key: 'navMap', index: 4 },
 ]
 
-export function Brand({ compact = false }) {
+export function Brand({ compact = false, static: isStatic = false }) {
     const navigate = useNavigate()
     const { settings } = useAuth()
     const goHome = () => {
         navigate('/')
         window.scrollTo({ top: 0, behavior: 'smooth' })
     }
+    const Tag = isStatic ? 'div' : 'button'
+    const tagProps = isStatic
+        ? { style: { cursor: 'default' } }
+        : { onClick: goHome, 'aria-label': `${settings?.siteName || 'LimeLeaf'} home` }
     return (
-        <button
+        <Tag
             className={`brand ${compact ? 'compact' : ''}`}
-            onClick={goHome}
-            aria-label={`${settings?.siteName || 'LimeLeaf'} home`}
+            {...tagProps}
         >
             {settings?.logoUrl ? <img src={settings.logoUrl} alt="Logo" style={{ width: 44, height: 44, objectFit: 'contain', borderRadius: 8 }} /> : <span className="brand-mark"><i /><i /></span>}
             {!compact && <span className="brand-name"><b>{settings?.siteName || 'LimeLeaf'}</b><small>KITCHEN</small></span>}
-        </button>
+        </Tag>
     )
 }
 

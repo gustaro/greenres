@@ -331,7 +331,7 @@
 .btn-submit-contact:hover:not(:disabled) {
     background: var(--brand-primary-dark);
     transform: translateY(-2px);
-    box-shadow: 0 6px 18px rgba(14, 151, 28, 0.35);
+    box-shadow: 0 6px 18px color-mix(in srgb, var(--brand-primary) 35%, transparent);
 }
 
 .btn-submit-contact:disabled {

@@ -322,7 +322,8 @@
 }
 
 .pf-save-btn:hover:not(:disabled) {
-    background: #0d8c1a;
+    background: var(--brand-primary-hover);
+    box-shadow: 0 6px 16px color-mix(in srgb, var(--brand-primary) 32%, transparent);
     transform: translateY(-1px);
 }
 
@@ -421,7 +422,7 @@
 }
 
 .addr-add-btn:hover {
-    background: #a6ed2a;
+    background: var(--brand-accent-strong);
 }
 
 /* Toast */

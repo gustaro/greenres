@@ -5,10 +5,7 @@ export function ProfileInfoTab({
     setName,
     phone,
     setPhone,
-    birthday,
-    setBirthday,
-    gender,
-    setGender,
+    
     email,
     avatarUrl,
     uploadingAvatar,
@@ -66,20 +63,6 @@ export function ProfileInfoTab({
                 <div className="pf-field">
                     <label>{t('profilePhone')}</label>
                     <input value={phone} onChange={e => setPhone(e.target.value)} placeholder="08x-xxx-xxxx" />
-                </div>
-
-                <div className="pf-field">
-                    <label>{t('profileBirthday')}</label>
-                    <input type="date" value={birthday} onChange={e => setBirthday(e.target.value)} />
-                </div>
-                <div className="pf-field">
-                    <label>{t('profileGender')}</label>
-                    <select value={gender} onChange={e => setGender(e.target.value)}>
-                        <option value="">{t('genderUnspecified')}</option>
-                        <option value="male">{t('genderMale')}</option>
-                        <option value="female">{t('genderFemale')}</option>
-                        <option value="other">{t('genderOther')}</option>
-                    </select>
                 </div>
             </div>
 

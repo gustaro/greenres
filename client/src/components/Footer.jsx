@@ -30,7 +30,7 @@ export const Footer = () => {
     // anchor = element id to scrollIntoView on the homepage
     const footerSections = [
         {
-            heading: isEn ? 'Explore' : 'สำรวจ',
+            heading: isEn ? 'Services' : 'บริการ',
             links: [
                 { label: isEn ? 'Home' : 'หน้าแรก',          to: '/' },
                 { label: isEn ? 'Order Food' : 'สั่งอาหาร',   to: '/order' },
@@ -39,20 +39,11 @@ export const Footer = () => {
             ],
         },
         {
-            heading: isEn ? 'Services' : 'บริการ',
-            links: [
-                { label: isEn ? 'Store Map' : 'แผนที่ร้าน',    to: '/map' },
-                { label: isEn ? 'My Profile' : 'โปรไฟล์',      to: '/profile' },
-                { label: isEn ? 'Order History' : 'ประวัติสั่งซื้อ', to: '/profile' },
-                { label: isEn ? 'Points & Rewards' : 'แต้มสะสม',  to: '/profile' },
-            ],
-        },
-        {
             heading: isEn ? 'Info' : 'ข้อมูลร้าน',
             links: [
                 { label: isEn ? 'Contact Us' : 'ติดต่อร้าน',    to: '/map' },
                 { label: isEn ? 'Delivery Info' : 'ข้อมูลจัดส่ง',  anchor: 'delivery-info' },
-                { label: isEn ? 'Catering' : 'จัดเลี้ยง / Catering', to: '/order' },
+                { label: isEn ? 'Store Map' : 'แผนที่ร้าน',    to: '/map' },
                 { label: isEn ? 'Opening Hours' : 'เวลาทำการ',    to: '/map' },
             ],
         },
@@ -62,7 +53,7 @@ export const Footer = () => {
         <footer className="site-footer">
             <div className="footer-inner">
                 <div className="footer-brand">
-                    <Brand />
+                    <Brand static />
                     <p style={{ marginBottom: 12, whiteSpace: 'pre-line' }}>
                         {settings?.footerDescription || t('footerAbout')}
                     </p>

@@ -50,7 +50,7 @@
 .hero-home.hero-tone-accent .hero-copy button:hover {
     background: var(--brand-primary);
     transform: translateY(-2px);
-    box-shadow: 0 14px 28px rgba(7, 92, 27, .32);
+    box-shadow: 0 14px 28px color-mix(in srgb, var(--brand-primary-dark) 32%, transparent);
 }
 
 .hero-home.hero-tone-accent .hero-picture-glow {
@@ -98,7 +98,7 @@
 .hero-home.hero-tone-highlight .hero-copy button:hover {
     background: var(--brand-primary);
     transform: translateY(-2px);
-    box-shadow: 0 14px 28px rgba(7, 92, 27, .3);
+    box-shadow: 0 14px 28px color-mix(in srgb, var(--brand-primary-dark) 30%, transparent);
 }
 
 .hero-home.hero-tone-highlight .hero-picture-glow {

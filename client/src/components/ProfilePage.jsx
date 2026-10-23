@@ -29,8 +29,6 @@ export function ProfilePage({
     const [tab, setTab] = useState(() => searchParams.get('tab') === 'address' ? 'address' : 'info')
     const [name, setName] = useState('')
     const [phone, setPhone] = useState('')
-    const [birthday, setBirthday] = useState('')
-    const [gender, setGender] = useState('')
     const [saving, setSaving] = useState(false)
     const [toast, setToast] = useState('')
     const [orders, setOrders] = useState([])
@@ -60,8 +58,6 @@ export function ProfilePage({
         if (profile) {
             setName(profile.name ?? '')
             setPhone(profile.phone ?? '')
-            setBirthday(profile.birthday ?? profile.dateOfBirth ?? '')
-            setGender(profile.gender ?? '')
         }
     }, [profile])
 
@@ -129,7 +125,7 @@ export function ProfilePage({
 
     const handleSave = async () => {
         setSaving(true)
-        const { error } = await updateProfile({ name, phone, birthday, gender })
+        const { error } = await updateProfile({ name, phone })
         setSaving(false)
         if (error) showToast('บันทึกไม่สำเร็จ: ' + error.message, 'error')
         else showToast('บันทึกสำเร็จแล้ว!', 'success')
@@ -320,10 +316,6 @@ export function ProfilePage({
                             setName={setName}
                             phone={phone}
                             setPhone={setPhone}
-                            birthday={birthday}
-                            setBirthday={setBirthday}
-                            gender={gender}
-                            setGender={setGender}
                             email={session?.user?.email}
                             avatarUrl={profile?.avatarUrl}
                             uploadingAvatar={uploadingAvatar}

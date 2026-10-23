@@ -64,30 +64,30 @@
 
 /* Types styling */
 .countdown-toast-card.badge-new-order {
-    border-left: 5px solid #f59e0b;
-    background: #fffdfa;
+    border-left: 5px solid var(--brand-accent-strong);
+    background: color-mix(in srgb, var(--brand-accent-soft) 55%, #fff);
 }
 .countdown-toast-card.badge-new-order .toast-icon-wrap {
-    background: #fef3c7;
-    color: #b45309;
+    background: var(--brand-accent);
+    color: var(--brand-primary-dark);
 }
 
 .countdown-toast-card.badge-food-ready {
     border-left: 5px solid var(--brand-primary);
-    background: #f8fdfa;
+    background: color-mix(in srgb, var(--brand-surface) 70%, #fff);
 }
 .countdown-toast-card.badge-food-ready .toast-icon-wrap {
-    background: #d1fae5;
+    background: var(--brand-accent-soft);
     color: var(--brand-primary-dark);
 }
 
 .countdown-toast-card.badge-info {
-    border-left: 5px solid #3b82f6;
-    background: #f8faff;
+    border-left: 5px solid var(--brand-border);
+    background: var(--brand-surface);
 }
 .countdown-toast-card.badge-info .toast-icon-wrap {
-    background: #dbeafe;
-    color: #1d4ed8;
+    background: var(--brand-accent-soft);
+    color: var(--brand-primary-dark);
 }
 
 .toast-icon-wrap {
@@ -116,14 +116,14 @@
 .toast-title {
     font-size: 14px;
     font-weight: 800;
-    color: #1e293b;
+    color: var(--brand-text);
     line-height: 1.3;
 }
 
 .toast-close-btn {
     background: transparent;
     border: none;
-    color: #94a3b8;
+    color: var(--brand-muted);
     cursor: pointer;
     padding: 4px;
     display: flex;
@@ -136,7 +136,7 @@
 
 .toast-close-btn:hover {
     color: var(--brand-text);
-    background: #f1f5f9;
+    background: var(--brand-surface);
 }
 
 .toast-order-code {
@@ -146,7 +146,7 @@
     margin-top: 4px;
     font-size: 13px;
     font-weight: 800;
-    color: #0f172a;
+    color: var(--brand-text);
 }
 
 .toast-order-meta {
@@ -156,13 +156,13 @@
     background: var(--brand-accent-soft);
     padding: 2px 8px;
     border-radius: 6px;
-    border: 1px solid #a7f3d0;
+    border: 1px solid var(--brand-border-soft);
 }
 
 .toast-message {
     margin: 4px 0 0;
     font-size: 12px;
-    color: #475569;
+    color: var(--brand-muted);
     line-height: 1.4;
 }
 
@@ -172,7 +172,7 @@
     gap: 6px;
     margin-top: 6px;
     padding: 6px 10px;
-    background: rgba(0, 0, 0, 0.03);
+    background: var(--brand-surface);
     border-radius: 6px;
     font-size: 11px;
     color: var(--brand-text);
@@ -201,28 +201,28 @@
     align-items: center;
     gap: 6px;
     background: var(--brand-primary);
-    color: #ffffff;
+    color: var(--brand-accent);
     border: none;
     border-radius: 8px;
     padding: 6px 14px;
     font-size: 12px;
     font-weight: 700;
     cursor: pointer;
-    box-shadow: 0 2px 6px rgba(15, 158, 30, 0.3);
+    box-shadow: 0 2px 6px color-mix(in srgb, var(--brand-primary) 30%, transparent);
     transition: all 0.2s;
 }
 
 .toast-action-btn:hover {
-    background: var(--brand-primary);
+    background: var(--brand-primary-hover);
     transform: translateY(-1px);
-    box-shadow: 0 4px 10px rgba(15, 158, 30, 0.4);
+    box-shadow: 0 4px 10px color-mix(in srgb, var(--brand-primary) 40%, transparent);
 }
 
 /* Progress Bar */
 .toast-progress-track {
     width: 100%;
     height: 4px;
-    background: #f1f5f9;
+    background: var(--brand-surface);
     position: relative;
     overflow: hidden;
 }
@@ -233,15 +233,15 @@
 }
 
 .toast-progress-bar.bar-new-order {
-    background: linear-gradient(90deg, #f59e0b, #fbbf24);
+    background: linear-gradient(90deg, var(--brand-accent-strong), var(--brand-accent));
 }
 
 .toast-progress-bar.bar-food-ready {
-    background: linear-gradient(90deg, var(--brand-primary), #34d399);
+    background: linear-gradient(90deg, var(--brand-primary), var(--brand-accent-strong));
 }
 
 .toast-progress-bar.bar-info {
-    background: linear-gradient(90deg, #3b82f6, #60a5fa);
+    background: linear-gradient(90deg, var(--brand-border), var(--brand-primary));
 }
 
 /* Responsive adjustment for small screens */

@@ -174,6 +174,9 @@ export const translations = {
         // Auth Modal
         authSignIn: 'เข้าสู่ระบบ',
         authSignUp: 'สมัครสมาชิก',
+        authErrRequired: 'กรุณากรอกข้อมูลในช่องนี้',
+        authErrEmail: 'รูปแบบอีเมลไม่ถูกต้อง',
+        authErrPassword: 'รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร',
         authNotMember: 'ยังไม่ได้เป็นสมาชิก?',
         authHaveAccount: 'ฉันมีบัญชีแล้ว',
         authForgot: 'ลืมรหัสผ่าน?',
@@ -480,6 +483,9 @@ export const translations = {
         // Auth Modal
         authSignIn: 'Sign In',
         authSignUp: 'Sign Up',
+        authErrRequired: 'Please fill out this field',
+        authErrEmail: 'Please enter a valid email address',
+        authErrPassword: 'Password must be at least 6 characters',
         authNotMember: 'Not a member yet?',
         authHaveAccount: 'I already have an account',
         authForgot: 'Forgot password?',

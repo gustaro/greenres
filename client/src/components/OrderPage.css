@@ -73,7 +73,7 @@
 
 .on-cattabs button:hover:not(.active) {
     color: #fff;
-    border-bottom-color: rgba(184, 255, 53, .55);
+    border-bottom-color: color-mix(in srgb, var(--brand-accent) 55%, transparent);
     background: transparent;
 }
 
@@ -588,7 +588,7 @@
     background: var(--brand-accent);
     color: var(--brand-primary-dark);
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(168, 255, 42, .3)
+    box-shadow: 0 4px 12px color-mix(in srgb, var(--brand-accent-strong) 35%, transparent)
 }
 
 .op-checkout-btn.disabled {

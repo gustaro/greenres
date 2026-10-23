@@ -11,14 +11,41 @@ export function AuthModal({ onClose, onSuccess }) {
   const [err, setErr] = useState('')
   const [loading, setLoading] = useState(false)
   const [notice, setNotice] = useState('')
+  const [fieldErrs, setFieldErrs] = useState({})
 
-  const switchTo = (mode) => { setTab(mode); setErr(''); setNotice('') }
+  const switchTo = (mode) => { setTab(mode); setErr(''); setNotice(''); setFieldErrs({}) }
   const linkStyle = { background: 'none', border: 0, padding: 0, color: 'var(--brand-primary-dark, #0b5a1f)', fontWeight: 800, fontSize: 13, cursor: 'pointer', textDecoration: 'underline' }
+  const clearFieldErr = (key) => setFieldErrs(prev => (prev[key] ? { ...prev, [key]: '' } : prev))
+  const inputStyle = (key) => (fieldErrs[key] ? (isRequiredErr(key) ? { borderColor: '#d62828' } : { borderColor: 'var(--brand-accent-strong, #9fe51f)', boxShadow: '0 0 0 3px color-mix(in srgb, var(--brand-accent-strong, #9fe51f) 30%, transparent)' }) : undefined)
+  const isRequiredErr = (key) => fieldErrs[key] === t('authErrRequired')
+  const Req = ({ name }) => isRequiredErr(name) ? <span role="alert" aria-label={t('authErrRequired')} style={{ color: '#d62828', fontWeight: 900, fontSize: 15, marginLeft: 3 }}>*</span> : null
+  const FieldError = ({ name }) => fieldErrs[name] && !isRequiredErr(name) ? (
+    <span role="alert" style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 5, padding: '6px 10px', borderRadius: 8, fontSize: 12, fontWeight: 700, color: 'var(--brand-primary-dark, #075c1b)', background: 'var(--brand-accent-soft, #effbdc)', borderLeft: '4px solid var(--brand-accent-strong, #9fe51f)' }}>
+      <i className="bi bi-exclamation-circle-fill" style={{ color: 'var(--brand-primary, #12852f)' }} />
+      {fieldErrs[name]}
+    </span>
+  ) : null
+
+  const validate = (f) => {
+    const errs = {}
+    const email = String(f.get('email') || '').trim()
+    if (!email) errs.email = t('authErrRequired')
+    else if (!/^\S+@\S+\.\S+$/.test(email)) errs.email = t('authErrEmail')
+    if ((tab === 'register' || tab === 'reset') && !String(f.get('name') || '').trim()) errs.name = t('authErrRequired')
+    const pwKey = tab === 'reset' ? 'newPassword' : 'password'
+    const pw = String(f.get(pwKey) || '')
+    if (!pw) errs[pwKey] = t('authErrRequired')
+    else if (pw.length < 6) errs[pwKey] = t('authErrPassword')
+    return errs
+  }
 
   const handle = async (e) => {
     e.preventDefault()
     setErr('')
     setNotice('')
+    const errs = validate(new FormData(e.currentTarget))
+    setFieldErrs(errs)
+    if (Object.keys(errs).length) return
     setLoading(true)
     const f = new FormData(e.currentTarget)
     const email = f.get('email')
@@ -94,26 +121,30 @@ export function AuthModal({ onClose, onSuccess }) {
         </div>
         )}
 
-        <form onSubmit={handle}>
+        <form onSubmit={handle} noValidate>
           {(tab === 'register' || tab === 'reset') && (
             <label>
-              {t('authName')}
-              <input name="name" required placeholder={t('authNamePlaceholder')} />
+              {t('authName')}<Req name="name" />
+              <input name="name" placeholder={t('authNamePlaceholder')} style={inputStyle('name')} onChange={() => clearFieldErr('name')} />
+              <FieldError name="name" />
             </label>
           )}
           <label>
-            {t('authEmail')}
-            <input name="email" type="email" required placeholder="you@example.com" />
+            {t('authEmail')}<Req name="email" />
+            <input name="email" type="email" placeholder="you@example.com" style={inputStyle('email')} onChange={() => clearFieldErr('email')} />
+            <FieldError name="email" />
           </label>
           {tab === 'reset' ? (
             <label>
-              {t('authNewPassword')}
-              <input name="newPassword" type="password" required placeholder={t('authPasswordPlaceholder')} minLength={6} />
+              {t('authNewPassword')}<Req name="newPassword" />
+              <input name="newPassword" type="password" placeholder={t('authPasswordPlaceholder')} style={inputStyle('newPassword')} onChange={() => clearFieldErr('newPassword')} />
+              <FieldError name="newPassword" />
             </label>
           ) : (
             <label>
-              {t('authPassword')}
-              <input name="password" type="password" required placeholder={t('authPasswordPlaceholder')} minLength={6} />
+              {t('authPassword')}<Req name="password" />
+              <input name="password" type="password" placeholder={t('authPasswordPlaceholder')} style={inputStyle('password')} onChange={() => clearFieldErr('password')} />
+              <FieldError name="password" />
             </label>
           )}
           {tab === 'login' && (
