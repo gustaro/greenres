@@ -4,6 +4,15 @@ import { deleteImage } from "../middleware/upload.js";
 const productInclude = {
   category: { select: { id: true, name: true, slug: true } },
   inventory: { select: { quantity: true, lowThreshold: true } },
+  optionGroups: {
+    orderBy: { sortOrder: "asc" },
+    include: {
+      options: {
+        orderBy: { sortOrder: "asc" },
+        include: { ingredient: { select: { id: true, name: true, nameEn: true, quantity: true, unit: true, isActive: true } } },
+      },
+    },
+  },
   recipeItems: {
     select: {
       quantityRequired: true,
@@ -169,7 +178,7 @@ export const createProduct = async (req, res, next) => {
         prepTime: parseInt(prepTime) || 15,
         stock: parseInt(stock) || 999,
       },
-      include: { category: { select: { id: true, name: true, slug: true } } },
+      include: productInclude,
     });
 
     // Create inventory record
@@ -215,7 +224,7 @@ export const updateProduct = async (req, res, next) => {
 
     const product = await prisma.product.update({
       where: { id: req.params.id }, data,
-      include: { category: { select: { id: true, name: true, slug: true } } },
+      include: productInclude,
     });
 
     if (stock !== undefined) {
@@ -246,6 +255,66 @@ export const deleteProduct = async (req, res, next) => {
     await prisma.product.delete({ where: { id: req.params.id } });
     clearProductsCache();
     res.json({ message: "Product deleted" });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const replaceProductOptions = async (req, res, next) => {
+  try {
+    const productId = req.params.id;
+    const groups = Array.isArray(req.body?.groups) ? req.body.groups : [];
+    const product = await prisma.product.findUnique({ where: { id: productId }, select: { id: true } });
+    if (!product) return res.status(404).json({ message: "Product not found" });
+
+    const normalizedGroups = groups.map((group, groupIndex) => {
+      const name = String(group.name || "").trim();
+      if (!name) throw Object.assign(new Error("กรุณาระบุชื่อกลุ่มตัวเลือก"), { status: 400 });
+      const selectionType = group.selectionType === "MULTIPLE" ? "MULTIPLE" : "SINGLE";
+      const options = Array.isArray(group.options) ? group.options : [];
+      if (options.length === 0) throw Object.assign(new Error(`กลุ่ม ${name} ต้องมีอย่างน้อย 1 ตัวเลือก`), { status: 400 });
+      const maxSelections = selectionType === "SINGLE" ? 1 : Math.max(1, Math.min(Number(group.maxSelections) || options.length, options.length));
+      const isRequired = group.isRequired !== false;
+      const minSelections = isRequired ? Math.max(1, Math.min(Number(group.minSelections) || 1, maxSelections)) : 0;
+
+      return {
+        name,
+        nameEn: String(group.nameEn || "").trim() || null,
+        selectionType,
+        isRequired,
+        minSelections,
+        maxSelections,
+        sortOrder: groupIndex,
+        isActive: group.isActive !== false,
+        options: {
+          create: options.map((option, optionIndex) => {
+            const optionName = String(option.name || "").trim();
+            if (!optionName) throw Object.assign(new Error(`กรุณาระบุชื่อตัวเลือกในกลุ่ม ${name}`), { status: 400 });
+            return {
+              name: optionName,
+              nameEn: String(option.nameEn || "").trim() || null,
+              priceAdjustment: Math.max(0, Number(option.priceAdjustment) || 0),
+              ingredientId: option.ingredientId || null,
+              ingredientQuantity: option.ingredientId && Number(option.ingredientQuantity) > 0 ? Number(option.ingredientQuantity) : null,
+              isDefault: Boolean(option.isDefault),
+              isActive: option.isActive !== false,
+              sortOrder: optionIndex,
+            };
+          }),
+        },
+      };
+    });
+
+    await prisma.$transaction(async (tx) => {
+      await tx.productOptionGroup.deleteMany({ where: { productId } });
+      for (const group of normalizedGroups) {
+        await tx.productOptionGroup.create({ data: { productId, ...group } });
+      }
+    });
+
+    clearProductsCache();
+    const updated = await prisma.product.findUnique({ where: { id: productId }, include: productInclude });
+    res.json(updated);
   } catch (error) {
     next(error);
   }

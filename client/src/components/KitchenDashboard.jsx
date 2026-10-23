@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { api, kitchenApi } from '../lib/database'
+import { api, kitchenApi, updateOrder } from '../lib/database'
 import { StaffShell, orderCode, groupOrderItems } from './StaffShared'
 import { SERVER_CHANGE_EVENT, SERVER_SYNC_KEY } from '../lib/api'
 import { attachRealtimeFallback, subscribeDatabaseChanges } from '../lib/realtime'
@@ -18,11 +18,37 @@ export function KitchenDashboard({ setOrders }) {
     const [loading, setLoading] = useState(true)
     const [actionLoadingId, setActionLoadingId] = useState(null)
     const [toasts, setToasts] = useState([])
+    const [realtimeStatus, setRealtimeStatus] = useState('CONNECTING')
+    const [isOnline, setIsOnline] = useState(() => typeof navigator === 'undefined' || navigator.onLine)
+    const [soundEnabled, setSoundEnabled] = useState(() => localStorage.getItem('limeleaf_kitchen_sound') !== 'off')
+    const [keepAwake, setKeepAwake] = useState(false)
 
     const loadRequestRef = useRef(null)
     const pendingTransitionsRef = useRef(new Map())
     const knownOrderIdsRef = useRef(new Map())
     const isInitialLoadRef = useRef(true)
+    const soundEnabledRef = useRef(soundEnabled)
+    const wakeLockRef = useRef(null)
+
+    useEffect(() => {
+        soundEnabledRef.current = soundEnabled
+        localStorage.setItem('limeleaf_kitchen_sound', soundEnabled ? 'on' : 'off')
+    }, [soundEnabled])
+
+    useEffect(() => {
+        const handleOnline = () => setIsOnline(true)
+        const handleOffline = () => setIsOnline(false)
+        window.addEventListener('online', handleOnline)
+        window.addEventListener('offline', handleOffline)
+        return () => {
+            window.removeEventListener('online', handleOnline)
+            window.removeEventListener('offline', handleOffline)
+        }
+    }, [])
+
+    useEffect(() => () => {
+        wakeLockRef.current?.release?.().catch(() => {})
+    }, [])
 
     const dismissToast = id => setToasts(prev => prev.filter(t => t.id !== id))
     const addToast = toast => setToasts(prev => [...prev, { id: 'toast-' + Date.now() + '-' + Math.random(), ...toast }])
@@ -81,7 +107,7 @@ export function KitchenDashboard({ setOrders }) {
                                     duration: 6500,
                                 }
                             ])
-                            playNotificationChime()
+                            if (soundEnabledRef.current) playNotificationChime()
                         }
                     } else if (totalQty > prevQty) {
                         knownOrderIdsRef.current.set(order.id, totalQty)
@@ -100,7 +126,7 @@ export function KitchenDashboard({ setOrders }) {
                                 duration: 7500,
                             }
                         ])
-                        playNotificationChime()
+                        if (soundEnabledRef.current) playNotificationChime()
                     }
                 })
             }
@@ -154,6 +180,7 @@ export function KitchenDashboard({ setOrders }) {
             tables: ['orders', 'order_items'],
             onChange: refresh,
             onStatus: (status, error) => {
+                setRealtimeStatus(error ? 'ERROR' : status)
                 if (status === 'SUBSCRIBED') console.info('[Realtime] Kitchen connected')
                 if (error) console.warn('[Realtime] Kitchen connection error', error)
             },
@@ -171,6 +198,63 @@ export function KitchenDashboard({ setOrders }) {
         }
     }, [loadKitchenData])
 
+    const toggleWakeLock = async () => {
+        if (keepAwake) {
+            await wakeLockRef.current?.release?.().catch(() => {})
+            wakeLockRef.current = null
+            setKeepAwake(false)
+            return
+        }
+        if (!navigator.wakeLock?.request) {
+            addToast({ type: 'info', title: 'อุปกรณ์ไม่รองรับ', message: 'เบราว์เซอร์นี้ไม่รองรับโหมดป้องกันหน้าจอดับ', duration: 4000 })
+            return
+        }
+        try {
+            wakeLockRef.current = await navigator.wakeLock.request('screen')
+            wakeLockRef.current.addEventListener('release', () => setKeepAwake(false), { once: true })
+            setKeepAwake(true)
+        } catch (error) {
+            addToast({ type: 'info', title: 'เปิดโหมดหน้าจอค้างไม่ได้', message: error.message, duration: 4000 })
+        }
+    }
+
+    const toggleSound = () => {
+        setSoundEnabled(enabled => {
+            const next = !enabled
+            if (next) playNotificationChime()
+            return next
+        })
+    }
+
+    const restoreOrderStatus = async (order, previousStatus) => {
+        const foodStatus = previousStatus === 'CONFIRMED' ? 'รอครัว' : previousStatus === 'PREPARING' ? 'กำลังทำ' : previousStatus === 'READY' ? (order.deliveryType === 'ให้จัดส่ง' ? 'พร้อมจัดส่ง' : 'พร้อมเสิร์ฟ') : order.foodStatus
+        pendingTransitionsRef.current.set(order.id, previousStatus)
+        const restore = current => current.map(item => item.id === order.id ? { ...item, serverStatus: previousStatus, foodStatus } : item)
+        setOrders(restore)
+        setQueue(restore)
+        try {
+            await updateOrder(order.id, { status: previousStatus })
+            addToast({ type: 'info', title: 'ย้อนกลับสถานะแล้ว', message: `${orderCode(order)} กลับเป็น “${foodStatus}”`, duration: 3000 })
+        } catch (error) {
+            window.alert('ย้อนกลับสถานะไม่สำเร็จ: ' + error.message)
+            loadKitchenData(true)
+        } finally {
+            setTimeout(() => pendingTransitionsRef.current.delete(order.id), 800)
+        }
+    }
+
+    const offerUndo = (order, previousStatus, title) => addToast({
+        type: 'info',
+        title,
+        message: `${orderCode(order)} · สามารถย้อนกลับได้ภายใน 5 วินาที`,
+        duration: 5000,
+        action: {
+            label: 'ย้อนกลับ',
+            icon: 'bi-arrow-counterclockwise',
+            onClick: () => restoreOrderStatus(order, previousStatus),
+        },
+    })
+
     const startOrder = async order => {
         setActionLoadingId(order.id)
         pendingTransitionsRef.current.set(order.id, 'PREPARING')
@@ -180,6 +264,7 @@ export function KitchenDashboard({ setOrders }) {
 
         try {
             await kitchenApi.start(order.id)
+            offerUndo(order, order.serverStatus || 'CONFIRMED', 'เริ่มทำออเดอร์แล้ว')
             setTimeout(() => pendingTransitionsRef.current.delete(order.id), 800)
             loadKitchenData(true)
         } catch (error) {
@@ -201,6 +286,7 @@ export function KitchenDashboard({ setOrders }) {
 
         try {
             await kitchenApi.ready(order.id)
+            offerUndo(order, order.serverStatus || 'PREPARING', 'เปลี่ยนเป็นพร้อมเสิร์ฟแล้ว')
             setTimeout(() => pendingTransitionsRef.current.delete(order.id), 800)
             loadKitchenData(true)
         } catch (error) {
@@ -281,6 +367,12 @@ export function KitchenDashboard({ setOrders }) {
                     startOrder={startOrder}
                     finishOrder={finishOrder}
                     cancelKitchenOrder={cancelKitchenOrder}
+                    realtimeStatus={realtimeStatus}
+                    isOnline={isOnline}
+                    soundEnabled={soundEnabled}
+                    onToggleSound={toggleSound}
+                    keepAwake={keepAwake}
+                    onToggleWakeLock={toggleWakeLock}
                 />
             )}
 

@@ -1,3 +1,7 @@
+import { useState } from 'react'
+import { ProductOptionsModal } from '../ProductOptionsModal'
+import { selectableOptionGroups, productIdFromLineKey } from '../../lib/productOptions'
+
 export function CashierCounterTab({
     counterSource,
     setCounterSource,
@@ -21,12 +25,21 @@ export function CashierCounterTab({
     counterItems,
     counterTakeawayMap,
     setCounterTakeawayMap,
+    counterIncrementLine,
+    counterDecrementLine,
+    counterRemoveLine,
     counterTotal,
     counterNote,
     setCounterNote,
     counterLoading,
     submitCounterOrder,
+    counterOptionProduct,
+    setCounterOptionProduct,
+    addCounterLine,
 }) {
+    const [isMobileCartOpen, setIsMobileCartOpen] = useState(false)
+    const totalQuantity = counterItems.reduce((sum, line) => sum + Number(line.quantity || 0), 0)
+
     return (
         <section>
             <div className="staff-section-head">
@@ -67,10 +80,10 @@ export function CashierCounterTab({
                                     {group.products.map(p => (
                                         <div className="counter-product" key={p.id}>
                                             <img src={p.img} alt={p.name} />
-                                            <div><b>{p.name}</b><small>฿{p.price}</small></div>
+                                            <div><b>{p.name}</b><small>฿{p.price}</small>{selectableOptionGroups(p).length > 0 && <small className="counter-option-badge"><i className="bi bi-ui-radios" /> มีตัวเลือก</small>}</div>
                                             <div className="counter-qty">
                                                 <button onClick={() => counterRemove(p)}>−</button>
-                                                <span>{counterCart[p.id] || 0}</span>
+                                                <span>{Object.entries(counterCart).reduce((sum, [key, quantity]) => sum + (productIdFromLineKey(key) === p.id ? Number(quantity) : 0), 0)}</span>
                                                 <button onClick={() => counterAdd(p)}>+</button>
                                             </div>
                                         </div>
@@ -82,8 +95,13 @@ export function CashierCounterTab({
                     </div>
                 </div>
 
-                <aside className="counter-cart">
-                    <h3>ข้อมูลออเดอร์</h3>
+                <aside className={`counter-cart ${isMobileCartOpen ? 'is-mobile-open' : ''}`} aria-label="ตะกร้าออเดอร์">
+                    <div className="counter-cart-heading">
+                        <h3>ข้อมูลออเดอร์</h3>
+                        <button type="button" className="counter-cart-close" onClick={() => setIsMobileCartOpen(false)} aria-label="ปิดตะกร้า">
+                            <i className="bi bi-x-lg" />
+                        </button>
+                    </div>
                     <div className="counter-customer-fields">
                         <label>
                             ชื่อลูกค้า <small>{counterSource === 'reservation' ? '(จำเป็น)' : '(ไม่บังคับ)'}</small>
@@ -124,17 +142,19 @@ export function CashierCounterTab({
                     {counterItems.length === 0 ? (
                         <p className="counter-empty">ยังไม่มีรายการ</p>
                     ) : (
-                        counterItems.map(p => {
-                            const isTakeaway = Boolean(counterTakeawayMap[p.id])
+                        counterItems.map(line => {
+                            const p = line.product
+                            const isTakeaway = Boolean(counterTakeawayMap[line.lineKey])
                             return (
-                                <div className="counter-cart-row" key={p.id} style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 6, alignItems: 'center' }}>
+                                <div className="counter-cart-row" key={line.lineKey}>
                                     <div>
-                                        <span>{p.name} × {counterCart[p.id]}</span>
+                                        <span>{p.name}</span>
+                                        {line.selectedOptions.length > 0 && <small className="counter-item-options">{line.selectedOptions.map(option => option.name).join(' · ')}</small>}
                                         {counterSource === 'walkin' && (
                                             <div style={{ marginTop: 2 }}>
                                                 <button
                                                     type="button"
-                                                    onClick={() => setCounterTakeawayMap(prev => ({ ...prev, [p.id]: !prev[p.id] }))}
+                                                    onClick={() => setCounterTakeawayMap(prev => ({ ...prev, [line.lineKey]: !prev[line.lineKey] }))}
                                                     style={{
                                                         border: 0,
                                                         background: isTakeaway ? '#fef08a' : '#f6faf2',
@@ -158,18 +178,42 @@ export function CashierCounterTab({
                                             </div>
                                         )}
                                     </div>
-                                    <b>฿{p.price * counterCart[p.id]}</b>
+                                    <div className="counter-cart-line-actions">
+                                        <b>฿{line.unitPrice * line.quantity}</b>
+                                        <div className="counter-cart-line-qty" aria-label={`จำนวน ${p.name}`}>
+                                            <button type="button" onClick={() => counterDecrementLine(line.lineKey)} aria-label={`ลดจำนวน ${p.name}`}>−</button>
+                                            <span>{line.quantity}</span>
+                                            <button type="button" onClick={() => counterIncrementLine(line.lineKey)} aria-label={`เพิ่มจำนวน ${p.name}`}>+</button>
+                                            <button type="button" className="counter-cart-remove" onClick={() => counterRemoveLine(line.lineKey)} aria-label={`ลบ ${p.name}`}>
+                                                <i className="bi bi-trash3" />
+                                            </button>
+                                        </div>
+                                    </div>
                                 </div>
                             )
                         })
                     )}
-                    <div className="counter-total"><span>ยอดรวม</span><b>฿{counterTotal}</b></div>
-                    <textarea className="counter-note" value={counterNote} onChange={e => setCounterNote(e.target.value)} placeholder="หมายเหตุ (ถ้ามี)" rows={2} />
-                    <button className="staff-primary counter-submit" onClick={submitCounterOrder} disabled={counterLoading || counterItems.length === 0}>
-                        {counterLoading ? <><i className="bi bi-arrow-repeat spin me-1" /> กำลังส่งเข้าครัว...</> : <><i className="bi bi-send-check me-1"></i> ส่งเข้าครัว</>}
-                    </button>
+                    <div className="counter-cart-actions">
+                        <div className="counter-total"><span>ยอดรวม</span><b>฿{counterTotal}</b></div>
+                        <textarea className="counter-note" value={counterNote} onChange={e => setCounterNote(e.target.value)} placeholder="หมายเหตุ (ถ้ามี)" rows={2} />
+                        <button className="staff-primary counter-submit" onClick={submitCounterOrder} disabled={counterLoading || counterItems.length === 0}>
+                            {counterLoading ? <><i className="bi bi-arrow-repeat spin me-1" /> กำลังส่งเข้าครัว...</> : <><i className="bi bi-send-check me-1"></i> ส่งเข้าครัว</>}
+                        </button>
+                    </div>
                 </aside>
             </div>
+            <button
+                type="button"
+                className="counter-mobile-cart-bar"
+                onClick={() => setIsMobileCartOpen(true)}
+                aria-expanded={isMobileCartOpen}
+            >
+                <span><i className="bi bi-basket2-fill" /> ตะกร้า <b>{totalQuantity}</b></span>
+                <strong>฿{counterTotal}</strong>
+                <span>ดูรายการ <i className="bi bi-chevron-up" /></span>
+            </button>
+            {isMobileCartOpen && <button type="button" className="counter-cart-backdrop" onClick={() => setIsMobileCartOpen(false)} aria-label="ปิดตะกร้า" />}
+            {counterOptionProduct && <ProductOptionsModal product={counterOptionProduct} title="เลือกตัวเลือกสำหรับออเดอร์หน้าร้าน" showNote={false} onConfirm={(selection, details) => addCounterLine(counterOptionProduct, selection, details)} onClose={() => setCounterOptionProduct(null)} />}
         </section>
     )
 }

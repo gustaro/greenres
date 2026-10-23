@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { PageHead, Empty, money, formatCashierPaymentMethod } from './AdminShared'
 import { DeliveryImageLightbox } from '../delivery/DeliveryImageLightbox'
+import { orderItemOptionLabel } from '../../lib/productOptions'
 
 export function AdminOrdersTab({
     pendingOrders = [],
@@ -11,23 +12,35 @@ export function AdminOrdersTab({
 }) {
     const [actionLoading, setActionLoading] = useState(null)
     const [lightboxImage, setLightboxImage] = useState(null)
+    const [search, setSearch] = useState('')
+    const [sourceFilter, setSourceFilter] = useState('all')
+    const actionRequestRef = useRef(false)
+
+    const normalizedSearch = search.trim().toLowerCase()
+    const matchesOrder = order => !normalizedSearch || `${order.orderNumber || order.id} ${order.customerId || ''}`.toLowerCase().includes(normalizedSearch)
+    const visiblePendingOrders = pendingOrders.filter(matchesOrder)
+    const visibleHistory = orders.filter(order => order.serverStatus !== 'PENDING' && matchesOrder(order) && (sourceFilter === 'all' || order.orderSource === sourceFilter))
 
     const handleCancel = async (orderId) => {
-        if (!cancelOrder) return
+        if (!cancelOrder || actionRequestRef.current) return
+        actionRequestRef.current = true
         setActionLoading(orderId)
         try {
             await cancelOrder(orderId)
         } finally {
+            actionRequestRef.current = false
             setActionLoading(null)
         }
     }
 
     const handleApprove = async (orderId) => {
-        if (!approveOrder) return
+        if (!approveOrder || actionRequestRef.current) return
+        actionRequestRef.current = true
         setActionLoading(orderId)
         try {
             await approveOrder(orderId)
         } finally {
+            actionRequestRef.current = false
             setActionLoading(null)
         }
     }
@@ -36,10 +49,10 @@ export function AdminOrdersTab({
         <>
             <PageHead eyebrow="ORDER APPROVAL" title="อนุมัติออเดอร์ออนไลน์" description="ออเดอร์ออนไลน์จากลูกค้า — ต้องอนุมัติก่อนส่งเข้าครัว (ออเดอร์หน้าร้านไม่ต้องอนุมัติ)" />
             <div className="admin-order-cards">
-                {pendingOrders.length === 0 ? (
+                {visiblePendingOrders.length === 0 ? (
                     <Empty>ไม่มีออเดอร์ออนไลน์ที่รออนุมัติ</Empty>
                 ) : (
-                    pendingOrders.map(order => (
+                    visiblePendingOrders.map(order => (
                         <article key={order.id} className="admin-order-card">
                             <header>
                                 <div>
@@ -58,6 +71,7 @@ export function AdminOrdersTab({
                                     <li key={item.id}>
                                         <span>
                                             {item.productName || products.find(product => product.id === String(item.productId))?.name || item.productId} × {item.quantity}
+                                            {orderItemOptionLabel(item) && <small className="staff-item-options">{orderItemOptionLabel(item)}</small>}
                                         </span>
                                         <b>{money(item.priceAtTime * item.quantity)}</b>
                                     </li>
@@ -66,7 +80,7 @@ export function AdminOrdersTab({
                             <footer>
                                 <button
                                     className="admin-danger"
-                                    disabled={actionLoading === order.id}
+                                    disabled={Boolean(actionLoading)}
                                     onClick={() => handleCancel(order.id)}
                                 >
                                     {actionLoading === order.id ? (
@@ -77,7 +91,7 @@ export function AdminOrdersTab({
                                 </button>
                                 <button
                                     className="admin-primary"
-                                    disabled={actionLoading === order.id}
+                                    disabled={Boolean(actionLoading)}
                                     onClick={() => handleApprove(order.id)}
                                 >
                                     {actionLoading === order.id ? (
@@ -95,8 +109,15 @@ export function AdminOrdersTab({
                 <div className="admin-panel-head">
                     <div><h2>ประวัติคำสั่งซื้อ</h2><p>รายการที่ผ่านการตรวจสอบแล้ว พร้อมหลักฐานการจัดส่งและชำระเงิน</p></div>
                 </div>
+                <div className="admin-list-toolbar">
+                    <label className="admin-list-search"><i className="bi bi-search" /><input value={search} onChange={event => setSearch(event.target.value)} placeholder="ค้นหาเลขออเดอร์หรือลูกค้า..." /></label>
+                    <select value={sourceFilter} onChange={event => setSourceFilter(event.target.value)} aria-label="กรองตามช่องทาง">
+                        <option value="all">ทุกช่องทาง</option><option value="online">ออนไลน์</option><option value="walkin">ทานที่ร้าน</option><option value="takeaway">สั่งกลับบ้าน</option>
+                    </select>
+                    <span>{visibleHistory.length} รายการ</span>
+                </div>
                 <div className="admin-table-wrap">
-                    <table>
+                    <table className="admin-responsive-table">
                         <thead>
                             <tr>
                                 <th>เลขออเดอร์</th>
@@ -108,18 +129,18 @@ export function AdminOrdersTab({
                             </tr>
                         </thead>
                         <tbody>
-                            {orders.filter(order => order.serverStatus !== 'PENDING').map(order => (
+                            {visibleHistory.map(order => (
                                 <tr key={order.id}>
-                                    <td><b>{order.orderNumber || order.id}</b></td>
-                                    <td>{order.customerId}</td>
-                                    <td>
+                                    <td data-label="เลขออเดอร์"><b>{order.orderNumber || order.id}</b></td>
+                                    <td data-label="ลูกค้า">{order.customerId}</td>
+                                    <td data-label="ช่องทาง">
                                         <i className={`admin-badge ${order.orderSource === 'online' ? '' : 'pending'}`}>
                                             {order.orderSource === 'walkin' ? 'ทานที่ร้าน' : order.orderSource === 'takeaway' ? 'สั่งกลับบ้าน' : 'ออนไลน์'}
                                         </i>
                                     </td>
-                                    <td>{money(order.totalAmount)}</td>
-                                    <td><i className="admin-badge">{order.foodStatus}</i></td>
-                                    <td>
+                                    <td data-label="ยอดรวม">{money(order.totalAmount)}</td>
+                                    <td data-label="สถานะ"><i className="admin-badge">{order.foodStatus}</i></td>
+                                    <td data-label="หลักฐาน">
                                         <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
                                             {order.proofImageUrl && (
                                                 <button

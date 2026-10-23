@@ -24,8 +24,11 @@ export function DeliveryRiderBar({ rider, session, profile, isAdmin, activeJobsC
             }}
         >
             <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-                <div
+                <button
+                    type="button"
+                    className="delivery-rider-avatar"
                     onClick={() => setShowProfileModal(true)}
+                    aria-label="แก้ไขรูปโปรไฟล์และข้อมูลไรเดอร์"
                     title="คลิกเพื่อแก้ไขรูปโปรไฟล์และข้อมูลไรเดอร์"
                     style={{
                         width: 44,
@@ -62,7 +65,7 @@ export function DeliveryRiderBar({ rider, session, profile, isAdmin, activeJobsC
                             display: avatar ? 'none' : 'block'
                         }}
                     ></i>
-                </div>
+                </button>
                 <div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                         <b style={{ fontSize: 15 }}>{rider?.user?.name || session?.user?.name || 'Rider'}</b>

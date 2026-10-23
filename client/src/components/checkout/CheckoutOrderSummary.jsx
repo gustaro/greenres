@@ -6,11 +6,12 @@ export function CheckoutOrderSummary({ items, cart, orderMode, takeawayItemMap, 
         <aside>
             <div className="chk-card" style={{ position: 'sticky', top: 30 }}>
                 <h3 className="chk-title">{isEn ? 'Order Summary' : 'สรุปรายการคำสั่งซื้อ'}</h3>
-                {items.map(product => {
-                    const isItemTakeaway = orderMode === 'dine-in' && Boolean(takeawayItemMap[product.id])
+                {items.map(line => {
+                    const product = line.product
+                    const isItemTakeaway = orderMode === 'dine-in' && Boolean(takeawayItemMap[line.lineKey])
                     const displayName = isEn && product.en ? product.en : product.name
                     return (
-                        <div className="sum-row" key={product.id}>
+                        <div className="sum-row" key={line.lineKey}>
                             <span>
                                 {displayName}
                                 {isItemTakeaway && (
@@ -19,11 +20,12 @@ export function CheckoutOrderSummary({ items, cart, orderMode, takeawayItemMap, 
                                     </span>
                                 )}
                                 <small style={{ display: 'block', color: '#888', fontSize: 11, marginTop: 4 }}>
-                                    {cart[product.id]} × ฿{product.price}
-                                    {itemNotes[product.id] ? ` · ${itemNotes[product.id]}` : ''}
+                                    {line.quantity} × ฿{line.unitPrice}
+                                    {itemNotes[line.lineKey] ? ` · ${itemNotes[line.lineKey]}` : ''}
                                 </small>
+                                {line.selectedOptions.length > 0 && <small style={{ display: 'block', color: 'var(--brand-primary-dark)', fontSize: 10, marginTop: 3 }}>{line.selectedOptions.map(option => isEn && option.nameEn ? option.nameEn : option.name).join(' · ')}</small>}
                             </span>
-                            <b style={{ fontWeight: 600 }}>฿{product.price * cart[product.id]}</b>
+                            <b style={{ fontWeight: 600 }}>฿{line.unitPrice * line.quantity}</b>
                         </div>
                     )
                 })}

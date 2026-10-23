@@ -41,6 +41,7 @@ export function CashierReceiptModal({
                         <li key={item.id || idx}>
                             <span className="col-name">
                                 {item.displayName}
+                                {item.optionLabel && <small style={{ color: 'var(--brand-primary-dark)', display: 'block' }}>{item.optionLabel}</small>}
                                 {item.cleanNote && <small style={{ color: '#666', display: 'block' }}>({item.cleanNote})</small>}
                             </span>
                             <span className="col-qty">{item.quantity}</span>

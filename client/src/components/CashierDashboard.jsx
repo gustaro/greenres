@@ -12,6 +12,7 @@ import { CashierReadyTab } from './cashier/CashierReadyTab'
 import { CashierPaymentsTab } from './cashier/CashierPaymentsTab'
 import { CashierHistoryTab } from './cashier/CashierHistoryTab'
 import { CashierSummaryTab } from './cashier/CashierSummaryTab'
+import { ProductOptionsModal } from './ProductOptionsModal'
 
 export function CashierDashboard({ orders = [], setOrders, refreshOrders }) {
     const { settings } = useAuth()
@@ -31,10 +32,11 @@ export function CashierDashboard({ orders = [], setOrders, refreshOrders }) {
         counterReservationGuests, setCounterReservationGuests,
         counterCategory, setCounterCategory,
         counterGroups, visibleCounterGroups,
-        counterCart, counterAdd, counterRemove, counterItems,
+        counterCart, counterAdd, counterRemove, counterIncrementLine, counterDecrementLine, counterRemoveLine, counterItems,
         counterTakeawayMap, setCounterTakeawayMap,
         counterTotal, counterNote, setCounterNote,
         counterLoading, counterNotice, submitCounterOrder,
+        counterOptionProduct, setCounterOptionProduct, addCounterLine,
         moveTableOrder, setMoveTableOrder,
         newTableInput, setNewTableInput,
         movingTableLoading, handleMoveTable,
@@ -43,6 +45,7 @@ export function CashierDashboard({ orders = [], setOrders, refreshOrders }) {
         addItemsTakeawayMap, setAddItemsTakeawayMap,
         addItemsCategory, setAddItemsCategory,
         visibleAddItemsGroups, addingItemsLoading, submitAddItems,
+        addItemsOptionProduct, setAddItemsOptionProduct, addItemsAdd, addItemsRemove, addItemsConfirmOption,
         paymentModalOrder, setPaymentModalOrder,
         selectedPaymentMethod, setSelectedPaymentMethod,
         cashReceived, setCashReceived,
@@ -98,6 +101,9 @@ export function CashierDashboard({ orders = [], setOrders, refreshOrders }) {
                     counterAdd={counterAdd}
                     counterRemove={counterRemove}
                     counterItems={counterItems}
+                    counterIncrementLine={counterIncrementLine}
+                    counterDecrementLine={counterDecrementLine}
+                    counterRemoveLine={counterRemoveLine}
                     counterTakeawayMap={counterTakeawayMap}
                     setCounterTakeawayMap={setCounterTakeawayMap}
                     counterTotal={counterTotal}
@@ -105,6 +111,9 @@ export function CashierDashboard({ orders = [], setOrders, refreshOrders }) {
                     setCounterNote={setCounterNote}
                     counterLoading={counterLoading}
                     submitCounterOrder={submitCounterOrder}
+                    counterOptionProduct={counterOptionProduct}
+                    setCounterOptionProduct={setCounterOptionProduct}
+                    addCounterLine={addCounterLine}
                 />
             )}
 
@@ -210,7 +219,11 @@ export function CashierDashboard({ orders = [], setOrders, refreshOrders }) {
                 onSubmit={submitAddItems}
                 onCancel={() => setAddItemsOrder(null)}
                 loading={addingItemsLoading}
+                addItemsAdd={addItemsAdd}
+                addItemsRemove={addItemsRemove}
             />
+
+            {addItemsOptionProduct && <ProductOptionsModal product={addItemsOptionProduct} title="เลือกตัวเลือกสำหรับเมนูสั่งเพิ่ม" onConfirm={addItemsConfirmOption} onClose={() => setAddItemsOptionProduct(null)} />}
 
             <CashierPaymentModal
                 order={paymentModalOrder}

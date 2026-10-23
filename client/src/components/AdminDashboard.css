@@ -236,6 +236,39 @@
     font-size: 11px
 }
 
+.admin-logout-btn {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    width: calc(100% - 20px);
+    margin: 0 10px 18px;
+    padding: 9px 14px;
+    border-radius: 10px;
+    border: 1px solid rgba(254, 202, 202, .42);
+    background: rgba(127, 29, 29, .2);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.18s, color 0.18s, border-color 0.18s;
+    flex-shrink: 0;
+}
+
+.admin-logout-btn:hover {
+    background: rgba(239, 68, 68, .28);
+    color: #fff;
+    border-color: rgba(254, 202, 202, .72);
+}
+
+.admin-logout-btn:focus-visible {
+    outline: 3px solid var(--brand-accent);
+    outline-offset: 2px;
+}
+
+.admin-logout-btn i {
+    font-size: 15px;
+}
+
 .admin-main {
     min-width: 0
 }
@@ -711,6 +744,151 @@
     min-height: 34px
 }
 
+.admin-category-order-note {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 18px;
+    border-bottom: 1px solid var(--brand-border-soft);
+    background: var(--brand-accent-soft);
+    color: var(--brand-primary-dark);
+    font-size: 12px;
+    font-weight: 700
+}
+
+.admin-category-order-note>i {
+    font-size: 18px
+}
+
+.admin-category-saving {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-left: auto;
+    white-space: nowrap
+}
+
+.admin-category-order {
+    display: flex;
+    align-items: center;
+    color: var(--brand-primary-dark);
+    font-size: 14px;
+    font-weight: 1000
+}
+
+.admin-category-drag-handle {
+    width: 34px;
+    height: 34px;
+    display: grid;
+    place-items: center;
+    border: 1px solid var(--brand-border-soft);
+    border-radius: 8px;
+    background: var(--brand-accent-soft);
+    color: var(--brand-primary-dark);
+    cursor: grab;
+    font-size: 18px;
+    transition: background .16s, border-color .16s, transform .16s
+}
+
+.admin-category-drag-handle:hover,
+.admin-category-table tbody tr:hover .admin-category-drag-handle {
+    border-color: var(--brand-primary);
+    background: var(--brand-accent);
+    transform: scale(1.04)
+}
+
+.admin-category-drag-handle:active {
+    cursor: grabbing
+}
+
+.admin-category-table {
+    border-collapse: separate !important;
+    border-spacing: 0 10px !important;
+    min-width: 780px !important;
+    padding: 0 12px 8px;
+    background: linear-gradient(180deg, #f8fcf6, #fff)
+}
+
+.admin-category-table thead th {
+    border: 0;
+    background: transparent;
+    padding-top: 10px;
+    padding-bottom: 2px
+}
+
+.admin-category-table .admin-category-drag-column,
+.admin-category-table .admin-category-drag-cell {
+    width: 58px;
+    padding-right: 6px;
+    text-align: center
+}
+
+.admin-category-table .admin-category-drag-column i {
+    color: var(--brand-primary);
+    font-size: 16px
+}
+
+.admin-category-table tbody tr {
+    cursor: grab
+}
+
+.admin-category-table tbody tr:active {
+    cursor: grabbing
+}
+
+.admin-category-table tbody td {
+    border-top: 1px solid var(--brand-border-soft);
+    border-bottom: 1px solid var(--brand-border-soft);
+    background: #fff;
+    transition: background .16s, border-color .16s, box-shadow .16s
+}
+
+.admin-category-table tbody td:first-child {
+    border-left: 1px solid var(--brand-border-soft);
+    border-radius: 12px 0 0 12px;
+    box-shadow: -2px 4px 12px rgba(7, 92, 27, .05)
+}
+
+.admin-category-table tbody td:last-child {
+    border-right: 1px solid var(--brand-border-soft);
+    border-radius: 0 12px 12px 0;
+    box-shadow: 3px 4px 12px rgba(7, 92, 27, .05)
+}
+
+.admin-category-table tbody tr:hover td {
+    border-color: #a9dcae;
+    background: #fbfff8
+}
+
+.admin-category-table input {
+    width: 100%;
+    cursor: text
+}
+
+.admin-category-table button {
+    cursor: pointer
+}
+
+.admin-category-table tr.admin-category-row-dragging {
+    opacity: .52;
+    transform: scale(.992)
+}
+
+.admin-category-table tr.admin-category-row-over td {
+    background: var(--brand-accent-soft);
+    border-top-color: var(--brand-primary);
+    border-bottom-color: var(--brand-primary)
+}
+
+.admin-category-table tr.admin-category-row-over td:first-child {
+    border-left-color: var(--brand-primary);
+    box-shadow: -4px 0 0 var(--brand-accent)
+}
+
+.admin-category-table tr.admin-category-row-over td:last-child {
+    border-right-color: var(--brand-primary)
+}
+
 .admin-product-cell,
 .admin-user-cell {
     display: flex;
@@ -733,6 +911,160 @@
 .admin-product-cell small {
     color: #8e9890;
     margin-top: 3px
+}
+
+.admin-products-table {
+    min-width: 840px !important
+}
+
+.admin-products-table thead th {
+    padding-block: 14px;
+    background: linear-gradient(180deg, var(--brand-accent-soft), #f8faf6);
+    color: var(--brand-primary-dark);
+    font-size: 9px;
+    font-weight: 900
+}
+
+.admin-products-table tbody tr {
+    transition: background .16s ease, box-shadow .16s ease
+}
+
+.admin-products-table tbody tr:hover {
+    background: color-mix(in srgb, var(--brand-accent-soft) 48%, #fff)
+}
+
+.admin-products-table tbody td {
+    height: 78px;
+    vertical-align: middle
+}
+
+.admin-products-table th:first-child,
+.admin-products-table td:first-child {
+    width: 34%
+}
+
+.admin-products-table th:last-child,
+.admin-products-table td:last-child {
+    width: 260px
+}
+
+.admin-products-table .admin-product-cell {
+    gap: 13px
+}
+
+.admin-products-table .admin-product-cell img {
+    width: 54px;
+    height: 54px;
+    flex: 0 0 auto;
+    border: 2px solid #fff;
+    border-radius: 12px;
+    box-shadow: 0 3px 12px rgba(7, 92, 27, .14)
+}
+
+.admin-product-info {
+    min-width: 0;
+    display: grid;
+    gap: 4px
+}
+
+.admin-product-info strong {
+    overflow: hidden;
+    color: var(--brand-text);
+    font-size: 13px;
+    line-height: 1.35;
+    text-overflow: ellipsis;
+    white-space: nowrap
+}
+
+.admin-product-info span {
+    min-width: 0;
+    display: block;
+    overflow: hidden;
+    color: var(--brand-muted);
+    font-size: 10px;
+    text-overflow: ellipsis;
+    white-space: nowrap
+}
+
+.admin-product-category {
+    display: inline-flex;
+    align-items: center;
+    min-height: 27px;
+    padding: 4px 10px;
+    border: 1px solid var(--brand-border-soft);
+    border-radius: 999px;
+    background: var(--brand-surface);
+    color: var(--brand-primary-dark);
+    font-size: 10px;
+    font-weight: 800;
+    white-space: nowrap
+}
+
+.admin-product-price {
+    color: var(--brand-primary-dark);
+    font-size: 14px
+}
+
+.admin-product-stock {
+    min-width: 34px;
+    display: inline-grid;
+    place-items: center;
+    padding: 4px 8px;
+    border-radius: 8px;
+    background: var(--brand-accent-soft);
+    color: var(--brand-primary-dark);
+    font-size: 11px;
+    font-weight: 900
+}
+
+.admin-product-stock.empty {
+    background: #fff0ed;
+    color: #c94a3e
+}
+
+.admin-product-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 11px;
+    border: 1px solid transparent;
+    border-radius: 999px;
+    font-size: 10px;
+    font-weight: 900;
+    white-space: nowrap
+}
+
+.admin-product-status.active {
+    border-color: #bbf0c8;
+    background: #e8f8ec;
+    color: #107d23
+}
+
+.admin-product-status.inactive {
+    border-color: #ffd4ce;
+    background: #fff0ed;
+    color: #c94a3e
+}
+
+.admin-product-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 7px;
+    white-space: nowrap
+}
+
+.admin-product-delete-btn {
+    min-height: 34px;
+    padding: 0 9px;
+    border-radius: 7px
+}
+
+@media(max-width:980px) {
+    .admin-products-table th:first-child,
+    .admin-products-table td:first-child {
+        width: 280px
+    }
 }
 
 .admin-user-cell>span {
@@ -1050,6 +1382,18 @@
     .admin-admin-card {
         justify-content: center;
         padding-inline: 0
+    }
+
+    .admin-logout-btn {
+        width: 48px;
+        min-height: 44px;
+        margin: 8px auto 12px;
+        padding: 0;
+        justify-content: center;
+    }
+
+    .admin-logout-btn span {
+        display: none;
     }
 
     .admin-stats {
@@ -1447,40 +1791,6 @@
     box-shadow: 0 0 0 3px rgba(21, 149, 43, .1)
 }
 
-.admin-hero-theme-tip {
-    display: flex;
-    align-items: flex-start;
-    gap: 14px;
-    padding: 16px 20px;
-    margin-bottom: 22px;
-    border-radius: 12px;
-    background: var(--brand-accent-soft);
-    border: 1.5px solid var(--brand-border);
-    color: var(--brand-primary-dark);
-}
-
-.admin-hero-theme-tip i {
-    font-size: 22px;
-    color: var(--brand-primary);
-    line-height: 1.2;
-    flex-shrink: 0;
-}
-
-.admin-hero-theme-tip strong {
-    display: block;
-    font-size: 14px;
-    font-weight: 800;
-    margin-bottom: 4px;
-    color: var(--brand-primary-dark);
-}
-
-.admin-hero-theme-tip p {
-    margin: 0;
-    font-size: 13px;
-    line-height: 1.5;
-    color: var(--brand-text);
-}
-
 .admin-hero-list {
     display: grid;
     gap: 18px
@@ -1714,7 +2024,19 @@
 }
 
 .admin-grid-form.products {
-    grid-template-columns: 1.5fr 1.5fr 1.2fr 0.8fr 0.8fr auto auto;
+    grid-template-columns: minmax(0, 1.5fr) minmax(0, 1.5fr) minmax(0, 1.2fr) minmax(0, .8fr) minmax(0, .8fr) minmax(0, .8fr) minmax(116px, .9fr);
+}
+
+.admin-grid-form.products>label {
+    min-width: 0
+}
+
+.admin-grid-form.products>label>input,
+.admin-grid-form.products>label>select,
+.admin-grid-form.products .admin-file-label {
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box
 }
 
 .admin-text-input,
@@ -1792,7 +2114,7 @@
 }
 
 .admin-grid-form.products {
-    grid-template-columns: 1.5fr 1.5fr 1.2fr 0.8fr 0.8fr auto auto;
+    grid-template-columns: minmax(0, 1.5fr) minmax(0, 1.5fr) minmax(0, 1.2fr) minmax(0, .8fr) minmax(0, .8fr) minmax(0, .8fr) minmax(116px, .9fr);
 }
 
 .admin-text-input,
@@ -1991,36 +2313,43 @@
     padding-top: 6px;
 }
 
-/* Read-only protected roles badge in User table */
-.admin-badge-protected {
+/* Editable user access controls */
+.admin-user-updating {
+    display: block;
+    margin-top: 5px;
+    color: var(--brand-primary);
+    font-size: 10px;
+    font-weight: 700;
+}
+
+.admin-user-actions {
+    display: grid;
+    justify-items: start;
+    gap: 6px;
+}
+
+.admin-user-actions small {
+    color: var(--brand-primary-dark);
+    font-size: 10px;
+    font-weight: 700;
+}
+
+.admin-user-password-btn {
+    min-height: 34px;
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    padding: 5px 12px;
-    border-radius: 20px;
-    font-size: 12px;
-    font-weight: 700;
-    white-space: nowrap;
-    border: 1px solid transparent;
+    padding: 0 11px;
+    border: 1px solid var(--brand-primary);
+    border-radius: 8px;
+    background: var(--brand-accent-soft);
+    color: var(--brand-primary-dark);
+    font-size: 11px;
+    font-weight: 900;
 }
 
-.admin-badge-protected.admin {
-    background: #fef2f2;
-    color: #991b1b;
-    border-color: #fecaca;
-}
-
-.admin-badge-protected.cashier,
-.admin-badge-protected.staff {
-    background: #eff6ff;
-    color: #1e40af;
-    border-color: #bfdbfe;
-}
-
-.admin-badge-protected.kitchen {
-    background: #fff7ed;
-    color: #9a3412;
-    border-color: #fed7aa;
+.admin-user-password-btn:hover {
+    background: var(--brand-accent);
 }
 
 /* Promotion metadata badges and audit trail */
@@ -2084,21 +2413,76 @@
 .admin-recipe-head { display: flex; align-items: end; justify-content: space-between; gap: 20px; padding: 20px; border-bottom: 1px solid var(--brand-border-soft); background: var(--brand-accent-soft) }
 .admin-recipe-head small { color: var(--brand-primary); font-weight: 900; letter-spacing: 1.4px }
 .admin-recipe-head h3 { margin: 4px 0 0; color: var(--brand-primary-dark); font-size: 22px }
-.admin-recipe-head select { min-width: min(360px, 48%) }
+.admin-recipe-head select { min-width: min(320px, 44vw) }
+.admin-recipe-head-actions { display: flex; align-items: center; gap: 10px }
+.admin-recipe-head-actions button { min-height: 38px; white-space: nowrap }
+.admin-recipe-create-fields { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; padding: 18px 20px; border-bottom: 1px solid var(--brand-border-soft); background: #fff }
+.admin-recipe-create-fields label { display: grid; gap: 6px; color: var(--brand-primary-dark); font-size: 11px; font-weight: 900 }
+.admin-recipe-create-fields input,
+.admin-recipe-create-fields select { width: 100%; min-height: 42px; border: 1px solid var(--brand-border-soft); border-radius: 8px; background: #fff; padding: 0 11px; color: var(--brand-text); outline: none }
+.admin-recipe-create-fields input:focus,
+.admin-recipe-create-fields select:focus { border-color: var(--brand-primary); box-shadow: 0 0 0 3px rgba(21, 149, 43, .1) }
+.admin-recipe-ingredient-picker { padding: 18px 20px; border-bottom: 1px solid var(--brand-border-soft); background: linear-gradient(110deg, var(--brand-accent-soft), #fff 78%) }
+.admin-recipe-picker-head { display: flex; align-items: end; justify-content: space-between; gap: 16px; margin-bottom: 13px }
+.admin-recipe-picker-head label { width: min(360px, 100%); display: grid; gap: 6px; color: var(--brand-primary-dark); font-size: 11px; font-weight: 900 }
+.admin-recipe-picker-head select { width: 100%; min-height: 42px; border: 1px solid var(--brand-primary); border-radius: 9px; background: #fff; padding: 0 11px; color: var(--brand-text); outline: none }
+.admin-recipe-picker-head select:focus { box-shadow: 0 0 0 3px rgba(21, 149, 43, .12) }
+.admin-recipe-picker-head p { margin: 0 0 7px; color: var(--brand-muted); font-size: 11px; font-weight: 700 }
+.admin-recipe-ingredient-palette { display: grid; grid-template-columns: repeat(auto-fill, minmax(185px, 1fr)); gap: 9px }
+.admin-recipe-ingredient-card { min-width: 0; min-height: 62px; display: grid; grid-template-columns: 34px minmax(0, 1fr) auto; align-items: center; gap: 9px; padding: 9px 11px; border: 1px solid var(--brand-border-soft); border-radius: 11px; background: #fff; color: var(--brand-text); text-align: left; cursor: grab; box-shadow: 0 3px 9px rgba(7, 92, 27, .05); transition: transform .16s, border-color .16s, box-shadow .16s, opacity .16s }
+.admin-recipe-ingredient-card:hover:not(:disabled) { border-color: var(--brand-primary); box-shadow: 0 7px 15px rgba(7, 92, 27, .1); transform: translateY(-2px) }
+.admin-recipe-ingredient-card:active:not(:disabled) { cursor: grabbing }
+.admin-recipe-ingredient-card.is-dragging { opacity: .45; transform: scale(.97) }
+.admin-recipe-ingredient-card.is-added { border-color: #a7d9ad; background: var(--brand-accent-soft); cursor: default; opacity: .68 }
+.admin-recipe-ingredient-card-icon { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 9px; background: var(--brand-accent); color: var(--brand-primary-dark); font-size: 14px }
+.admin-recipe-ingredient-card-copy { min-width: 0; display: grid; gap: 2px }
+.admin-recipe-ingredient-card-copy strong,
+.admin-recipe-ingredient-card-copy small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+.admin-recipe-ingredient-card-copy strong { color: var(--brand-primary-dark); font-size: 12px }
+.admin-recipe-ingredient-card-copy small { color: var(--brand-muted); font-size: 9px }
+.admin-recipe-ingredient-added { color: var(--brand-primary); font-size: 15px }
+.admin-recipe-palette-empty { grid-column: 1 / -1; padding: 18px; border: 1px dashed var(--brand-border); border-radius: 10px; background: rgba(255, 255, 255, .72); color: var(--brand-muted); font-size: 11px; text-align: center }
 .admin-recipe-list { display: grid; gap: 9px; padding: 20px }
 .admin-recipe-empty { margin: 0; padding: 25px; border: 1px dashed var(--brand-border); border-radius: 10px; color: var(--brand-muted); text-align: center }
-.admin-recipe-row { display: grid; grid-template-columns: minmax(220px, 1fr) 140px 70px 42px; align-items: center; gap: 9px }
+.admin-recipe-drop-zone { margin: 16px 20px; padding: 12px; border: 2px dashed var(--brand-border-soft); border-radius: 14px; background: var(--brand-surface); transition: border-color .16s, background .16s, box-shadow .16s }
+.admin-recipe-drop-zone.is-drag-over { border-color: var(--brand-primary); background: var(--brand-accent-soft); box-shadow: 0 0 0 4px rgba(21, 149, 43, .1) }
+.admin-recipe-drop-zone.is-drag-over .admin-recipe-drop-empty { border-color: var(--brand-primary); color: var(--brand-primary-dark) }
+.admin-recipe-drop-empty { min-height: 130px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; background: #fff }
+.admin-recipe-drop-empty>i { color: var(--brand-primary); font-size: 27px }
+.admin-recipe-drop-empty>b { color: var(--brand-primary-dark); font-size: 13px }
+.admin-recipe-drop-empty>span { font-size: 10px }
+.admin-recipe-row { display: grid; grid-template-columns: minmax(150px, .65fr) minmax(220px, 1fr) 140px 70px 42px; align-items: center; gap: 9px }
 .admin-recipe-row span { color: var(--brand-primary-dark); font-weight: 900 }
 .admin-recipe-row>button { width: 38px; height: 38px; border: 1px solid #fca5a5; border-radius: 8px; background: #fff0ed; color: #b91c1c }
 .admin-recipe-actions { display: flex; justify-content: space-between; gap: 12px; padding: 0 20px 20px }
+.admin-recipe-save-actions { display: flex; justify-content: flex-end; gap: 10px }
 
 @media(max-width:760px) {
     .admin-inline-category-form,
     .admin-ingredient-form { grid-template-columns: 1fr }
     .admin-recipe-head { align-items: stretch; flex-direction: column }
+    .admin-recipe-head-actions { align-items: stretch; flex-direction: column }
     .admin-recipe-head select { min-width: 0; width: 100% }
-    .admin-recipe-row { grid-template-columns: 1fr 100px 45px 38px }
+    .admin-recipe-create-fields { grid-template-columns: 1fr }
+    .admin-recipe-picker-head { align-items: stretch; flex-direction: column }
+    .admin-recipe-picker-head label { width: 100% }
+    .admin-recipe-picker-head p { margin: 0 }
+    .admin-recipe-ingredient-palette { grid-template-columns: repeat(2, minmax(0, 1fr)) }
+    .admin-recipe-drop-zone { margin-inline: 12px }
+    .admin-recipe-row { grid-template-columns: 1fr 1fr 90px 45px 38px }
     .admin-recipe-actions { flex-direction: column }
+    .admin-recipe-save-actions { display: grid; grid-template-columns: 1fr 1fr }
+}
+
+@media(max-width:520px) {
+    .admin-recipe-ingredient-picker { padding-inline: 14px }
+    .admin-recipe-ingredient-palette { grid-template-columns: 1fr }
+    .admin-recipe-row { grid-template-columns: minmax(0, 1fr) 58px 38px }
+    .admin-recipe-row>select:nth-of-type(1),
+    .admin-recipe-row>select:nth-of-type(2) { grid-column: 1 / -1 }
+    .admin-recipe-row>input { grid-column: 1 }
+    .admin-recipe-row>span { grid-column: 2 }
+    .admin-recipe-row>button { grid-column: 3; grid-row: 3 }
 }
 
 /* Website & social settings */
@@ -2615,6 +2999,58 @@
     background: #f8faf6;
 }
 
+.admin-password-modal {
+    max-width: 480px;
+}
+
+.admin-password-notice {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 12px 14px;
+    border: 1px solid var(--brand-border-soft);
+    border-radius: 10px;
+    background: var(--brand-accent-soft);
+    color: var(--brand-primary-dark);
+    font-size: 11px;
+    line-height: 1.55;
+}
+
+.admin-password-notice i {
+    margin-top: 1px;
+    color: var(--brand-primary);
+    font-size: 17px;
+}
+
+.admin-password-input-wrap {
+    position: relative;
+}
+
+.admin-password-input-wrap input {
+    width: 100%;
+    padding-right: 44px;
+}
+
+.admin-password-input-wrap button {
+    position: absolute;
+    top: 50%;
+    right: 5px;
+    width: 34px;
+    height: 32px;
+    display: grid;
+    place-items: center;
+    border: 0;
+    border-radius: 7px;
+    background: transparent;
+    color: var(--brand-muted);
+    transform: translateY(-50%);
+}
+
+.admin-password-input-wrap button:hover {
+    background: var(--brand-accent-soft);
+    color: var(--brand-primary-dark);
+}
+
 /* Badge button in table */
 .admin-badge-btn {
     display: inline-flex;
@@ -2656,7 +3092,10 @@
 .btn-edit-action {
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     gap: 5px;
+    width: 104px;
+    min-height: 42px;
     padding: 6px 12px;
     border-radius: 8px;
     background: var(--brand-accent-soft);
@@ -2671,4 +3110,506 @@
 .btn-edit-action:hover {
     background: var(--brand-accent);
     transform: translateY(-1px);
+}
+
+.admin-product-options-guide {
+    display: flex;
+    align-items: flex-start;
+    gap: 11px;
+    padding: 13px 16px;
+    border-bottom: 1px solid var(--brand-border-soft);
+    background: var(--brand-accent-soft);
+    color: var(--brand-primary-dark)
+}
+
+.admin-product-options-guide>i {
+    width: 30px;
+    height: 30px;
+    flex: 0 0 auto;
+    display: grid;
+    place-items: center;
+    border-radius: 9px;
+    background: var(--brand-primary);
+    color: #fff
+}
+
+.admin-product-options-guide>div {
+    display: grid;
+    gap: 2px
+}
+
+.admin-product-options-guide b {
+    font-size: 11px
+}
+
+.admin-product-options-guide span {
+    color: var(--brand-muted);
+    font-size: 10px;
+    line-height: 1.5
+}
+
+.admin-product-info small {
+    width: fit-content;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin: 1px 0 0;
+    color: var(--brand-muted);
+    font-size: 8px;
+    font-weight: 800
+}
+
+.admin-product-info small.configured {
+    color: var(--brand-primary)
+}
+
+@media(max-width:760px) {
+    .admin-products-table {
+        min-width: 0 !important;
+        display: block;
+        padding: 10px;
+        background: var(--brand-surface)
+    }
+
+    .admin-logout-btn {
+        width: 72px;
+        min-width: 72px;
+        min-height: 52px;
+        margin: 0 4px;
+        padding: 4px 2px;
+        flex-direction: column;
+        justify-content: center;
+        gap: 3px;
+        border-color: rgba(254, 202, 202, .48);
+        border-radius: 8px;
+        background: rgba(185, 28, 28, .3);
+    }
+
+    .admin-logout-btn i {
+        font-size: 18px;
+    }
+
+    .admin-logout-btn span {
+        display: block;
+        color: #fff;
+        font-size: 9.5px;
+        font-weight: 800;
+        line-height: 1.15;
+        white-space: nowrap;
+    }
+
+    .admin-products-table thead {
+        display: none
+    }
+
+    .admin-products-table tbody {
+        display: grid;
+        gap: 12px
+    }
+
+    .admin-products-table tbody tr {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        overflow: hidden;
+        border: 1px solid var(--brand-border-soft);
+        border-radius: 14px;
+        background: #fff;
+        box-shadow: 0 4px 14px rgba(7, 92, 27, .07)
+    }
+
+    .admin-products-table tbody td {
+        width: auto !important;
+        height: auto;
+        min-width: 0;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        padding: 10px 12px;
+        border-top: 1px solid var(--brand-border-soft)
+    }
+
+    .admin-products-table tbody td::before {
+        content: attr(data-label);
+        color: var(--brand-muted);
+        font-size: 9px;
+        font-weight: 900;
+        text-transform: uppercase
+    }
+
+    .admin-products-table tbody td:first-child,
+    .admin-products-table tbody td:last-child {
+        grid-column: 1 / -1
+    }
+
+    .admin-products-table tbody td:first-child {
+        padding: 14px 12px;
+        border-top: 0;
+        background: linear-gradient(110deg, #fff, var(--brand-accent-soft))
+    }
+
+    .admin-products-table tbody td:first-child::before,
+    .admin-products-table tbody td:last-child::before {
+        display: none
+    }
+
+    .admin-products-table .admin-product-cell img {
+        width: 62px;
+        height: 62px
+    }
+
+    .admin-product-info {
+        width: calc(100% - 75px)
+    }
+
+    .admin-product-actions {
+        width: 100%;
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr)) auto;
+        gap: 7px
+    }
+
+    .admin-product-actions>button {
+        width: 100%;
+        min-height: 42px;
+        justify-content: center
+    }
+
+    .admin-product-options-guide {
+        padding: 12px
+    }
+}
+
+@media(max-width:420px) {
+    .admin-products-table tbody tr {
+        grid-template-columns: 1fr
+    }
+
+    .admin-products-table tbody td:first-child,
+    .admin-products-table tbody td:last-child {
+        grid-column: auto
+    }
+
+    .admin-product-actions {
+        grid-template-columns: 1fr 1fr
+    }
+
+    .admin-product-delete-btn {
+        grid-column: 1 / -1
+    }
+}
+
+.admin-category-mobile-order {
+    display: none
+}
+
+.admin-list-toolbar,
+.admin-panel-toolbar-filters {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap
+}
+
+.admin-list-toolbar {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--brand-border-soft);
+    background: var(--brand-panel)
+}
+
+.admin-list-toolbar>span {
+    margin-left: auto;
+    color: var(--brand-muted);
+    font-size: 11px;
+    font-weight: 800
+}
+
+.admin-list-toolbar select,
+.admin-panel-toolbar-filters select,
+.admin-list-search {
+    min-height: 42px;
+    border: 1px solid var(--brand-border);
+    border-radius: 9px;
+    background: #fff
+}
+
+.admin-list-toolbar select,
+.admin-panel-toolbar-filters select {
+    padding: 0 11px;
+    color: var(--brand-text)
+}
+
+.admin-list-search {
+    min-width: min(320px, 100%);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 11px;
+    color: var(--brand-muted)
+}
+
+.admin-list-search input {
+    width: 100%;
+    min-width: 0;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    color: var(--brand-text)
+}
+
+.admin-panel-toolbar-filters.admin-inventory-filters {
+    width: min(100%, 498px);
+    display: grid;
+    grid-template-columns: minmax(0, 320px) minmax(140px, 168px);
+    gap: 10px;
+    flex-wrap: nowrap
+}
+
+.admin-panel-toolbar-filters.admin-inventory-filters .admin-list-search,
+.admin-panel-toolbar-filters.admin-inventory-filters select {
+    width: 100%;
+    min-width: 0
+}
+
+.admin-grid-form .admin-form-field {
+    min-width: 0;
+    display: grid;
+    gap: 6px;
+    color: var(--brand-muted);
+    font-size: 10px;
+    font-weight: 900
+}
+
+.admin-confirm-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 1800;
+    display: grid;
+    place-items: center;
+    padding: 18px;
+    background: rgba(3, 24, 10, .62);
+    backdrop-filter: blur(5px)
+}
+
+.admin-confirm-dialog {
+    width: min(430px, 100%);
+    display: grid;
+    grid-template-columns: 48px minmax(0, 1fr);
+    gap: 14px;
+    padding: 22px;
+    border: 1px solid var(--brand-border-soft);
+    border-radius: 18px;
+    background: #fff;
+    box-shadow: 0 24px 70px rgba(3, 24, 10, .32)
+}
+
+.admin-confirm-icon {
+    width: 48px;
+    height: 48px;
+    display: grid;
+    place-items: center;
+    border-radius: 14px;
+    background: #fff0ed;
+    color: #b42318;
+    font-size: 21px
+}
+
+.admin-confirm-dialog h3 {
+    margin: 2px 0 5px;
+    color: var(--brand-primary-dark);
+    font-size: 18px
+}
+
+.admin-confirm-dialog p {
+    margin: 0;
+    color: var(--brand-muted);
+    font-size: 13px;
+    line-height: 1.55
+}
+
+.admin-confirm-dialog footer {
+    grid-column: 1 / -1;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding-top: 6px
+}
+
+@media(max-width:760px) {
+    .admin-responsive-table {
+        display: block;
+        min-width: 0 !important;
+        padding: 10px;
+        background: var(--brand-surface)
+    }
+
+    .admin-responsive-table thead {
+        display: none
+    }
+
+    .admin-responsive-table tbody {
+        display: grid;
+        gap: 12px
+    }
+
+    .admin-responsive-table tbody tr:not(.admin-ingredient-category-row) {
+        display: grid;
+        width: 100%;
+        padding: 12px;
+        border: 1px solid var(--brand-border-soft);
+        border-radius: 14px;
+        background: #fff;
+        box-shadow: 0 4px 14px rgba(7, 92, 27, .05)
+    }
+
+    .admin-responsive-table tbody td {
+        display: grid;
+        grid-template-columns: 108px minmax(0, 1fr);
+        align-items: center;
+        gap: 10px;
+        width: 100%;
+        padding: 8px 0;
+        border: 0;
+        border-top: 1px solid var(--brand-border-soft);
+        text-align: right
+    }
+
+    .admin-responsive-table tbody td:first-child {
+        border-top: 0
+    }
+
+    .admin-responsive-table tbody td::before {
+        content: attr(data-label);
+        color: var(--brand-muted);
+        font-size: 10px;
+        font-weight: 900;
+        text-align: left
+    }
+
+    .admin-responsive-table tbody td>* {
+        justify-self: end
+    }
+
+    .admin-responsive-table .admin-user-cell,
+    .admin-responsive-table .admin-user-actions {
+        justify-self: stretch;
+        text-align: left
+    }
+
+    .admin-responsive-table input,
+    .admin-responsive-table select {
+        width: 100%;
+        min-height: 42px
+    }
+
+    .admin-responsive-table .admin-ingredient-category-row {
+        display: block;
+        margin-top: 4px
+    }
+
+    .admin-responsive-table .admin-ingredient-category-row td {
+        display: block;
+        padding: 10px 12px !important;
+        text-align: left;
+        border-radius: 10px
+    }
+
+    .admin-responsive-table .admin-ingredient-category-row td::before {
+        content: none
+    }
+
+    .admin-category-drag-handle {
+        display: none
+    }
+
+    .admin-category-mobile-order {
+        display: inline-flex;
+        gap: 7px
+    }
+
+    .admin-category-mobile-order button {
+        width: 42px;
+        height: 42px;
+        border: 1px solid var(--brand-border);
+        border-radius: 9px;
+        background: var(--brand-surface);
+        color: var(--brand-primary-dark)
+    }
+
+    .admin-list-toolbar,
+    .admin-panel-toolbar,
+    .admin-panel-toolbar-filters {
+        align-items: stretch;
+        flex-direction: column
+    }
+
+    .admin-list-toolbar>* ,
+    .admin-panel-toolbar-filters>* {
+        width: 100%
+    }
+
+    .admin-list-toolbar>span {
+        margin-left: 0;
+        text-align: right
+    }
+
+    .admin-panel-toolbar-filters.admin-inventory-filters {
+        width: 100%;
+        grid-template-columns: minmax(0, 1fr) minmax(130px, 168px);
+        flex-direction: row;
+        gap: 8px
+    }
+
+    .admin-modal-backdrop {
+        align-items: flex-end;
+        padding: 0
+    }
+
+    .admin-modal-card {
+        max-height: 96dvh;
+        border-radius: 18px 18px 0 0
+    }
+
+    .admin-modal-header,
+    .admin-modal-body,
+    .admin-modal-footer {
+        padding-left: 16px;
+        padding-right: 16px
+    }
+
+    .admin-modal-grid-2 {
+        grid-template-columns: 1fr
+    }
+
+    .admin-modal-image-row {
+        align-items: flex-start
+    }
+
+    .admin-modal-footer {
+        position: sticky;
+        bottom: 0
+    }
+
+    .admin-modal-footer>button {
+        flex: 1;
+        min-height: 44px
+    }
+}
+
+@media(max-width:480px) {
+    .admin-confirm-dialog {
+        grid-template-columns: 40px minmax(0, 1fr);
+        padding: 18px
+    }
+
+    .admin-confirm-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 11px
+    }
+
+    .admin-confirm-dialog footer button {
+        flex: 1;
+        min-height: 44px
+    }
 }

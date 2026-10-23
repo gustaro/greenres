@@ -88,7 +88,7 @@ export function StoreMapViewer({ settings }) {
                     <i className="bi bi-geo-alt-fill"></i>
                     <span>{storeName}</span>
                 </h2>
-                <span style={{ fontSize: 12, color: '#6d756d', fontWeight: 600 }}>
+                <span className="store-map-coordinates">
                     {lat.toFixed(4)}, {lng.toFixed(4)}
                 </span>
             </div>

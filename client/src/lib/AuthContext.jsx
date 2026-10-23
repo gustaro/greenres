@@ -9,6 +9,8 @@ if (typeof window !== 'undefined') {
 }
 
 const AuthContext = createContext(null)
+const INACTIVITY_TIMEOUT_MS = 60 * 60 * 1000
+export const SIGN_OUT_EVENT = 'limeleaf:sign-out'
 
 export function AuthProvider({ children }) {
     const [session, setSession] = useState(null)
@@ -73,11 +75,36 @@ export function AuthProvider({ children }) {
     const signUp = ({ email, password, name, phone }) => authenticate('/auth/register', { email, password, name, phone })
     const signIn = ({ email, password }) => authenticate('/auth/login', { email, password })
 
-    const signOut = async () => {
-        try { if (hasSessionToken()) await api('/auth/logout', { method: 'POST' }) } catch { /* local logout still applies */ }
+    const signOut = useCallback(async () => {
+        const logoutRequest = hasSessionToken()
+            ? api('/auth/logout', { method: 'POST' }).catch(() => null)
+            : Promise.resolve()
         clearTokens()
         setAuthenticatedUser(null)
-    }
+        localStorage.removeItem('lime-cart')
+        localStorage.removeItem('lime-cart-notes')
+        window.dispatchEvent(new CustomEvent(SIGN_OUT_EVENT))
+        await logoutRequest
+    }, [setAuthenticatedUser])
+
+    useEffect(() => {
+        if (!session) return undefined
+
+        let inactivityTimer
+        const resetInactivityTimer = () => {
+            window.clearTimeout(inactivityTimer)
+            inactivityTimer = window.setTimeout(signOut, INACTIVITY_TIMEOUT_MS)
+        }
+        const activityEvents = ['pointerdown', 'pointermove', 'keydown', 'scroll', 'touchstart']
+
+        activityEvents.forEach(eventName => window.addEventListener(eventName, resetInactivityTimer, { passive: true }))
+        resetInactivityTimer()
+
+        return () => {
+            window.clearTimeout(inactivityTimer)
+            activityEvents.forEach(eventName => window.removeEventListener(eventName, resetInactivityTimer))
+        }
+    }, [session, signOut])
 
     const refreshProfile = useCallback(async () => {
         if (!hasSessionToken()) return { error: new Error('กรุณาเข้าสู่ระบบ') }

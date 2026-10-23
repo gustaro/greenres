@@ -1,4 +1,5 @@
 import { orderCode } from '../StaffShared'
+import { buildCartLines, productIdFromLineKey } from '../../lib/productOptions'
 
 export function CashierAddItemsModal({
     order,
@@ -14,10 +15,18 @@ export function CashierAddItemsModal({
     onSubmit,
     onCancel,
     loading,
+    addItemsAdd,
+    addItemsRemove,
 }) {
     if (!order) return null
 
     const totalAddedCount = Object.values(addItemsCart).reduce((a, b) => a + b, 0)
+    const selectedLines = buildCartLines(addItemsCart, counterProducts)
+    const setProductTakeaway = (productId, value) => setAddItemsTakeawayMap(prev => {
+        const next = { ...prev }
+        Object.keys(addItemsCart).filter(key => productIdFromLineKey(key) === productId).forEach(key => { next[key] = value })
+        return next
+    })
 
     return (
         <div className="overlay" style={{ zIndex: 1200, display: 'grid', placeItems: 'center', background: 'rgba(0,0,0,0.5)' }}>
@@ -105,8 +114,9 @@ export function CashierAddItemsModal({
                 {/* Items to add */}
                 <div style={{ display: 'grid', gap: 10, maxHeight: 300, overflowY: 'auto', paddingRight: 4 }}>
                     {visibleAddItemsGroups.flatMap(g => g.products).map(p => {
-                        const qty = addItemsCart[p.id] || 0
-                        const isTakeaway = Boolean(addItemsTakeawayMap[p.id])
+                        const productLines = selectedLines.filter(line => line.productId === p.id)
+                        const qty = productLines.reduce((sum, line) => sum + line.quantity, 0)
+                        const isTakeaway = productLines.length > 0 && productLines.every(line => Boolean(addItemsTakeawayMap[line.lineKey]))
                         return (
                             <div key={p.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 12px', border: '1px solid var(--brand-border, #d8e7d2)', borderRadius: 8, background: qty > 0 ? 'var(--brand-accent-soft, #effbdc)' : '#fff' }}>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -121,7 +131,7 @@ export function CashierAddItemsModal({
                                         <div style={{ display: 'inline-flex', background: 'var(--brand-surface, #f6faf2)', borderRadius: 20, padding: 2, border: '1px solid var(--brand-border, #d8e7d2)' }}>
                                             <button
                                                 type="button"
-                                                onClick={() => setAddItemsTakeawayMap(prev => ({ ...prev, [p.id]: false }))}
+                                                onClick={() => setProductTakeaway(p.id, false)}
                                                 style={{
                                                     border: 0,
                                                     background: !isTakeaway ? 'var(--brand-accent-soft, #effbdc)' : 'transparent',
@@ -140,7 +150,7 @@ export function CashierAddItemsModal({
                                             </button>
                                             <button
                                                 type="button"
-                                                onClick={() => setAddItemsTakeawayMap(prev => ({ ...prev, [p.id]: true }))}
+                                                onClick={() => setProductTakeaway(p.id, true)}
                                                 style={{
                                                     border: 0,
                                                     background: isTakeaway ? '#fef3c7' : 'transparent',
@@ -160,9 +170,9 @@ export function CashierAddItemsModal({
                                         </div>
                                     )}
                                     <div className="counter-qty" style={{ margin: 0 }}>
-                                        <button onClick={() => setAddItemsCart(prev => ({ ...prev, [p.id]: Math.max(0, (prev[p.id] || 0) - 1) }))}>−</button>
+                                        <button onClick={() => addItemsRemove(p)}>−</button>
                                         <span>{qty}</span>
-                                        <button onClick={() => setAddItemsCart(prev => ({ ...prev, [p.id]: (prev[p.id] || 0) + 1 }))}>+</button>
+                                        <button onClick={() => addItemsAdd(p)}>+</button>
                                     </div>
                                 </div>
                             </div>
@@ -187,13 +197,13 @@ export function CashierAddItemsModal({
                         </div>
                     </div>
                     {/* Breakdown Chips */}
-                    {Object.entries(addItemsCart).filter(([_, q]) => q > 0).length > 0 && (
+                    {selectedLines.length > 0 && (
                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, background: '#f6faf2', padding: '8px 10px', borderRadius: 8, border: '1px solid #f0f0f0' }}>
-                            {Object.entries(addItemsCart).filter(([_, q]) => q > 0).map(([pid, qty]) => {
-                                const prod = (counterProducts || []).find(p => p.id === pid)
-                                const isT = Boolean(addItemsTakeawayMap[pid])
+                            {selectedLines.map(line => {
+                                const prod = line.product
+                                const isT = Boolean(addItemsTakeawayMap[line.lineKey])
                                 return (
-                                    <span key={pid} style={{
+                                    <span key={line.lineKey} style={{
                                         fontSize: 12,
                                         padding: '3px 8px',
                                         borderRadius: 6,
@@ -205,7 +215,7 @@ export function CashierAddItemsModal({
                                         gap: 4
                                     }}>
                                         <i className={isT ? "bi bi-box2" : "bi bi-shop"}></i>
-                                        {prod?.name || 'สินค้า'} {isT ? '(กลับบ้าน)' : '(ทานร้าน)'} × {qty}
+                                        {prod?.name || 'สินค้า'}{line.selectedOptions.length ? ` — ${line.selectedOptions.map(option => option.name).join(', ')}` : ''} {isT ? '(กลับบ้าน)' : '(ทานร้าน)'} × {line.quantity}
                                     </span>
                                 )
                             })}

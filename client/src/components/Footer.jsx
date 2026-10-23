@@ -7,6 +7,8 @@ export const Footer = () => {
     const { settings } = useAuth()
     const { isEn, t } = useLanguage()
     const navigate = useNavigate()
+    const footerCredit = settings?.footerCredit || 'Made with {heart} in Thailand'
+    const creditParts = footerCredit.split('{heart}')
 
     // Navigate to a route or scroll to an anchor on the homepage
     const goTo = (to, anchor) => {
@@ -49,7 +51,7 @@ export const Footer = () => {
             heading: isEn ? 'Info' : 'ข้อมูลร้าน',
             links: [
                 { label: isEn ? 'Contact Us' : 'ติดต่อร้าน',    to: '/map' },
-                { label: isEn ? 'Delivery Info' : 'ข้อมูลจัดส่ง',  anchor: 'promotions' },
+                { label: isEn ? 'Delivery Info' : 'ข้อมูลจัดส่ง',  anchor: 'delivery-info' },
                 { label: isEn ? 'Catering' : 'จัดเลี้ยง / Catering', to: '/order' },
                 { label: isEn ? 'Opening Hours' : 'เวลาทำการ',    to: '/map' },
             ],
@@ -98,7 +100,14 @@ export const Footer = () => {
 
             <div className="footer-bottom">
                 <small>{settings?.footerCopyright || `© ${new Date().getFullYear()} ${settings?.siteName || 'LimeLeaf'} Kitchen. All rights reserved.`}</small>
-                <small>Made with <i className="bi bi-heart-fill" style={{ color: '#ef4444', margin: '0 4px', fontSize: 11 }} /> in Thailand</small>
+                <small>
+                    {creditParts.map((part, index) => (
+                        <span key={`${part}-${index}`}>
+                            {index > 0 && <i className="bi bi-heart-fill" style={{ color: '#ef4444', margin: '0 4px', fontSize: 11 }} />}
+                            {part}
+                        </span>
+                    ))}
+                </small>
             </div>
         </footer>
     )

@@ -13,6 +13,7 @@ import { AdminUsersTab } from './admin/AdminUsersTab'
 import { AdminInventoryTab } from './admin/AdminInventoryTab'
 import { AdminReportsTab } from './admin/AdminReportsTab'
 import { AdminIntegrationsTab } from './admin/AdminIntegrationsTab'
+import { useAdminConfirm } from './admin/AdminShared'
 import './AdminDashboard.css'
 
 export { PageHead, Empty, PAGE_LINK_OPTIONS, roleNames, money } from './admin/AdminShared'
@@ -59,7 +60,7 @@ const navSections = [
 const menuItems = navSections.flatMap(section => section.items)
 
 export function AdminDashboard({ orders = [], setOrders, products = [], setProducts, categories = [], setCategories }) {
-    const { profile, settings } = useAuth()
+    const { profile, settings, signOut } = useAuth()
     const adminName = profile?.name || profile?.email || 'Admin'
     const adminInitials = adminName.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2)
     const [active, setActive] = useState('overview')
@@ -68,6 +69,7 @@ export function AdminDashboard({ orders = [], setOrders, products = [], setProdu
     const [users, setUsers] = useState([])
     const [inventory, setInventory] = useState([])
     const [notice, setNotice] = useState('')
+    const { confirm, confirmDialog } = useAdminConfirm()
 
     const safeOrders = Array.isArray(orders) ? orders : []
     const paidOrders = safeOrders.filter(order => order?.isPaid && order?.foodStatus !== 'ยกเลิก')
@@ -113,7 +115,7 @@ export function AdminDashboard({ orders = [], setOrders, products = [], setProdu
     }
 
     const handleCancelOrder = async orderId => {
-        if (!window.confirm('คุณต้องการยกเลิกคำสั่งซื้อนี้ใช่หรือไม่?')) return
+        if (!await confirm('คุณต้องการยกเลิกคำสั่งซื้อนี้ใช่หรือไม่?', { confirmLabel: 'ยกเลิกออเดอร์' })) return
         try {
             await updateOrderStatus(orderId, 'CANCELLED')
             setOrders?.(prev => (prev || []).map(o => o.id === orderId ? {
@@ -156,7 +158,7 @@ export function AdminDashboard({ orders = [], setOrders, products = [], setProdu
 
     return (
         <div className="admin-layout">
-            <aside className="admin-sidebar">
+            <aside className="admin-sidebar" aria-label="เมนูผู้ดูแลระบบ">
                 <button className="admin-brand" onClick={() => setActive('overview')}>
                     {settings?.logoUrl ? (
                         <img src={settings.logoUrl} alt="Logo" style={{ width: 36, height: 36, objectFit: 'contain', borderRadius: 6 }} />
@@ -210,6 +212,10 @@ export function AdminDashboard({ orders = [], setOrders, products = [], setProdu
                         <small>ผู้ดูแลระบบ</small>
                     </div>
                 </div>
+                <button type="button" className="admin-logout-btn" onClick={signOut} title="ออกจากระบบ">
+                    <i className="bi bi-box-arrow-left"></i>
+                    <span>ออกจากระบบ</span>
+                </button>
             </aside>
 
             <main className="admin-main">
@@ -314,7 +320,8 @@ export function AdminDashboard({ orders = [], setOrders, products = [], setProdu
                         <AdminInventoryTab
                             inventory={inventory}
                             setInventory={setInventory}
-                            products={products}
+                            setProducts={setProducts}
+                            notify={notify}
                             fail={fail}
                         />
                     )}
@@ -335,6 +342,7 @@ export function AdminDashboard({ orders = [], setOrders, products = [], setProdu
                 </div>
             </main>
             {notice && <div className="admin-toast"><i className="bi bi-check2-circle"></i> {notice}</div>}
+            {confirmDialog}
         </div>
     )
 }

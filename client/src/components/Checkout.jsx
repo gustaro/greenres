@@ -6,6 +6,7 @@ import { extractCoordinates, cleanAddressText, embedCoordinates } from '../lib/g
 import { CheckoutOrderSummary } from './checkout/CheckoutOrderSummary'
 import { CheckoutDeliverySection } from './checkout/CheckoutDeliverySection'
 import { CheckoutPaymentSection } from './checkout/CheckoutPaymentSection'
+import { buildCartLines } from '../lib/productOptions'
 
 export const SERVER_DELIVERY_FEE = Number(import.meta.env.VITE_DELIVERY_FEE || 35)
 export const SERVER_FREE_DELIVERY_THRESHOLD = Number(import.meta.env.VITE_FREE_DELIVERY_THRESHOLD || 300)
@@ -18,7 +19,7 @@ export function CheckoutModal({ cart, products, itemNotes = {}, onClose, onDone,
     const [scheduleType, setScheduleType] = useState('ทันที')
     const deliveryType = orderMode === 'dine-in' ? 'ทานที่ร้าน' : takeawayMethod === 'pickup' ? 'รับเองที่ร้าน' : 'ให้จัดส่ง'
     const [paymentMethod, setPaymentMethod] = useState('ชำระเงินปลายทาง')
-    const [promotionCode, setPromotionCode] = useState('')
+    const [promotionCode, setPromotionCode] = useState(() => sessionStorage.getItem('limeleaf_pending_promo') || '')
     const [appliedPromotion, setAppliedPromotion] = useState(null)
     const [promotionError, setPromotionError] = useState('')
     const [checkingPromotion, setCheckingPromotion] = useState(false)
@@ -66,8 +67,8 @@ export function CheckoutModal({ cart, products, itemNotes = {}, onClose, onDone,
         }
     }, [addressId, savedAddresses])
 
-    const items = products.filter(product => cart[product.id])
-    const subtotal = items.reduce((sum, product) => sum + product.price * cart[product.id], 0)
+    const items = buildCartLines(cart, products)
+    const subtotal = items.reduce((sum, line) => sum + line.unitPrice * line.quantity, 0)
     const fee = deliveryType === 'ให้จัดส่ง' ? (subtotal >= SERVER_FREE_DELIVERY_THRESHOLD ? 0 : SERVER_DELIVERY_FEE) : 0
     const promoDiscount = appliedPromotion?.discount || 0
     const redeemRate = Number(settings?.pointsRedeemRate || 10)
@@ -86,6 +87,7 @@ export function CheckoutModal({ cart, products, itemNotes = {}, onClose, onDone,
         setPromotionError('')
         try {
             setAppliedPromotion(await validatePromotion(promotionCode, subtotal))
+            sessionStorage.removeItem('limeleaf_pending_promo')
         } catch (error) {
             setAppliedPromotion(null)
             setPromotionError(error.message)
@@ -142,13 +144,13 @@ export function CheckoutModal({ cart, products, itemNotes = {}, onClose, onDone,
             : null
 
         const finalItemNotes = { ...(itemNotes || {}) }
-        items.forEach(product => {
-            const isItemTakeaway = orderMode === 'dine-in' && Boolean(takeawayItemMap[product.id])
-            const existingNote = (finalItemNotes[product.id] || '').replace(/\[กลับบ้าน\]\s*/, '').trim()
+        items.forEach(line => {
+            const isItemTakeaway = orderMode === 'dine-in' && Boolean(takeawayItemMap[line.lineKey])
+            const existingNote = (finalItemNotes[line.lineKey] || '').replace(/\[กลับบ้าน\]\s*/, '').trim()
             if (isItemTakeaway) {
-                finalItemNotes[product.id] = `[กลับบ้าน] ${existingNote}`.trim()
+                finalItemNotes[line.lineKey] = `[กลับบ้าน] ${existingNote}`.trim()
             } else if (orderMode === 'dine-in') {
-                finalItemNotes[product.id] = existingNote
+                finalItemNotes[line.lineKey] = existingNote
             }
         })
 
@@ -284,16 +286,18 @@ export function CheckoutModal({ cart, products, itemNotes = {}, onClose, onDone,
                                     {isEn ? 'If you wish to take any dish home, click "Takeaway" below and the kitchen will box it up for you.' : 'หากต้องการนำอาหารบางรายการกลับบ้าน ให้กดเลือก "สั่งกลับบ้าน" ที่เมนูด้านล่าง ครัวจะจัดแพ็กเกจใส่กล่องให้ทันที'}
                                 </p>
                                 <div style={{ display: 'grid', gap: 8 }}>
-                                    {items.map(product => {
-                                        const isTakeaway = Boolean(takeawayItemMap[product.id])
+                                    {items.map(line => {
+                                        const product = line.product
+                                        const isTakeaway = Boolean(takeawayItemMap[line.lineKey])
                                         return (
-                                            <div key={product.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 12px', background: isTakeaway ? '#f0fdf0' : '#fff', border: isTakeaway ? '1px solid #b8ff35' : '1px solid #eee', borderRadius: 6 }}>
+                                            <div key={line.lineKey} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 12px', background: isTakeaway ? '#f0fdf0' : '#fff', border: isTakeaway ? '1px solid #b8ff35' : '1px solid #eee', borderRadius: 6 }}>
                                                 <span style={{ fontSize: 13, fontWeight: 600 }}>
-                                                    {(isEn && product.en) ? product.en : product.name} × {cart[product.id]}
+                                                    {(isEn && product.en) ? product.en : product.name} × {line.quantity}
+                                                    {line.selectedOptions.length > 0 && <small style={{ display: 'block', color: '#68776b' }}>{line.selectedOptions.map(option => isEn && option.nameEn ? option.nameEn : option.name).join(' · ')}</small>}
                                                 </span>
                                                 <button
                                                     type="button"
-                                                    onClick={() => setTakeawayItemMap(prev => ({ ...prev, [product.id]: !prev[product.id] }))}
+                                                    onClick={() => setTakeawayItemMap(prev => ({ ...prev, [line.lineKey]: !prev[line.lineKey] }))}
                                                     style={{
                                                         border: 0,
                                                         background: isTakeaway ? 'var(--brand-primary, #12852f)' : '#d8e7d2',

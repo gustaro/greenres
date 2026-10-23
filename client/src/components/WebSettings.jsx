@@ -13,6 +13,7 @@ export function WebSettings({ notify, fail }) {
     const [tempPhone, setTempPhone] = useState('')
     const [tempFooterDesc, setTempFooterDesc] = useState('')
     const [tempFooterCopyright, setTempFooterCopyright] = useState('')
+    const [tempFooterCredit, setTempFooterCredit] = useState('')
     const [isUploadingLogo, setIsUploadingLogo] = useState(false)
     const [isSavingGeneral, setIsSavingGeneral] = useState(false)
 
@@ -23,6 +24,7 @@ export function WebSettings({ notify, fail }) {
         setTempPhone(settings.restaurantPhone || '')
         setTempFooterDesc(settings.footerDescription || 'อาหารไทยและฟิวชั่น ทำสดทุกออเดอร์\nส่งตรงถึงบ้านทุกวัน')
         setTempFooterCopyright(settings.footerCopyright || `© ${new Date().getFullYear()} ${settings.siteName || 'LimeLeaf'} Kitchen. All rights reserved.`)
+        setTempFooterCredit(settings.footerCredit || 'Made with {heart} in Thailand')
     }, [settings])
 
     const uploadLogoFile = async e => {
@@ -50,6 +52,7 @@ export function WebSettings({ notify, fail }) {
                 restaurantPhone: tempPhone.trim(),
                 footerDescription: tempFooterDesc.trim(),
                 footerCopyright: tempFooterCopyright.trim(),
+                footerCredit: tempFooterCredit.trim(),
             }
 
             setSettings(prev => ({ ...prev, ...updatePayload }))
@@ -135,6 +138,11 @@ export function WebSettings({ notify, fail }) {
                                 <label className="admin-settings-field">
                                     <span>ข้อความลิขสิทธิ์</span>
                                     <input placeholder={`© ${new Date().getFullYear()} LimeLeaf Kitchen. All rights reserved.`} value={tempFooterCopyright} onChange={e => setTempFooterCopyright(e.target.value)} />
+                                </label>
+                                <label className="admin-settings-field">
+                                    <span>ข้อความเครดิตส่วนท้าย</span>
+                                    <input placeholder="Made with {heart} in Thailand" value={tempFooterCredit} onChange={e => setTempFooterCredit(e.target.value)} />
+                                    <small>ใช้ <code>{'{heart}'}</code> เมื่อต้องการแสดงไอคอนหัวใจ</small>
                                 </label>
                             </div>
                         </div>

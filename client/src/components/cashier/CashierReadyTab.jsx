@@ -1,4 +1,5 @@
 import { Empty, money, orderCode, formatCashierPaymentMethod } from '../StaffShared'
+import { orderItemOptionLabel } from '../../lib/productOptions'
 
 export function CashierReadyTab({
     readyOrders,
@@ -135,6 +136,7 @@ export function CashierReadyTab({
                                                     <li key={item.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--brand-accent-soft, #effbdc)', border: '1.5px solid var(--brand-accent, #9fe51f)', padding: '6px 10px', borderRadius: 8, fontSize: 13 }}>
                                                         <div>
                                                             <strong style={{ color: 'var(--brand-primary-dark, #075c1b)' }}>{item.productName || item.displayName || 'สินค้า'}</strong>
+                                                            {orderItemOptionLabel(item) && <small className="staff-item-options">{orderItemOptionLabel(item)}</small>}
                                                             {item.isTakeaway && <span style={{ fontSize: 10, background: '#fef3c7', color: '#92400e', padding: '1px 5px', borderRadius: 4, marginLeft: 5, fontWeight: 700 }}>กลับบ้าน</span>}
                                                             {item.isAddedLater && <span style={{ fontSize: 10, background: '#fee2e2', color: '#b91c1c', padding: '1px 5px', borderRadius: 4, marginLeft: 5, fontWeight: 700 }}>สั่งเพิ่ม</span>}
                                                             {item.cleanNote && <small style={{ display: 'block', color: '#b45309', fontSize: 11 }}>{item.cleanNote}</small>}
@@ -167,7 +169,7 @@ export function CashierReadyTab({
                                             <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
                                                 {alreadyServedItems.map(item => (
                                                     <li key={item.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#fafaf9', border: '1px solid #e7e5e4', padding: '4px 10px', borderRadius: 6, fontSize: 12, color: '#78716c' }}>
-                                                        <span style={{ textDecoration: 'line-through' }}>{item.productName || item.displayName || 'สินค้า'}</span>
+                                                        <span style={{ textDecoration: 'line-through' }}>{item.productName || item.displayName || 'สินค้า'}{orderItemOptionLabel(item) && <small className="staff-item-options">{orderItemOptionLabel(item)}</small>}</span>
                                                         <span style={{ color: 'var(--brand-primary, #12852f)', fontSize: 11, fontWeight: 700 }}><i className="bi bi-check-circle-fill me-1" />เสิร์ฟแล้ว ×{item.quantity}</span>
                                                     </li>
                                                 ))}
@@ -184,7 +186,7 @@ export function CashierReadyTab({
                                             <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
                                                 {cookingItems.map(item => (
                                                     <li key={item.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#fffbeb', border: '1px dashed #fcd34d', padding: '4px 10px', borderRadius: 6, fontSize: 12, color: '#92400e' }}>
-                                                        <span>{item.productName || item.displayName || 'สินค้า'}</span>
+                                                        <span>{item.productName || item.displayName || 'สินค้า'}{orderItemOptionLabel(item) && <small className="staff-item-options">{orderItemOptionLabel(item)}</small>}</span>
                                                         <span style={{ fontSize: 11, fontWeight: 700 }}><i className="bi bi-hourglass-split me-1" />กำลังปรุง ×{item.quantity}</span>
                                                     </li>
                                                 ))}

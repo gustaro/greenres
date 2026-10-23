@@ -126,6 +126,31 @@ export const serializeProductDescription = (en, description) => {
 
 export const mapProduct = row => {
     const { en, description } = parseProductDescription(row.description)
+    const optionGroups = (row.optionGroups || []).map(group => ({
+        id: group.id,
+        name: group.name,
+        nameEn: group.nameEn || '',
+        selectionType: group.selectionType === 'MULTIPLE' ? 'MULTIPLE' : 'SINGLE',
+        isRequired: group.isRequired !== false,
+        minSelections: Number(group.minSelections || 0),
+        maxSelections: Number(group.maxSelections || 1),
+        sortOrder: Number(group.sortOrder || 0),
+        isActive: group.isActive !== false,
+        options: (group.options || []).map(option => ({
+            id: option.id,
+            name: option.name,
+            nameEn: option.nameEn || '',
+            priceAdjustment: Number(option.priceAdjustment || 0),
+            ingredientId: option.ingredientId || '',
+            ingredientQuantity: option.ingredientQuantity == null ? '' : Number(option.ingredientQuantity),
+            ingredient: option.ingredient || null,
+            isAvailable: !option.ingredientId || (option.ingredient?.isActive !== false && Number(option.ingredient?.quantity || 0) >= Number(option.ingredientQuantity || 0)),
+            isDefault: Boolean(option.isDefault),
+            isActive: option.isActive !== false,
+            sortOrder: Number(option.sortOrder || 0),
+        })),
+    }))
+    const hasUnavailableRequiredOptions = optionGroups.some(group => group.isActive && group.isRequired && !group.options.some(option => option.isActive && option.isAvailable))
     return {
         id: row.id,
         categoryId: row.categoryId,
@@ -137,13 +162,14 @@ export const mapProduct = row => {
         imageUrl: row.imageUrl,
         status: !row.isActive
             ? 'หมด'
-            : row.recipeItems?.length && row.recipeItems.some(item => !item.ingredient?.isActive || Number(item.ingredient?.quantity || 0) < Number(item.quantityRequired || 0))
+            : hasUnavailableRequiredOptions || (row.recipeItems?.length && row.recipeItems.some(item => !item.ingredient?.isActive || Number(item.ingredient?.quantity || 0) < Number(item.quantityRequired || 0)))
                 ? 'วัตถุดิบไม่เพียงพอ'
                 : 'มี',
         stock: Number(row.stock || 0),
         isActive: row.isActive,
         isFeatured: row.isFeatured,
         prepTime: row.prepTime,
+        optionGroups,
     }
 }
 
@@ -237,6 +263,7 @@ export const mapOrder = row => {
                 productName: item.product?.name || 'สินค้า',
                 quantity: Number(item.quantity),
                 priceAtTime: Number(item.unitPrice),
+                selectedOptions: Array.isArray(item.selectedOptions) ? item.selectedOptions : [],
                 note: itemNote,
                 cleanNote,
                 isTakeaway: Boolean(itemNote.includes('[กลับบ้าน]')),
@@ -406,6 +433,7 @@ export async function fetchOrderHistory() {
 
 export async function placeOrder({
     cart,
+    products = [],
     paymentMethod,
     paymentDetail,
     deliveryType,
@@ -426,9 +454,16 @@ export async function placeOrder({
     dropLat = null,
     dropLng = null,
 }) {
+    const productMap = new Map(products.map(product => [product.id, product]))
     const overrideItems = Object.entries(cart)
         .filter(([_, q]) => Number(q) > 0)
-        .map(([productId, quantity]) => ({ productId, quantity: Number(quantity) }))
+        .map(([lineKey, quantity]) => {
+            const [productId, optionPart = ''] = lineKey.split('::')
+            const product = productMap.get(productId)
+            const validOptionIds = new Set((product?.optionGroups || []).flatMap(group => group.options.map(option => option.id)))
+            const selectedOptionIds = optionPart ? optionPart.split(',').filter(id => validOptionIds.has(id)) : []
+            return { lineKey, productId, quantity: Number(quantity), selectedOptionIds }
+        })
 
     const finalDropLat = dropLat != null ? Number(dropLat) : (newAddressObj?.dropLat != null ? Number(newAddressObj.dropLat) : null)
     const finalDropLng = dropLng != null ? Number(dropLng) : (newAddressObj?.dropLng != null ? Number(newAddressObj.dropLng) : null)
@@ -523,6 +558,7 @@ export const updateOrderStatus = (id, status) =>
 // Cashier places walk-in or takeaway order directly from counter
 export async function placeCounterOrder({
     cart,
+    products = [],
     orderSource,
     notes,
     customerName,
@@ -533,9 +569,15 @@ export async function placeCounterOrder({
     itemNotes = {},
 }) {
     // Instead of doing multiple cart updates, bypass cart completely
+    const productMap = new Map(products.map(product => [product.id, product]))
     const overrideItems = Object.entries(cart)
         .filter(([_, q]) => Number(q) > 0)
-        .map(([productId, quantity]) => ({ productId, quantity: Number(quantity) }))
+        .map(([lineKey, quantity]) => {
+            const [productId, optionPart = ''] = lineKey.split('::')
+            const product = productMap.get(productId)
+            const validOptionIds = new Set((product?.optionGroups || []).flatMap(group => group.options.map(option => option.id)))
+            return { lineKey, productId, quantity: Number(quantity), selectedOptionIds: optionPart ? optionPart.split(',').filter(id => validOptionIds.has(id)) : [] }
+        })
 
     if (overrideItems.length === 0) throw new Error("Cart is empty")
 
@@ -670,6 +712,7 @@ export const kitchenApi = {
 
 export const deliveryApi = {
     riderProfile: () => api('/delivery/rider/me'),
+    riders: () => api('/delivery/riders'),
     updateProfile: data => api('/delivery/rider/me/profile', { method: 'PUT', body: JSON.stringify(data) }),
     riderDeliveries: async () => (await api('/delivery/rider/me/deliveries')).map(mapDelivery),
     setRiderStatus: status => api('/delivery/rider/me/status', { method: 'PUT', body: JSON.stringify({ status }) }),
@@ -712,7 +755,7 @@ export const adminApi = {
     },
     updateUserRole: (id, role) => {
         const serverRole = serverRoleMap[role] || role
-        if (!['CUSTOMER', 'STAFF', 'KITCHEN', 'ADMIN'].includes(serverRole)) {
+        if (!['CUSTOMER', 'STAFF', 'KITCHEN', 'RIDER', 'ADMIN'].includes(serverRole)) {
             throw new Error('Server ปัจจุบันไม่อนุญาตให้ Admin กำหนด role นี้ผ่าน API')
         }
         return api(`/users/${id}/role`, { method: 'PUT', body: JSON.stringify({ role: serverRole }) })
@@ -724,6 +767,10 @@ export const adminApi = {
     updateUserPoints: (id, points) => api(`/users/${id}/points`, {
         method: 'PUT',
         body: JSON.stringify({ points }),
+    }),
+    updateUserPassword: (id, password) => api(`/users/${id}/password`, {
+        method: 'PUT',
+        body: JSON.stringify({ password }),
     }),
     deleteUser: id => api(`/users/${id}`, { method: 'DELETE' }),
     createUser: data => api('/users', { method: 'POST', body: JSON.stringify(data) }),
@@ -738,7 +785,7 @@ export const adminApi = {
     updateInventory: (ingredientId, data) => api(`/inventory/${ingredientId}`, { method: 'PUT', body: JSON.stringify(data) }),
     deleteIngredient: ingredientId => api(`/inventory/${ingredientId}`, { method: 'DELETE' }),
     recipes: () => api('/inventory/recipes'),
-    updateRecipe: (productId, items) => api(`/inventory/recipes/${productId}`, { method: 'PUT', body: JSON.stringify({ items }) }),
+    updateRecipe: (productId, items, details = {}) => api(`/inventory/recipes/${productId}`, { method: 'PUT', body: JSON.stringify({ ...details, items }) }),
     overview: () => api('/dashboard/overview'),
     topProducts: () => api('/dashboard/top-products'),
 }
@@ -747,10 +794,12 @@ const requestBody = data => data instanceof FormData ? data : JSON.stringify(dat
 
 export const catalogApi = {
     createCategory: data => api('/categories', { method: 'POST', body: requestBody(data) }),
+    reorderCategories: orderedIds => api('/categories/reorder', { method: 'PUT', body: JSON.stringify({ orderedIds }) }),
     updateCategory: (id, data) => api(`/categories/${id}`, { method: 'PUT', body: requestBody(data) }),
     deleteCategory: id => api(`/categories/${id}`, { method: 'DELETE' }),
     createProduct: data => api('/products', { method: 'POST', body: requestBody(data) }),
     updateProduct: (id, data) => api(`/products/${id}`, { method: 'PUT', body: requestBody(data) }),
+    updateProductOptions: (id, groups) => api(`/products/${id}/options`, { method: 'PUT', body: JSON.stringify({ groups }) }),
     deleteProduct: id => api(`/products/${id}`, { method: 'DELETE' }),
 }
 

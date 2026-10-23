@@ -164,7 +164,7 @@ export const getRecipes = async (_req, res, next) => {
     const products = await prisma.product.findMany({
       where: { isActive: true },
       select: {
-        id: true, name: true, imageUrl: true,
+        id: true, name: true, description: true, imageUrl: true,
         category: { select: { id: true, name: true } },
         recipeItems: {
           select: {
@@ -185,6 +185,18 @@ export const getRecipes = async (_req, res, next) => {
 export const replaceRecipe = async (req, res, next) => {
   try {
     const items = Array.isArray(req.body.items) ? req.body.items : [];
+    const hasName = req.body.name !== undefined;
+    const hasNameEn = req.body.nameEn !== undefined;
+    const name = hasName ? String(req.body.name || "").trim() : null;
+    const nameEn = hasNameEn ? String(req.body.nameEn || "").trim() : null;
+    if (hasName && !name) return res.status(400).json({ message: "name is required" });
+
+    const existingProduct = await prisma.product.findUnique({
+      where: { id: req.params.productId },
+      select: { id: true, description: true },
+    });
+    if (!existingProduct) return res.status(404).json({ message: "Product not found" });
+
     const normalized = items
       .map((item) => ({ ingredientId: item.ingredientId, quantityRequired: Number(item.quantityRequired) }))
       .filter((item) => item.ingredientId && item.quantityRequired > 0);
@@ -195,6 +207,22 @@ export const replaceRecipe = async (req, res, next) => {
     const ingredientMap = new Map(ingredients.map((item) => [item.id, item]));
 
     await prisma.$transaction(async (tx) => {
+      if (hasName || hasNameEn) {
+        const productData = {};
+        if (hasName) productData.name = name;
+        if (hasNameEn) {
+          let detail = "";
+          try {
+            const parsed = JSON.parse(existingProduct.description || "");
+            if (parsed && typeof parsed === "object") detail = parsed.description || parsed.detail || "";
+          } catch {
+            // Legacy descriptions contain only the English name.
+          }
+          productData.description = detail ? JSON.stringify({ en: nameEn, description: detail }) : nameEn;
+        }
+        await tx.product.update({ where: { id: req.params.productId }, data: productData });
+      }
+
       await tx.recipeIngredient.deleteMany({ where: { productId: req.params.productId } });
       if (normalized.length > 0) {
         await tx.recipeIngredient.createMany({
@@ -210,7 +238,7 @@ export const replaceRecipe = async (req, res, next) => {
 
     const recipe = await prisma.product.findUnique({
       where: { id: req.params.productId },
-      select: { id: true, name: true, recipeItems: { include: { ingredient: true }, orderBy: { ingredient: { name: "asc" } } } },
+      select: { id: true, name: true, description: true, recipeItems: { include: { ingredient: true }, orderBy: { ingredient: { name: "asc" } } } },
     });
     clearProductsCache();
     res.json(recipe);

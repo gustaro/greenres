@@ -4,7 +4,7 @@ export const requireRole = (...roles) => (req, res, next) => {
   next();
 };
 
-export const isAdmin                 = requireRole("ADMIN");
+export const isAdmin                 = requireRole("ADMIN", "SUPERADMIN");
 export const isStaffOrAdmin          = requireRole("STAFF", "ADMIN");
 export const isKitchenOrAdmin        = requireRole("KITCHEN", "ADMIN");
 export const isRiderOrAdmin          = requireRole("RIDER", "ADMIN");

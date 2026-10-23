@@ -222,10 +222,14 @@ export function groupOrderItems(rawItems = []) {
         const displayName = isTakeaway ? `${rawName} (กลับบ้าน)` : rawName
         const unitPrice = Number(item.priceAtTime || item.unitPrice || item.product?.price || 0)
         const qty = Number(item.quantity || 1)
+        const selectedOptions = Array.isArray(item.selectedOptions) ? item.selectedOptions : []
+        const optionKey = selectedOptions.map(option => option.optionId || option.id || option.name).sort().join('|')
+        const optionLabel = selectedOptions.map(option => option.name).filter(Boolean).join(' · ')
 
         const existing = groups.find(g =>
             g.displayName === displayName &&
             g.cleanNote === cleanNote &&
+            g.optionKey === optionKey &&
             Math.abs(g.unitPrice - unitPrice) < 0.01
         )
 
@@ -240,6 +244,9 @@ export function groupOrderItems(rawItems = []) {
                 displayName,
                 isTakeaway,
                 cleanNote,
+                selectedOptions,
+                optionKey,
+                optionLabel,
                 unitPrice,
                 quantity: qty,
                 totalPrice: unitPrice * qty,
@@ -257,6 +264,7 @@ export function OrderItems({ order }) {
                 <li key={item.id || (item.displayName + '_' + item.cleanNote)}>
                     <span>
                         {item.displayName} <small>× {item.quantity}</small>
+                        {item.optionLabel && <small className="staff-item-options">{item.optionLabel}</small>}
                         {item.cleanNote && (
                             <small style={{ display: 'block', color: '#666', fontSize: 11 }}>
                                 {item.cleanNote}

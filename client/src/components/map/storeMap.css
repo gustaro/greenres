@@ -17,6 +17,7 @@
 }
 
 .store-map-hero-inner {
+    min-width: 0;
     max-width: 800px;
     margin: 0 auto;
     position: relative;
@@ -58,6 +59,7 @@
     line-height: 1.2;
     margin: 0 0 12px;
     color: #ffffff;
+    overflow-wrap: anywhere;
 }
 
 .store-map-hero p {
@@ -66,6 +68,7 @@
     opacity: 0.95;
     margin: 0;
     line-height: 1.6;
+    overflow-wrap: anywhere;
 }
 
 .store-map-content {
@@ -108,6 +111,7 @@
 }
 
 .store-card-header h2 {
+    min-width: 0;
     font-size: 1.35rem;
     font-weight: 800;
     color: var(--brand-primary); /* Solid vibrant green */
@@ -115,6 +119,19 @@
     display: flex;
     align-items: center;
     gap: 10px;
+}
+
+.store-card-header h2 span {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.store-map-coordinates {
+    flex: 0 0 auto;
+    color: var(--brand-muted);
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
 }
 
 .store-card-body {
@@ -139,6 +156,11 @@
     align-items: center;
     gap: 12px;
     flex-wrap: wrap;
+}
+
+.store-map-actions-bar > span {
+    min-width: 0;
+    overflow-wrap: anywhere;
 }
 
 .store-gmaps-link {
@@ -348,4 +370,70 @@
     color: var(--brand-muted);
     margin: 0 0 24px;
     line-height: 1.6;
+}
+
+@media(max-width:600px) {
+    .store-map-hero {
+        padding: 82px 16px 44px;
+    }
+
+    .store-map-hero h1 {
+        font-size: clamp(1.7rem, 8vw, 2rem);
+        word-break: break-all;
+    }
+
+    .store-map-hero p {
+        font-size: .95rem;
+        word-break: break-all;
+    }
+
+    .store-map-content {
+        width: calc(100% - 24px);
+        gap: 16px;
+        margin-bottom: 36px;
+    }
+
+    .store-card {
+        border-radius: 14px;
+    }
+
+    .store-card-header,
+    .store-card-body {
+        padding: 18px 16px;
+    }
+
+    .store-card-header {
+        align-items: flex-start;
+        flex-wrap: wrap;
+        gap: 6px 12px;
+    }
+
+    .store-card-header h2 {
+        flex: 1 1 220px;
+        font-size: 1.2rem;
+    }
+
+    .store-map-coordinates {
+        width: 100%;
+        padding-left: 30px;
+    }
+
+    .store-map-viewer-wrapper {
+        height: 300px;
+    }
+
+    .store-map-actions-bar {
+        align-items: stretch;
+        padding: 14px 16px;
+    }
+
+    .store-map-actions-bar > span {
+        line-height: 1.5;
+    }
+
+    .store-gmaps-link,
+    .btn-submit-contact {
+        width: 100%;
+        justify-content: center;
+    }
 }

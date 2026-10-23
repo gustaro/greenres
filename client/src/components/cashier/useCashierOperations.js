@@ -1,9 +1,11 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { updateOrderMeta, markOrderPaid, addItemsToOrder } from '../../lib/database'
 import { money, orderCode } from '../StaffShared'
 import { playNotificationChime } from '../ToastNotification'
+import { selectableOptionGroups, buildCartLines, makeCartLineKey, optionIdsFromLineKey, productIdFromLineKey } from '../../lib/productOptions'
 
 export function useCashierOperations({ setOrders, refreshOrders, addToast, counterProducts }) {
+    const paymentRequestRef = useRef(false)
     // Modal states
     const [moveTableOrder, setMoveTableOrder] = useState(null)
     const [newTableInput, setNewTableInput] = useState('')
@@ -14,6 +16,7 @@ export function useCashierOperations({ setOrders, refreshOrders, addToast, count
     const [addItemsTakeawayMap, setAddItemsTakeawayMap] = useState({})
     const [addItemsCategory, setAddItemsCategory] = useState('all')
     const [addingItemsLoading, setAddingItemsLoading] = useState(false)
+    const [addItemsOptionProduct, setAddItemsOptionProduct] = useState(null)
 
     const [paymentModalOrder, setPaymentModalOrder] = useState(null)
     const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('CASH')
@@ -112,7 +115,7 @@ export function useCashierOperations({ setOrders, refreshOrders, addToast, count
     }
 
     const handleConfirmPayment = async (details = {}) => {
-        if (!paymentModalOrder) return
+        if (!paymentModalOrder || paymentRequestRef.current) return
         const order = paymentModalOrder
         const total = Number(order.totalAmount) || 0
 
@@ -137,6 +140,7 @@ export function useCashierOperations({ setOrders, refreshOrders, addToast, count
             }
         }
 
+        paymentRequestRef.current = true
         setPaymentLoading(true)
         try {
             await markOrderPaid(order.id, selectedPaymentMethod, paymentDetail, stripePaymentId)
@@ -162,21 +166,39 @@ export function useCashierOperations({ setOrders, refreshOrders, addToast, count
         } catch (error) {
             window.alert('เกิดข้อผิดพลาดในการชำระเงิน: ' + error.message)
         } finally {
+            paymentRequestRef.current = false
             setPaymentLoading(false)
         }
     }
+
+    const addItemsAdd = product => {
+        if (selectableOptionGroups(product).length) return setAddItemsOptionProduct(product)
+        setAddItemsCart(prev => ({ ...prev, [product.id]: (prev[product.id] || 0) + 1 }))
+    }
+
+    const addItemsConfirmOption = selection => {
+        if (!addItemsOptionProduct) return
+        const lineKey = makeCartLineKey(addItemsOptionProduct.id, selection)
+        setAddItemsCart(prev => ({ ...prev, [lineKey]: (prev[lineKey] || 0) + 1 }))
+        setAddItemsOptionProduct(null)
+    }
+
+    const addItemsRemove = product => setAddItemsCart(prev => {
+        const lineKey = Object.keys(prev).reverse().find(key => productIdFromLineKey(key) === product.id && Number(prev[key]) > 0)
+        return lineKey ? { ...prev, [lineKey]: Math.max(0, Number(prev[lineKey]) - 1) } : prev
+    })
 
     const submitAddItems = async () => {
         if (!addItemsOrder) return
         const extraItems = Object.entries(addItemsCart)
             .filter(([_, q]) => Number(q) > 0)
-            .map(([productId, quantity]) => ({ productId, quantity: Number(quantity) }))
+            .map(([lineKey, quantity]) => ({ lineKey, productId: productIdFromLineKey(lineKey), quantity: Number(quantity), selectedOptionIds: optionIdsFromLineKey(lineKey) }))
 
         if (extraItems.length === 0) return window.alert('กรุณาเลือกเมนูที่ต้องการเพิ่มอย่างน้อย 1 รายการ')
 
         const extraNotes = {}
         extraItems.forEach(item => {
-            if (addItemsTakeawayMap[item.productId]) extraNotes[item.productId] = '[กลับบ้าน]'
+            if (addItemsTakeawayMap[item.lineKey]) extraNotes[item.lineKey] = '[กลับบ้าน]'
         })
 
         setAddingItemsLoading(true)
@@ -187,8 +209,10 @@ export function useCashierOperations({ setOrders, refreshOrders, addToast, count
             const summaryList = extraItems.map(item => {
                 const prod = productLookup.get(item.productId)
                 const name = prod?.name || 'สินค้า'
-                const isT = Boolean(addItemsTakeawayMap[item.productId])
-                return `${name}${isT ? ' (กลับบ้าน)' : ''} ×${item.quantity}`
+                const isT = Boolean(addItemsTakeawayMap[item.lineKey])
+                const line = buildCartLines({ [item.lineKey]: item.quantity }, counterProducts)[0]
+                const options = line?.selectedOptions?.length ? ` — ${line.selectedOptions.map(option => option.name).join(', ')}` : ''
+                return `${name}${options}${isT ? ' (กลับบ้าน)' : ''} ×${item.quantity}`
             })
             const totalAddedCount = extraItems.reduce((acc, it) => acc + it.quantity, 0)
             const code = orderCode(targetOrder)
@@ -231,6 +255,7 @@ export function useCashierOperations({ setOrders, refreshOrders, addToast, count
         addItemsTakeawayMap, setAddItemsTakeawayMap,
         addItemsCategory, setAddItemsCategory,
         addingItemsLoading, submitAddItems,
+        addItemsOptionProduct, setAddItemsOptionProduct, addItemsAdd, addItemsRemove, addItemsConfirmOption,
         paymentModalOrder, setPaymentModalOrder,
         selectedPaymentMethod, setSelectedPaymentMethod,
         cashReceived, setCashReceived,

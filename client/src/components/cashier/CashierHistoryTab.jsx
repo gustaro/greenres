@@ -55,15 +55,15 @@ export function CashierHistoryTab({
                     <tbody>
                         {paidOrders.map(order => (
                             <tr key={order.id}>
-                                <td>
+                                <td data-label="ออเดอร์">
                                     <b>{orderCode(order)}</b>
                                     <small>{order.deliveryType}{order.deliveryType === 'ทานที่ร้าน' && order.tableNumber ? ` · โต๊ะ ${order.tableNumber}` : ''}</small>
                                 </td>
-                                <td>{new Date(order.paidAt || order.createdAt).toLocaleString('th-TH')}</td>
-                                <td>{customerLabel(order)}</td>
-                                <td><i className="status paid">{formatCashierPaymentMethod(order.paymentMethod, order)}</i></td>
-                                <td><strong>{money(order.totalAmount)}</strong></td>
-                                <td>
+                                <td data-label="เวลาชำระ">{new Date(order.paidAt || order.createdAt).toLocaleString('th-TH')}</td>
+                                <td data-label="ลูกค้า">{customerLabel(order)}</td>
+                                <td data-label="ช่องทาง"><i className="status paid">{formatCashierPaymentMethod(order.paymentMethod, order)}</i></td>
+                                <td data-label="ยอดสุทธิ"><strong>{money(order.totalAmount)}</strong></td>
+                                <td className="cashier-history-action">
                                     <button className="staff-link" onClick={() => onViewReceipt(order)}>
                                         <i className="bi bi-printer me-1"></i> พิมพ์ใบเสร็จ
                                     </button>

@@ -1,7 +1,7 @@
 import { Router } from "express";
 import {
   getCategories, getCategoryBySlug,
-  createCategory, updateCategory, deleteCategory,
+  createCategory, reorderCategories, updateCategory, deleteCategory,
 } from "../controllers/category.controller.js";
 import { authenticate } from "../middleware/auth.js";
 import { isAdmin } from "../middleware/role.js";
@@ -15,6 +15,7 @@ router.get("/:slug", getCategoryBySlug);
 
 // Admin only
 router.post("/", authenticate, isAdmin, upload.single("image"), createCategory);
+router.put("/reorder", authenticate, isAdmin, reorderCategories);
 router.put("/:id", authenticate, isAdmin, upload.single("image"), updateCategory);
 router.delete("/:id", authenticate, isAdmin, deleteCategory);
 

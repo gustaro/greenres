@@ -1,15 +1,31 @@
 import { useState } from 'react'
 import { catalogApi, mapProduct, serializeProductDescription } from '../../lib/database'
-import { PageHead } from './AdminShared'
+import { PageHead, useAdminConfirm, useAdminModalFocus } from './AdminShared'
+import { AdminProductOptionsModal } from './AdminProductOptionsModal'
 
 export function AdminProductsTab({ products, setProducts, categories, notify, fail }) {
     const [isAdding, setIsAdding] = useState(false)
     const [deletingId, setDeletingId] = useState(null)
-    const [updatingImageId, setUpdatingImageId] = useState(null)
     const [editingProduct, setEditingProduct] = useState(null)
     const [isSavingEdit, setIsSavingEdit] = useState(false)
     const [editImagePreview, setEditImagePreview] = useState(null)
     const [editImageFile, setEditImageFile] = useState(null)
+    const [optionsProduct, setOptionsProduct] = useState(null)
+    const [savingOptions, setSavingOptions] = useState(false)
+    const [search, setSearch] = useState('')
+    const [categoryFilter, setCategoryFilter] = useState('all')
+    const [statusFilter, setStatusFilter] = useState('all')
+    const { confirm, isConfirming, confirmDialog } = useAdminConfirm()
+    const [isEditDirty, setIsEditDirty] = useState(false)
+    const editModalRef = useAdminModalFocus(Boolean(editingProduct), () => requestCloseEditModal(), isSavingEdit || isConfirming)
+
+    const normalizedSearch = search.trim().toLowerCase()
+    const visibleProducts = products.filter(product => {
+        const matchesSearch = !normalizedSearch || `${product.name || ''} ${product.en || ''}`.toLowerCase().includes(normalizedSearch)
+        const matchesCategory = categoryFilter === 'all' || product.categoryId === categoryFilter
+        const matchesStatus = statusFilter === 'all' || (statusFilter === 'active' ? product.isActive : !product.isActive)
+        return matchesSearch && matchesCategory && matchesStatus
+    })
 
     const addProduct = async event => {
         event.preventDefault()
@@ -70,7 +86,6 @@ export function AdminProductsTab({ products, setProducts, categories, notify, fa
 
         let body = payload
         if (changes.imageFile instanceof File) {
-            setUpdatingImageId(id)
             body = new FormData()
             Object.entries(payload).forEach(([key, value]) => {
                 if (value !== undefined && value !== null) {
@@ -86,10 +101,6 @@ export function AdminProductsTab({ products, setProducts, categories, notify, fa
             return true
         } catch (error) {
             fail(error)
-        } finally {
-            if (changes.imageFile instanceof File) {
-                setUpdatingImageId(null)
-            }
         }
         return false
     }
@@ -98,12 +109,20 @@ export function AdminProductsTab({ products, setProducts, categories, notify, fa
         setEditingProduct(product)
         setEditImagePreview(product.img || product.imageUrl || '')
         setEditImageFile(null)
+        setIsEditDirty(false)
     }
 
     const closeEditModal = () => {
         setEditingProduct(null)
         setEditImagePreview(null)
         setEditImageFile(null)
+        setIsEditDirty(false)
+    }
+
+    const requestCloseEditModal = async () => {
+        if (isSavingEdit) return
+        if (isEditDirty && !await confirm('มีข้อมูลสินค้าที่ยังไม่ได้บันทึก ต้องการปิดหน้าต่างนี้หรือไม่?', { title: 'ยังไม่ได้บันทึก', confirmLabel: 'ปิดโดยไม่บันทึก' })) return
+        closeEditModal()
     }
 
     const handleEditModalSave = async event => {
@@ -146,7 +165,7 @@ export function AdminProductsTab({ products, setProducts, categories, notify, fa
     }
 
     const deleteProduct = async id => {
-        if (!window.confirm('คุณต้องการลบสินค้านี้ใช่หรือไม่?')) return
+        if (!await confirm('คุณต้องการลบสินค้านี้ใช่หรือไม่?', { confirmLabel: 'ลบสินค้า' })) return
         setDeletingId(id)
         try {
             await catalogApi.deleteProduct(id)
@@ -156,6 +175,24 @@ export function AdminProductsTab({ products, setProducts, categories, notify, fa
             fail(error)
         } finally {
             setDeletingId(null)
+        }
+    }
+
+    const saveProductOptions = async groups => {
+        if (!optionsProduct) return
+        if (groups.some(group => !group.name.trim() || !group.options.length || group.options.some(option => !option.name.trim()))) {
+            return notify('กรุณากรอกชื่อกลุ่มและชื่อตัวเลือกให้ครบ')
+        }
+        setSavingOptions(true)
+        try {
+            const updated = mapProduct(await catalogApi.updateProductOptions(optionsProduct.id, groups))
+            setProducts(current => current.map(product => product.id === updated.id ? updated : product))
+            setOptionsProduct(null)
+            notify('บันทึกตัวเลือกสินค้าเรียบร้อยแล้ว')
+        } catch (error) {
+            fail(error)
+        } finally {
+            setSavingOptions(false)
         }
     }
 
@@ -193,24 +230,41 @@ export function AdminProductsTab({ products, setProducts, categories, notify, fa
                     สต๊อกเริ่มต้น
                     <input name="stock" required type="number" min="0" defaultValue="50" />
                 </label>
-                <label>
-                    รูปสินค้า
+                <div className="admin-form-field">
+                    <span>รูปสินค้า</span>
                     <label className="admin-file-label">
                         <input name="image" type="file" accept="image/*" className="admin-file-input" />
                         <span><i className="bi bi-folder-fill text-warning" style={{ marginRight: 4 }}></i>เลือกรูปภาพ</span>
                     </label>
-                </label>
+                </div>
                 <button className="admin-primary" disabled={isAdding}>
                     {isAdding ? <><i className="bi bi-arrow-repeat spin" /> กำลังเพิ่มสินค้า...</> : '+ เพิ่มสินค้า'}
                 </button>
             </form>
             <section className="admin-panel">
+                <div className="admin-list-toolbar">
+                    <label className="admin-list-search"><i className="bi bi-search" /><input value={search} onChange={event => setSearch(event.target.value)} placeholder="ค้นหาชื่อสินค้า..." /></label>
+                    <select value={categoryFilter} onChange={event => setCategoryFilter(event.target.value)} aria-label="กรองตามหมวดหมู่">
+                        <option value="all">ทุกหมวดหมู่</option>
+                        {categories.map(category => <option key={category.id} value={category.id}>{category.name}</option>)}
+                    </select>
+                    <select value={statusFilter} onChange={event => setStatusFilter(event.target.value)} aria-label="กรองตามสถานะ">
+                        <option value="all">ทุกสถานะ</option><option value="active">มีสินค้า</option><option value="inactive">สินค้าหมด</option>
+                    </select>
+                    <span>{visibleProducts.length} / {products.length} รายการ</span>
+                </div>
+                <div className="admin-product-options-guide">
+                    <i className="bi bi-sliders2" />
+                    <div>
+                        <b>ตัวเลือกสินค้าใช้สำหรับอะไร?</b>
+                        <span>ใช้ตั้งค่าขนาด ระดับความเผ็ด ท็อปปิ้ง หรือรายการเสริม พร้อมกำหนดราคาเพิ่มและจำนวนที่เลือกได้</span>
+                    </div>
+                </div>
                 <div className="admin-table-wrap">
-                    <table>
+                    <table className="admin-products-table">
                         <thead>
                             <tr>
                                 <th>สินค้า (ไทย / English)</th>
-                                <th>เปลี่ยนรูป</th>
                                 <th>ประเภท</th>
                                 <th>ราคา</th>
                                 <th>สต๊อก</th>
@@ -219,99 +273,46 @@ export function AdminProductsTab({ products, setProducts, categories, notify, fa
                             </tr>
                         </thead>
                         <tbody>
-                            {products.map(product => (
+                            {visibleProducts.map(product => (
                                 <tr key={product.id}>
-                                    <td>
+                                    <td data-label="สินค้า">
                                         <div className="admin-product-cell">
                                             <img src={product.img} alt={product.name} />
-                                            <span>
-                                                <small style={{ color: 'var(--brand-primary-dark, #075c1b)', fontWeight: 700, fontSize: 10 }}>ชื่อไทย:</small>
-                                                <input
-                                                    key={`name-${product.id}-${product.name}`}
-                                                    className="admin-text-input"
-                                                    defaultValue={product.name}
-                                                    placeholder="ชื่อภาษาไทย"
-                                                    onKeyDown={event => { if (event.key === 'Enter') event.currentTarget.blur() }}
-                                                    onBlur={event => event.target.value.trim() && event.target.value.trim() !== product.name && updateProduct(product.id, { name: event.target.value.trim() })}
-                                                />
-                                                <small style={{ color: 'var(--brand-primary-dark, #075c1b)', fontWeight: 700, fontSize: 10, marginTop: 4, display: 'block' }}>English Name:</small>
-                                                <input
-                                                    key={`en-${product.id}-${product.en}`}
-                                                    className="admin-text-input small"
-                                                    defaultValue={product.en}
-                                                    placeholder="English Name"
-                                                    onKeyDown={event => { if (event.key === 'Enter') event.currentTarget.blur() }}
-                                                    onBlur={event => event.target.value.trim() !== product.en && updateProduct(product.id, { en: event.target.value.trim() })}
-                                                />
-                                            </span>
+                                            <div className="admin-product-info">
+                                                <strong>{product.name}</strong>
+                                                <span>{product.en || 'ยังไม่มีชื่อภาษาอังกฤษ'}</span>
+                                                <small className={product.optionGroups?.length ? 'configured' : ''}>
+                                                    <i className="bi bi-ui-radios" />
+                                                    {product.optionGroups?.length ? `ตั้งค่าตัวเลือกแล้ว ${product.optionGroups.length} กลุ่ม` : 'ยังไม่มีตัวเลือกเสริม'}
+                                                </small>
+                                            </div>
                                         </div>
                                     </td>
-                                    <td>
-                                        <label className="admin-file-label" style={{ opacity: updatingImageId === product.id ? 0.6 : 1, pointerEvents: updatingImageId === product.id ? 'none' : 'auto' }}>
-                                            <input
-                                                className="admin-file-input"
-                                                type="file"
-                                                accept="image/*"
-                                                disabled={updatingImageId === product.id}
-                                                onChange={event => event.target.files?.[0] && updateProduct(product.id, { imageFile: event.target.files[0] })}
-                                            />
-                                            <span>
-                                                {updatingImageId === product.id ? (
-                                                    <><i className="bi bi-arrow-repeat spin me-1" />อัปโหลด...</>
-                                                ) : (
-                                                    <><i className="bi bi-folder-fill text-warning" style={{ marginRight: 4 }}></i>เปลี่ยนรูป</>
-                                                )}
-                                            </span>
-                                        </label>
+                                    <td data-label="ประเภท">
+                                        <span className="admin-product-category">{categories.find(category => category.id === product.categoryId)?.name || 'ไม่ระบุหมวดหมู่'}</span>
                                     </td>
-                                    <td>
-                                        <select
-                                            value={product.categoryId || ''}
-                                            onChange={event => updateProduct(product.id, { categoryId: event.target.value })}
-                                        >
-                                            {categories.map(category => (
-                                                <option key={category.id} value={category.id}>
-                                                    {category.name} {category.nameEn ? `(${category.nameEn})` : ''}
-                                                </option>
-                                            ))}
-                                        </select>
-                                    </td>
-                                    <td>
-                                        <input
-                                            key={`price-${product.id}-${product.price}`}
-                                            className="admin-number-input"
-                                            type="number"
-                                            min="0.01"
-                                            step="0.01"
-                                            defaultValue={product.price}
-                                            onKeyDown={event => { if (event.key === 'Enter') event.currentTarget.blur() }}
-                                            onBlur={event => Number(event.target.value) > 0 && Number(event.target.value) !== product.price && updateProduct(product.id, { price: Number(event.target.value) })}
-                                        />
-                                    </td>
-                                    <td>
-                                        <input
-                                            key={`stock-${product.id}-${product.stock}`}
-                                            className="admin-number-input"
-                                            type="number"
-                                            min="0"
-                                            defaultValue={product.stock}
-                                            onKeyDown={event => { if (event.key === 'Enter') event.currentTarget.blur() }}
-                                            onBlur={event => event.target.value !== '' && Number(event.target.value) !== product.stock && updateProduct(product.id, { stock: Math.max(0, Number(event.target.value)) })}
-                                        />
-                                    </td>
-                                    <td>
-                                        <button
-                                            type="button"
-                                            className={`admin-badge-btn ${product.isActive ? 'active' : 'inactive'}`}
-                                            onClick={() => updateProduct(product.id, { isActive: !product.isActive })}
-                                            title="คลิกเพื่อสลับสถานะ มีสินค้า / สินค้าหมด"
-                                        >
+                                    <td data-label="ราคา"><strong className="admin-product-price">฿{Number(product.price || 0).toLocaleString()}</strong></td>
+                                    <td data-label="สต๊อก"><span className={`admin-product-stock ${Number(product.stock || 0) <= 0 ? 'empty' : ''}`}>{Number(product.stock || 0).toLocaleString()}</span></td>
+                                    <td data-label="สถานะ">
+                                        <span className={`admin-product-status ${product.isActive ? 'active' : 'inactive'}`}>
                                             <i className={`bi ${product.isActive ? 'bi-check-circle-fill' : 'bi-x-circle-fill'}`} />
                                             <span>{product.isActive ? 'มีสินค้า' : 'สินค้าหมด'}</span>
-                                        </button>
+                                        </span>
                                     </td>
-                                    <td>
-                                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+                                    <td data-label="การจัดการ">
+                                        <div className="admin-product-actions">
+                                            <button
+                                                type="button"
+                                                className="admin-product-option-btn"
+                                                onClick={() => setOptionsProduct(product)}
+                                                title="ตั้งค่าขนาด ความเผ็ด ท็อปปิ้ง รายการเสริม และราคาเพิ่ม"
+                                            >
+                                                <i className="bi bi-ui-radios" />
+                                                <span>
+                                                    <b>ตั้งค่าตัวเลือก</b>
+                                                    <small>{product.optionGroups?.length ? `${product.optionGroups.length} กลุ่ม` : 'ยังไม่ตั้งค่า'}</small>
+                                                </span>
+                                            </button>
                                             <button
                                                 type="button"
                                                 className="btn-edit-action"
@@ -323,7 +324,7 @@ export function AdminProductsTab({ products, setProducts, categories, notify, fa
                                             </button>
                                             <button
                                                 type="button"
-                                                className="admin-text-danger"
+                                                className="admin-text-danger admin-product-delete-btn"
                                                 disabled={deletingId === product.id}
                                                 onClick={() => deleteProduct(product.id)}
                                                 title="ลบสินค้านี้"
@@ -336,23 +337,24 @@ export function AdminProductsTab({ products, setProducts, categories, notify, fa
                             ))}
                         </tbody>
                     </table>
+                    {visibleProducts.length === 0 && <div className="admin-empty"><span><i className="bi bi-search" /></span><p>ไม่พบสินค้าที่ตรงกับตัวกรอง</p></div>}
                 </div>
             </section>
 
             {/* Modal แก้ไขสินค้า */}
             {editingProduct && (
-                <div className="admin-modal-backdrop" onClick={e => { if (e.target === e.currentTarget) closeEditModal() }}>
-                    <div className="admin-modal-card" role="dialog" aria-modal="true">
+                <div className="admin-modal-backdrop" onClick={e => { if (e.target === e.currentTarget) requestCloseEditModal() }}>
+                    <div className="admin-modal-card" role="dialog" aria-modal="true" ref={editModalRef}>
                         <div className="admin-modal-header">
                             <div className="admin-modal-title-wrap">
                                 <h3><i className="bi bi-pencil-square text-success" />แก้ไขข้อมูลสินค้า</h3>
                                 <small>รหัสสินค้า: {editingProduct.id}</small>
                             </div>
-                            <button type="button" className="admin-modal-close" onClick={closeEditModal} aria-label="ปิด">
+                            <button type="button" className="admin-modal-close" onClick={requestCloseEditModal} aria-label="ปิด">
                                 <i className="bi bi-x-lg" />
                             </button>
                         </div>
-                        <form onSubmit={handleEditModalSave} style={{ display: 'contents' }}>
+                        <form onSubmit={handleEditModalSave} onChange={() => setIsEditDirty(true)} style={{ display: 'contents' }}>
                             <div className="admin-modal-body">
                                 <div className="admin-modal-image-row">
                                     <img
@@ -460,7 +462,7 @@ export function AdminProductsTab({ products, setProducts, categories, notify, fa
                             </div>
 
                             <div className="admin-modal-footer">
-                                <button type="button" className="admin-secondary" onClick={closeEditModal} disabled={isSavingEdit}>
+                                <button type="button" className="admin-secondary" onClick={requestCloseEditModal} disabled={isSavingEdit}>
                                     ยกเลิก
                                 </button>
                                 <button type="submit" className="admin-primary" disabled={isSavingEdit}>
@@ -475,6 +477,8 @@ export function AdminProductsTab({ products, setProducts, categories, notify, fa
                     </div>
                 </div>
             )}
+            <AdminProductOptionsModal product={optionsProduct} saving={savingOptions} onSave={saveProductOptions} onClose={() => !savingOptions && setOptionsProduct(null)} />
+            {confirmDialog}
         </>
     )
 }

@@ -1,3 +1,5 @@
+import { orderItemOptionLabel } from '../../lib/productOptions'
+
 export function KitchenItemRow({
     item,
     orderId,
@@ -9,6 +11,8 @@ export function KitchenItemRow({
     const isCooking = item.itemStatus === 'PREPARING'
     const isWaiting = !isReady && !isCooking
     const isLoading = itemLoadingKey === `${orderId}_${item.id}`
+    const optionLabel = orderItemOptionLabel(item)
+    const isCriticalNote = /แพ้|allerg|ห้าม|ไม่ใส่|งด/i.test(item.cleanNote || '')
 
     return (
         <li
@@ -26,7 +30,7 @@ export function KitchenItemRow({
                 transition: 'all 0.2s ease',
             }}
         >
-            <div style={{ flex: 1, minWidth: 0, marginRight: 12 }}>
+            <div className="kitchen-item-info" style={{ flex: 1, minWidth: 0, marginRight: 12 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
                     <span style={{ fontWeight: 700, fontSize: 14, color: isReady ? 'var(--brand-primary-dark, #075c1b)' : '#17351f' }}>
                         {item.productName || item.displayName || 'สินค้า'}
@@ -43,9 +47,11 @@ export function KitchenItemRow({
                     )}
                 </div>
 
+                {optionLabel && <small className="staff-item-options kitchen-option-callout"><i className="bi bi-ui-radios me-1" />{optionLabel}</small>}
+
                 {item.cleanNote && (
-                    <small style={{ color: '#b45309', fontWeight: 600, fontSize: 11, display: 'block', marginTop: 2 }}>
-                        <i className="bi bi-chat-left-dots me-1"></i> {item.cleanNote}
+                    <small className={`kitchen-item-note${isCriticalNote ? ' is-critical' : ''}`}>
+                        <i className={`bi ${isCriticalNote ? 'bi-exclamation-triangle-fill' : 'bi-chat-left-dots'} me-1`}></i> {item.cleanNote}
                     </small>
                 )}
 
@@ -56,7 +62,7 @@ export function KitchenItemRow({
                 </div>
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+            <div className="kitchen-item-actions" style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
                 <span style={{
                     fontSize: 14,
                     fontWeight: 800,

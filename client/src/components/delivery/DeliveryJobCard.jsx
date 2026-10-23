@@ -1,6 +1,7 @@
 import { DELIVERY_FLOW, DELIVERY_STATUS_LABEL, DELIVERY_STATUS_CLASS } from './DeliveryShared'
 import { money } from '../StaffShared'
 import { buildGoogleMapsNavUrl } from '../../lib/geo'
+import { orderItemOptionLabel } from '../../lib/productOptions'
 
 export function DeliveryJobCard({ job, isAdmin, tab, isOpen, onToggle, advance, advancingJobId, onConfirmCash, onViewImage }) {
     const flow = DELIVERY_FLOW[job.status]
@@ -13,6 +14,10 @@ export function DeliveryJobCard({ job, isAdmin, tab, isOpen, onToggle, advance, 
         lng: job.dropLng,
         address: job.deliveryAddress,
     })
+    const customerPhoneLink = job.customerPhone ? `tel:${String(job.customerPhone).replace(/[^\d+]/g, '')}` : ''
+    const canNavigate = Boolean(job.deliveryAddress || hasCoords)
+    const currentStatusLabel = DELIVERY_STATUS_LABEL[job.status] ?? job.status
+    const nextStatusLabel = flow ? DELIVERY_STATUS_LABEL[flow[0]] ?? flow[1] : ''
 
     return (
         <article
@@ -24,21 +29,48 @@ export function DeliveryJobCard({ job, isAdmin, tab, isOpen, onToggle, advance, 
             }}
         >
             {/* Card Header */}
-            <header onClick={onToggle} style={{ cursor: 'pointer' }}>
-                <div>
-                    <small style={{ color: 'var(--brand-primary, #12852f)', fontWeight: 800 }}>DELIVERY · {job.provider}</small>
-                    <h3 style={{ margin: '3px 0' }}>{job.orderNumber}</h3>
-                    <span style={{ fontSize: 12, color: '#6d7b6e', fontWeight: 600 }}>
-                        {job.customerName}{job.customerPhone ? <span style={{ marginLeft: 6 }}><i className="bi bi-telephone me-1"></i>{job.customerPhone}</span> : ''}
+            <header>
+                <button type="button" className="delivery-card-toggle" onClick={onToggle} aria-expanded={isOpen}>
+                    <span className="delivery-card-customer">
+                        <small>DELIVERY · {job.provider}</small>
+                        <strong>{job.orderNumber}</strong>
+                        <span>{job.customerName}{job.customerPhone ? ` · ${job.customerPhone}` : ''}</span>
                     </span>
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'end', gap: 6 }}>
-                    <i className={`status ${DELIVERY_STATUS_CLASS[job.status] ?? ''}`}>{DELIVERY_STATUS_LABEL[job.status] ?? job.status}</i>
-                    <span style={{ fontSize: 11, color: 'var(--brand-primary, #12852f)', fontWeight: 700 }}>
-                        {isOpen ? <><i className="bi bi-chevron-up me-1"></i>ซ่อน</> : <><i className="bi bi-chevron-down me-1"></i>ดูรายละเอียด & นำทาง</>}
+                    <span className="delivery-card-state">
+                        <i className={`status ${DELIVERY_STATUS_CLASS[job.status] ?? ''}`}>{currentStatusLabel}</i>
+                        <span>{isOpen ? <><i className="bi bi-chevron-up" /> ซ่อน</> : <><i className="bi bi-chevron-down" /> ดูรายละเอียด</>}</span>
                     </span>
-                </div>
+                </button>
             </header>
+
+            {!isOpen && job.deliveryAddress && (
+                <div className="delivery-destination-preview">
+                    <i className="bi bi-geo-alt-fill" />
+                    <span>{job.deliveryAddress}</span>
+                </div>
+            )}
+
+            <div className="delivery-quick-actions" aria-label="การดำเนินการด่วน">
+                {customerPhoneLink && (
+                    <a className="delivery-quick-action call" href={customerPhoneLink}>
+                        <i className="bi bi-telephone-fill" />
+                        <span>โทรหาลูกค้า</span>
+                    </a>
+                )}
+                {canNavigate && (
+                    <a className="delivery-quick-action maps" href={googleMapsUrl} target="_blank" rel="noopener noreferrer">
+                        <i className="bi bi-geo-alt-fill" />
+                        <span>เปิด Google Maps</span>
+                    </a>
+                )}
+            </div>
+
+            {isCash && !job.isPaid && (
+                <div className="delivery-cash-alert">
+                    <span><i className="bi bi-cash-coin" /> ต้องเก็บเงินปลายทาง</span>
+                    <b>{money(job.totalAmount)}</b>
+                </div>
+            )}
 
             {/* Expandable detail */}
             {isOpen && (
@@ -51,32 +83,8 @@ export function DeliveryJobCard({ job, isAdmin, tab, isOpen, onToggle, advance, 
                         <div style={{ flex: 1 }}>
                             <small style={{ color: '#6d7b6e' }}>{job.estimatedMinutes ? `ประมาณ ${job.estimatedMinutes} นาที` : 'ระยะทางทั่วไป'}</small>
                             <p style={{ margin: '4px 0 8px', fontWeight: 600, color: '#17351f' }}>{job.deliveryAddress || 'ไม่ได้ระบุที่อยู่'}</p>
-                            {(job.deliveryAddress || hasCoords) && (
+                            {hasCoords && (
                                 <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8 }}>
-                                    <a
-                                        href={googleMapsUrl}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        style={{
-                                            display: 'inline-flex',
-                                            alignItems: 'center',
-                                            gap: 6,
-                                            fontSize: 12,
-                                            fontWeight: 700,
-                                            color: 'var(--brand-primary-dark, #008a36)',
-                                            background: 'var(--brand-accent-soft, #effbdc)',
-                                            padding: '7px 14px',
-                                            borderRadius: 8,
-                                            textDecoration: 'none',
-                                            border: '1px solid var(--brand-accent, #9fe51f)',
-                                            boxShadow: '0 2px 4px rgba(0,0,0,0.04)',
-                                        }}
-                                    >
-                                        <i className="bi bi-geo-alt-fill" style={{ color: '#e11d48' }}></i>
-                                        {hasCoords ? 'เปิดนำทางไปยังพิกัด GPS ปลายทาง' : 'เปิดนำทางบน Google Maps'}
-                                        <i className="bi bi-box-arrow-up-right ms-1"></i>
-                                    </a>
-                                    {hasCoords && (
                                         <span
                                             style={{
                                                 display: 'inline-flex',
@@ -94,7 +102,6 @@ export function DeliveryJobCard({ job, isAdmin, tab, isOpen, onToggle, advance, 
                                             <i className="bi bi-pin-map-fill" style={{ color: 'var(--brand-primary, #12852f)' }}></i>
                                             ปักหมุดพิกัด: {Number(job.dropLat).toFixed(5)}, {Number(job.dropLng).toFixed(5)}
                                         </span>
-                                    )}
                                 </div>
                             )}
                         </div>
@@ -105,7 +112,7 @@ export function DeliveryJobCard({ job, isAdmin, tab, isOpen, onToggle, advance, 
                         <ul className="staff-order-items">
                             {job.items.map(item => (
                                 <li key={item.id ?? item.productName}>
-                                    <span>{item.productName} <small>× {item.quantity}</small></span>
+                                    <span>{item.productName} <small>× {item.quantity}</small>{orderItemOptionLabel(item) && <small className="staff-item-options">{orderItemOptionLabel(item)}</small>}</span>
                                     <b>{money(Number(item.priceAtTime) * Number(item.quantity))}</b>
                                 </li>
                             ))}
@@ -230,11 +237,16 @@ export function DeliveryJobCard({ job, isAdmin, tab, isOpen, onToggle, advance, 
                             )
                         })}
                     </div>
+                    <div className="delivery-progress-mobile">
+                        <span><small>สถานะปัจจุบัน</small><b>{currentStatusLabel}</b></span>
+                        {flow && <i className="bi bi-arrow-right" />}
+                        {flow && <span><small>ขั้นตอนถัดไป</small><b>{nextStatusLabel}</b></span>}
+                    </div>
                 </>
             )}
 
             {/* Action buttons */}
-            <footer>
+            <footer className="delivery-card-actions">
                 {flow && tab === 'active' && (
                     <button
                         className="staff-primary"

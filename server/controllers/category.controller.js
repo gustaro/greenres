@@ -22,7 +22,7 @@ export const getCategories = async (req, res, next) => {
     const where = includeInactive === "true" ? {} : { isActive: true };
     const categories = await prisma.category.findMany({
       where,
-      orderBy: { sortOrder: "asc" },
+      orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
       include: { _count: { select: { products: { where: { isActive: true } } } } },
     });
 
@@ -70,19 +70,64 @@ const generateCategorySlug = async (name, excludeId = null) => {
 
 export const createCategory = async (req, res, next) => {
   try {
-    const { name, nameEn, description, sortOrder } = req.body;
+    const { name, nameEn, description } = req.body;
     if (!name) return res.status(400).json({ message: "Name is required" });
 
     const finalDescription = nameEn !== undefined ? nameEn : (description || null);
     const slug = await generateCategorySlug(nameEn || name);
     const imageUrl = req.file?.path || null;
+    const lastCategory = await prisma.category.aggregate({ _max: { sortOrder: true } });
+    const nextSortOrder = (lastCategory._max.sortOrder ?? 0) + 1;
 
     const category = await prisma.category.create({
-      data: { name, slug, description: finalDescription, imageUrl, sortOrder: parseInt(sortOrder) || 0 },
+      data: { name, slug, description: finalDescription, imageUrl, sortOrder: nextSortOrder },
     });
     clearCategoriesCache();
     clearProductsCache();
     res.status(201).json(category);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const reorderCategories = async (req, res, next) => {
+  try {
+    const orderedIds = req.body?.orderedIds;
+    if (!Array.isArray(orderedIds) || orderedIds.length === 0) {
+      return res.status(400).json({ message: "orderedIds must be a non-empty array" });
+    }
+
+    const normalizedIds = orderedIds.map(id => String(id));
+    if (new Set(normalizedIds).size !== normalizedIds.length) {
+      return res.status(400).json({ message: "orderedIds must not contain duplicates" });
+    }
+
+    const allCategories = await prisma.category.findMany({
+      orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
+      select: { id: true },
+    });
+    const existingIds = new Set(allCategories.map(category => category.id));
+    if (normalizedIds.some(id => !existingIds.has(id))) {
+      return res.status(400).json({ message: "One or more category IDs are invalid" });
+    }
+
+    // Keep categories not shown in the current view after the submitted categories.
+    const submittedIds = new Set(normalizedIds);
+    const completeOrder = [
+      ...normalizedIds,
+      ...allCategories.map(category => category.id).filter(id => !submittedIds.has(id)),
+    ];
+
+    await prisma.$transaction(
+      completeOrder.map((id, index) => prisma.category.update({
+        where: { id },
+        data: { sortOrder: index + 1 },
+      })),
+    );
+
+    clearCategoriesCache();
+    clearProductsCache();
+    res.json({ orderedIds: normalizedIds });
   } catch (error) {
     next(error);
   }

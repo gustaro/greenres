@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import { heroApi } from '../../lib/database'
-import { PageHead, Empty, PAGE_LINK_OPTIONS } from './AdminShared'
+import { PageHead, Empty, PAGE_LINK_OPTIONS, useAdminConfirm } from './AdminShared'
 
 export function AdminHeroTab({ heroSlides, setHeroSlides, notify, fail }) {
+    const { confirm, confirmDialog } = useAdminConfirm()
     const [editingHero, setEditingHero] = useState(null)
     const [isAdding, setIsAdding] = useState(false)
     const [savingId, setSavingId] = useState(null)
@@ -98,7 +99,7 @@ export function AdminHeroTab({ heroSlides, setHeroSlides, notify, fail }) {
     }
 
     const deleteHero = async id => {
-        if (!window.confirm('ลบแบนเนอร์นี้ออกจากหน้าแรกใช่หรือไม่?')) return
+        if (!await confirm('ลบแบนเนอร์นี้ออกจากหน้าแรกใช่หรือไม่?', { confirmLabel: 'ลบแบนเนอร์' })) return
         setDeletingId(id)
         try {
             await heroApi.remove(id)
@@ -118,15 +119,6 @@ export function AdminHeroTab({ heroSlides, setHeroSlides, notify, fail }) {
                 title="จัดการแบนเนอร์หน้าแรก (Hero Section)"
                 description="จัดการป้ายสไลด์โปรโมทสินค้า ดีลพิเศษ หรือภาพไฮไลท์เด่นที่จะแสดงด้านบนสุดของหน้าแรก"
             />
-            <div className="admin-hero-theme-tip">
-                <i className="bi bi-palette-fill" />
-                <div>
-                    <strong>ระบบสลับสีพื้นหลังแบนเนอร์อัตโนมัติตามธีม (2 สี)</strong>
-                    <p>
-                        พื้นหลังของแบนเนอร์แต่ละสไลด์จะสลับ 2 โทนสีระหว่าง <b>โทนไฮไลท์สดใส (Accent)</b> และ <b>โทนสว่างประกายแดด (Highlight)</b> ให้โดยอัตโนมัติตามธีมสีของเว็บไซต์ โดยไม่ซ้ำหรือกลืนกับสีพื้นหลังของส่วนโปรโมชั่นด้านล่าง
-                    </p>
-                </div>
-            </div>
             <form className="admin-marketing-form" onSubmit={addHero}>
                 <label className="wide">
                     หัวข้อย่อยด้านบน (Eyebrow - ภาษาไทย)
@@ -264,6 +256,7 @@ export function AdminHeroTab({ heroSlides, setHeroSlides, notify, fail }) {
                     })
                 )}
             </div>
+            {confirmDialog}
         </>
     )
 }

@@ -5,6 +5,7 @@ import { useLanguage } from '../lib/LanguageContext'
 import { validatePromotion } from '../lib/database'
 import { cleanAddressText } from '../lib/geo'
 import { CartPointsWidget } from './cart/CartPointsWidget'
+import { buildCartLines } from '../lib/productOptions'
 
 export const SERVER_DELIVERY_FEE = Number(import.meta.env.VITE_DELIVERY_FEE || 35)
 export const SERVER_FREE_DELIVERY_THRESHOLD = Number(import.meta.env.VITE_FREE_DELIVERY_THRESHOLD || 300)
@@ -28,9 +29,9 @@ const formatSavedAddress = address => {
 // ─── Cart Drawer (Global Header Cart) ───────────────────────────────────────
 export function CartDrawer({ cart, setCart, products, itemNotes, setItemNotes, onClose, onCheckout, pointsToUse = 0, setPointsToUse, onAuth }) {
     const { isEn, t } = useLanguage()
-    const items = products.filter(p => cart[p.id])
+    const items = buildCartLines(cart, products)
     const { settings } = useAuth()
-    const total = items.reduce((s, p) => s + p.price * cart[p.id], 0)
+    const total = items.reduce((sum, line) => sum + line.unitPrice * line.quantity, 0)
     const redeemRate = Number(settings?.pointsRedeemRate || 10)
     const pointsDiscount = pointsToUse > 0 ? Math.floor(pointsToUse / redeemRate) : 0
     const netTotal = Math.max(0, total - pointsDiscount)
@@ -50,36 +51,38 @@ export function CartDrawer({ cart, setCart, products, itemNotes, setItemNotes, o
                 ) : (
                     <>
                         <div className="drawer-items">
-                            {items.map(p => (
-                                <div className="cart-item-ui" key={p.id}>
+                            {items.map(line => {
+                                const p = line.product
+                                return <div className="cart-item-ui" key={line.lineKey}>
                                     <img src={p.img} alt={p.name} className="cart-item-ui-img" />
                                     <div className="cart-item-ui-content">
                                         <div className="cart-item-ui-header">
                                             <b>{isEn && p.en ? p.en : p.name}</b>
-                                            <strong>฿{p.price * cart[p.id]}</strong>
+                                            <strong>฿{line.unitPrice * line.quantity}</strong>
                                         </div>
-                                        <small className="cart-item-ui-price">฿{p.price} × {cart[p.id]}</small>
+                                        {line.selectedOptions.length > 0 && <small className="cart-item-options">{line.selectedOptions.map(option => isEn && option.nameEn ? option.nameEn : option.name).join(' · ')}</small>}
+                                        <small className="cart-item-ui-price">฿{line.unitPrice} × {line.quantity}</small>
                                         <div className="cart-item-ui-actions">
                                             <input
                                                 type="text"
                                                 placeholder={t('notePlaceholder')}
-                                                value={itemNotes[p.id] || ''}
-                                                onChange={e => setItemNotes?.(v => ({ ...v, [p.id]: e.target.value }))}
+                                                value={itemNotes[line.lineKey] || ''}
+                                                onChange={e => setItemNotes?.(v => ({ ...v, [line.lineKey]: e.target.value }))}
                                                 className="cart-note-input"
                                             />
                                             <div className="qty cart-qty-ui">
-                                                <button onClick={() => setCart(v => ({ ...v, [p.id]: Math.max(0, (v[p.id] || 0) - 1) }))}>
+                                                <button onClick={() => setCart(v => ({ ...v, [line.lineKey]: Math.max(0, (v[line.lineKey] || 0) - 1) }))}>
                                                     <i className="bi bi-dash"></i>
                                                 </button>
-                                                <span>{cart[p.id]}</span>
-                                                <button onClick={() => setCart(v => ({ ...v, [p.id]: (v[p.id] || 0) + 1 }))}>
+                                                <span>{line.quantity}</span>
+                                                <button onClick={() => setCart(v => ({ ...v, [line.lineKey]: (v[line.lineKey] || 0) + 1 }))}>
                                                     <i className="bi bi-plus"></i>
                                                 </button>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
-                            ))}
+                            })}
                         </div>
                         <CartPointsWidget
                             subtotal={total}
@@ -117,12 +120,12 @@ export function CartSidebar({ cart, setCart, products, itemNotes, setItemNotes, 
     const { isEn, t } = useLanguage()
     const { session, profile, addAddress, settings } = useAuth()
     const navigate = useNavigate()
-    const cartItems = products.filter(p => cart[p.id])
-    const total = cartItems.reduce((s, p) => s + p.price * cart[p.id], 0)
+    const cartItems = buildCartLines(cart, products)
+    const total = cartItems.reduce((sum, line) => sum + line.unitPrice * line.quantity, 0)
     const redeemRate = Number(settings?.pointsRedeemRate || 10)
     const pointsDiscount = pointsToUse > 0 ? Math.floor(pointsToUse / redeemRate) : 0
     const netTotal = Math.max(0, total - pointsDiscount)
-    const count = cartItems.reduce((s, p) => s + cart[p.id], 0)
+    const count = cartItems.reduce((sum, line) => sum + line.quantity, 0)
     const savedAddresses = profile?.addresses || []
     const defaultAddress = savedAddresses.find(address => address.isDefault) || savedAddresses[0]
     const [showAddressForm, setShowAddressForm] = useState(false)
@@ -130,8 +133,8 @@ export function CartSidebar({ cart, setCart, products, itemNotes, setItemNotes, 
     const [addressError, setAddressError] = useState('')
     const [addressForm, setAddressForm] = useState({ label: 'บ้าน', street: '', province: 'กรุงเทพมหานคร', zip: '' })
 
-    const add = (p) => setCart?.(prev => ({ ...prev, [p.id]: (prev[p.id] || 0) + 1 }))
-    const remove = (p) => setCart?.(prev => ({ ...prev, [p.id]: Math.max(0, (prev[p.id] || 0) - 1) }))
+    const add = line => setCart?.(prev => ({ ...prev, [line.lineKey]: (prev[line.lineKey] || 0) + 1 }))
+    const remove = line => setCart?.(prev => ({ ...prev, [line.lineKey]: Math.max(0, (prev[line.lineKey] || 0) - 1) }))
     const updateAddressField = (field, value) => setAddressForm(current => ({ ...current, [field]: value }))
 
     const openAddressForm = () => {
@@ -224,32 +227,34 @@ export function CartSidebar({ cart, setCart, products, itemNotes, setItemNotes, 
 
             {cartItems.length > 0 && (
                 <div className="op-cart-items">
-                    {cartItems.map(p => (
-                        <div className="cart-item-ui" key={p.id}>
+                    {cartItems.map(line => {
+                        const p = line.product
+                        return <div className="cart-item-ui" key={line.lineKey}>
                             <img src={p.img} alt={p.name} className="cart-item-ui-img" />
                             <div className="cart-item-ui-content">
                                 <div className="cart-item-ui-header">
                                     <b>{isEn && p.en ? p.en : p.name}</b>
-                                    <strong>฿{p.price * cart[p.id]}</strong>
+                                    <strong>฿{line.unitPrice * line.quantity}</strong>
                                 </div>
-                                <small className="cart-item-ui-price">฿{p.price}</small>
+                                {line.selectedOptions.length > 0 && <small className="cart-item-options">{line.selectedOptions.map(option => isEn && option.nameEn ? option.nameEn : option.name).join(' · ')}</small>}
+                                <small className="cart-item-ui-price">฿{line.unitPrice}</small>
                                 <div className="cart-item-ui-actions">
                                     <input
                                         type="text"
                                         placeholder={t('notePlaceholder')}
-                                        value={itemNotes?.[p.id] || ''}
-                                        onChange={e => setItemNotes?.(v => ({ ...v, [p.id]: e.target.value }))}
+                                        value={itemNotes?.[line.lineKey] || ''}
+                                        onChange={e => setItemNotes?.(v => ({ ...v, [line.lineKey]: e.target.value }))}
                                         className="cart-note-input"
                                     />
                                     <div className="op-qty cart-qty-ui">
-                                        <button onClick={() => remove(p)}><i className="bi bi-dash"></i></button>
-                                        <span>{cart[p.id]}</span>
-                                        <button onClick={() => add(p)}><i className="bi bi-plus"></i></button>
+                                        <button onClick={() => remove(line)}><i className="bi bi-dash"></i></button>
+                                        <span>{line.quantity}</span>
+                                        <button onClick={() => add(line)}><i className="bi bi-plus"></i></button>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                    ))}
+                    })}
                 </div>
             )}
 

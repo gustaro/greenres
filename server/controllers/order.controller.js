@@ -6,6 +6,54 @@ const calcDeliveryFee = (subtotal) => {
   return subtotal >= freeDeliveryThreshold ? 0 : deliveryFee;
 };
 
+const optionGroupInclude = {
+  optionGroups: {
+    where: { isActive: true },
+    orderBy: { sortOrder: "asc" },
+    include: {
+      options: {
+        where: { isActive: true },
+        orderBy: { sortOrder: "asc" },
+        include: { ingredient: { select: { id: true, name: true, quantity: true, unit: true, isActive: true } } },
+      },
+    },
+  },
+};
+
+const resolveSelectedOptions = (product, item) => {
+  const requestedIds = new Set(Array.isArray(item.selectedOptionIds) ? item.selectedOptionIds.map(String) : []);
+  const validIds = new Set((product.optionGroups || []).flatMap(group => group.options.map(option => option.id)));
+  const unknown = [...requestedIds].find(id => !validIds.has(id));
+  if (unknown) throw Object.assign(new Error(`ตัวเลือกของ ${product.name} ไม่ถูกต้อง`), { status: 400 });
+
+  const snapshots = [];
+  for (const group of product.optionGroups || []) {
+    const selected = group.options.filter(option => requestedIds.has(option.id));
+    const minimum = group.isRequired ? Math.max(1, Number(group.minSelections || 1)) : Number(group.minSelections || 0);
+    const maximum = group.selectionType === "SINGLE" ? 1 : Math.max(1, Number(group.maxSelections || group.options.length));
+    if (selected.length < minimum || selected.length > maximum) {
+      throw Object.assign(new Error(`กรุณาเลือก ${group.name} ${minimum === maximum ? `${minimum} รายการ` : `${minimum}-${maximum} รายการ`}`), { status: 400 });
+    }
+    for (const option of selected) {
+      snapshots.push({
+        groupId: group.id,
+        groupName: group.name,
+        groupNameEn: group.nameEn || "",
+        optionId: option.id,
+        name: option.name,
+        nameEn: option.nameEn || "",
+        priceAdjustment: Number(option.priceAdjustment || 0),
+        ingredientId: option.ingredientId || null,
+        ingredientName: option.ingredient?.name || null,
+        ingredientQuantity: option.ingredientQuantity == null ? null : Number(option.ingredientQuantity),
+        unit: option.ingredient?.unit || null,
+      });
+    }
+  }
+
+  return snapshots;
+};
+
 const getIngredientUsage = async (client, items) => {
   const productQuantities = new Map();
   for (const item of items) {
@@ -28,6 +76,25 @@ const getIngredientUsage = async (client, items) => {
       required: (current?.required || 0) + required,
     });
   }
+
+  const optionIngredientQuantities = new Map();
+  for (const item of items) {
+    for (const option of Array.isArray(item.selectedOptions) ? item.selectedOptions : []) {
+      if (!option?.ingredientId || Number(option.ingredientQuantity || 0) <= 0) continue;
+      const required = Number(option.ingredientQuantity) * Number(item.quantity || 0);
+      optionIngredientQuantities.set(option.ingredientId, (optionIngredientQuantities.get(option.ingredientId) || 0) + required);
+    }
+  }
+  if (optionIngredientQuantities.size > 0) {
+    const ingredients = await client.ingredient.findMany({ where: { id: { in: [...optionIngredientQuantities.keys()] } } });
+    for (const ingredient of ingredients) {
+      const current = usage.get(ingredient.id);
+      usage.set(ingredient.id, {
+        ingredient,
+        required: (current?.required || 0) + (optionIngredientQuantities.get(ingredient.id) || 0),
+      });
+    }
+  }
   return [...usage.values()];
 };
 
@@ -45,13 +112,24 @@ export const createOrder = async (req, res, next) => {
 
     if (overrideItems && overrideItems.length > 0) {
       const productIds = overrideItems.map(i => i.productId);
-      const products = await prisma.product.findMany({ where: { id: { in: productIds } } });
+      const products = await prisma.product.findMany({ where: { id: { in: productIds } }, include: optionGroupInclude });
       const productMap = {};
       for (const p of products) productMap[p.id] = p;
 
       for (const item of overrideItems) {
         const p = productMap[item.productId];
-        if (p) cartItems.push({ productId: p.id, quantity: item.quantity, product: p });
+        if (p) {
+          const selectedOptions = resolveSelectedOptions(p, item);
+          const optionTotal = selectedOptions.reduce((sum, option) => sum + Number(option.priceAdjustment || 0), 0);
+          cartItems.push({
+            productId: p.id,
+            lineKey: item.lineKey || p.id,
+            quantity: Math.max(1, Number(item.quantity) || 1),
+            product: p,
+            selectedOptions,
+            unitPrice: Number(p.price) + optionTotal,
+          });
+        }
       }
     } else {
       // Get cart
@@ -86,7 +164,7 @@ export const createOrder = async (req, res, next) => {
 
     // Calculate subtotal
     const subtotal = cartItems.reduce(
-      (sum, item) => sum + parseFloat(item.product.price) * item.quantity, 0
+      (sum, item) => sum + Number(item.unitPrice ?? item.product.price) * item.quantity, 0
     );
 
     // Validate coupon
@@ -185,9 +263,10 @@ export const createOrder = async (req, res, next) => {
             create: cartItems.map((item) => ({
               productId: item.productId,
               quantity: item.quantity,
-              unitPrice: item.product.price,
-              subtotal: parseFloat((parseFloat(item.product.price) * item.quantity).toFixed(2)),
-              note: itemNotes?.[item.productId] || null,
+              unitPrice: Number(item.unitPrice ?? item.product.price),
+              subtotal: parseFloat((Number(item.unitPrice ?? item.product.price) * item.quantity).toFixed(2)),
+              note: itemNotes?.[item.lineKey] || itemNotes?.[item.productId] || null,
+              selectedOptions: item.selectedOptions || [],
             })),
           },
         },
@@ -554,7 +633,7 @@ export const appendOrderItems = async (req, res, next) => {
     }
 
     const productIds = items.map(i => i.productId);
-    const products = await prisma.product.findMany({ where: { id: { in: productIds } } });
+    const products = await prisma.product.findMany({ where: { id: { in: productIds } }, include: optionGroupInclude });
     const productMap = new Map(products.map(p => [p.id, p]));
 
     let addedSubtotal = 0;
@@ -562,16 +641,18 @@ export const appendOrderItems = async (req, res, next) => {
     for (const item of items) {
       const product = productMap.get(item.productId);
       if (!product) continue;
-      const unitPrice = parseFloat(product.price);
+      const selectedOptions = resolveSelectedOptions(product, item);
+      const unitPrice = parseFloat(product.price) + selectedOptions.reduce((sum, option) => sum + Number(option.priceAdjustment || 0), 0);
       const subtotal = parseFloat((unitPrice * item.quantity).toFixed(2));
       addedSubtotal += subtotal;
       itemsToCreate.push({
         orderId: order.id,
         productId: item.productId,
         quantity: item.quantity,
-        unitPrice: product.price,
+        unitPrice,
         subtotal,
-        note: itemNotes?.[item.productId] || item.note || null,
+        note: itemNotes?.[item.lineKey] || itemNotes?.[item.productId] || item.note || null,
+        selectedOptions,
       });
     }
 

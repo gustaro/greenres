@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../lib/AuthContext'
 import { useLanguage } from '../lib/LanguageContext'
@@ -38,6 +38,12 @@ export function Navbar({ onOrder, user, onAuth, onLogout, cartCount, onCart, bre
     const { lang, t, toggleLang } = useLanguage()
     const [menuOpen, setMenuOpen] = useState(false)
     const [scrolled, setScrolled] = useState(false)
+    const menuToggleRef = useRef(null)
+
+    const closeMenu = () => {
+        menuToggleRef.current?.focus({ preventScroll: true })
+        setMenuOpen(false)
+    }
 
     const currentUser = user || profile || (session ? { name: session.user?.email } : null)
     const avatarUrl = user?.avatarUrl || profile?.avatarUrl
@@ -72,25 +78,25 @@ export function Navbar({ onOrder, user, onAuth, onLogout, cartCount, onCart, bre
     }
 
     useEffect(() => {
-        const closeMenu = event => {
-            if (event.key === 'Escape') setMenuOpen(false)
+        const handleKeydown = event => {
+            if (event.key === 'Escape') closeMenu()
         }
         const handleScroll = () => {
             setScrolled(window.scrollY > 10)
         }
-        window.addEventListener('keydown', closeMenu)
+        window.addEventListener('keydown', handleKeydown)
         window.addEventListener('scroll', handleScroll, { passive: true })
         // Trigger initial check
         handleScroll()
 
         return () => {
-            window.removeEventListener('keydown', closeMenu)
+            window.removeEventListener('keydown', handleKeydown)
             window.removeEventListener('scroll', handleScroll)
         }
     }, [])
 
     const handleNav = (index) => {
-        setMenuOpen(false)
+        closeMenu()
         if (index === 0) { // หน้าแรก
             if (window.location.pathname !== '/') {
                 navigate('/')
@@ -115,12 +121,13 @@ export function Navbar({ onOrder, user, onAuth, onLogout, cartCount, onCart, bre
             <div className="nav-shell">
                 <Brand compact />
                 <button
+                    ref={menuToggleRef}
                     className="menu-toggle"
                     type="button"
                     aria-label={menuOpen ? t('navCloseMenu') : t('navOpenMenu')}
                     aria-expanded={menuOpen}
                     aria-controls="responsive-navigation"
-                    onClick={() => setMenuOpen(open => !open)}
+                    onClick={() => menuOpen ? closeMenu() : setMenuOpen(true)}
                 >
                     <span />
                     <span />
@@ -129,6 +136,7 @@ export function Navbar({ onOrder, user, onAuth, onLogout, cartCount, onCart, bre
                 <nav className="main-nav">
                     {navItems.map((item) => (
                         <button
+                            type="button"
                             key={item.key}
                             onClick={() => handleNav(item.index)}
                         >
@@ -137,6 +145,7 @@ export function Navbar({ onOrder, user, onAuth, onLogout, cartCount, onCart, bre
                     ))}
                     {isOperational && roleConfigs[userRole] && (
                         <button
+                            type="button"
                             className="nav-role-badge"
                             onClick={() => navigate(roleConfigs[userRole].path)}
                             title={roleConfigs[userRole].title}
@@ -147,6 +156,7 @@ export function Navbar({ onOrder, user, onAuth, onLogout, cartCount, onCart, bre
                     )}
                 </nav>
                 <button
+                    type="button"
                     className="lang"
                     onClick={toggleLang}
                     title={lang === 'th' ? 'Switch to English' : 'เปลี่ยนเป็นภาษาไทย'}
@@ -155,7 +165,7 @@ export function Navbar({ onOrder, user, onAuth, onLogout, cartCount, onCart, bre
                     <i className="bi bi-globe2" style={{ fontSize: 13, marginRight: 4 }}></i>
                     {lang === 'th' ? 'ENG' : 'ไทย'}
                 </button>
-                <button className="profile" onClick={currentUser ? () => navigate('/profile') : onAuth} title={currentUser ? t('navProfile') : t('navLogin')}>
+                <button type="button" className="profile" onClick={currentUser ? () => navigate('/profile') : onAuth} title={currentUser ? t('navProfile') : t('navLogin')}>
                     {avatarUrl ? (
                         <img src={avatarUrl} alt={currentUser?.name || 'User'} className="nav-avatar-img" />
                     ) : (
@@ -163,7 +173,7 @@ export function Navbar({ onOrder, user, onAuth, onLogout, cartCount, onCart, bre
                     )}
                     {currentUser && <span className="logged-dot" />}
                 </button>
-                <button className="cart-head" onClick={onCart} title={t('navCart')}>
+                <button type="button" className="cart-head" onClick={onCart} title={t('navCart')}>
                     <i className="bi bi-cart" style={{ fontSize: 24 }}></i>
                     {cartCount > 0 && <b>{cartCount}</b>}
                 </button>
@@ -174,8 +184,9 @@ export function Navbar({ onOrder, user, onAuth, onLogout, cartCount, onCart, bre
                     {isOperational && roleConfigs[userRole] && (
                         <div className="responsive-role-section">
                             <button
+                                type="button"
                                 className="responsive-role-btn main-role"
-                                onClick={() => { setMenuOpen(false); navigate(roleConfigs[userRole].path); }}
+                                onClick={() => { closeMenu(); navigate(roleConfigs[userRole].path); }}
                             >
                                 <i className={roleConfigs[userRole].icon} />
                                 <span>{roleConfigs[userRole].title}</span>
@@ -183,13 +194,13 @@ export function Navbar({ onOrder, user, onAuth, onLogout, cartCount, onCart, bre
                             </button>
                             {userRole === 'admin' && (
                                 <div className="responsive-sub-roles">
-                                    <button onClick={() => { setMenuOpen(false); navigate('/cashier'); }}>
+                                    <button type="button" onClick={() => { closeMenu(); navigate('/cashier'); }}>
                                         <i className="bi bi-cash-coin" /> แคชเชียร์
                                     </button>
-                                    <button onClick={() => { setMenuOpen(false); navigate('/kitchen'); }}>
+                                    <button type="button" onClick={() => { closeMenu(); navigate('/kitchen'); }}>
                                         <i className="bi bi-fire" /> ครัว
                                     </button>
-                                    <button onClick={() => { setMenuOpen(false); navigate('/delivery'); }}>
+                                    <button type="button" onClick={() => { closeMenu(); navigate('/delivery'); }}>
                                         <i className="bi bi-bicycle" /> ไรเดอร์
                                     </button>
                                 </div>
@@ -197,15 +208,15 @@ export function Navbar({ onOrder, user, onAuth, onLogout, cartCount, onCart, bre
                         </div>
                     )}
                     {navItems.map((item) => (
-                        <button key={item.key} onClick={() => handleNav(item.index)}>{t(item.key)}</button>
+                        <button type="button" key={item.key} onClick={() => handleNav(item.index)}>{t(item.key)}</button>
                     ))}
                 </div>
-                <button className="responsive-lang" onClick={() => { toggleLang(); setMenuOpen(false); }}>
+                <button type="button" className="responsive-lang" onClick={() => { closeMenu(); toggleLang(); }}>
                     <i className="bi bi-globe2" style={{ marginRight: 6 }}></i>
                     {lang === 'th' ? 'Language: Switch to English (ENG)' : 'ภาษา: เปลี่ยนเป็นภาษาไทย (TH)'}
                 </button>
             </nav>
-            {menuOpen && <button className="nav-backdrop" aria-label="ปิดเมนู" onClick={() => setMenuOpen(false)} />}
+            {menuOpen && <button type="button" className="nav-backdrop" aria-label="ปิดเมนู" onClick={closeMenu} />}
 
             {breadcrumbs && (
                 <nav className="breadcrumb-bar">

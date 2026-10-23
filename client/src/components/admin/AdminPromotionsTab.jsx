@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { adminApi } from '../../lib/database'
-import { PageHead, PAGE_LINK_OPTIONS, money } from './AdminShared'
+import { PageHead, PAGE_LINK_OPTIONS, money, useAdminConfirm } from './AdminShared'
 
 const getPromotionStatus = promotion => {
     const expiresAt = promotion.expiresAt ? new Date(promotion.expiresAt).getTime() : null
@@ -16,6 +16,7 @@ const getPromotionStatus = promotion => {
 }
 
 export function AdminPromotionsTab({ promotions, setPromotions, adminName, notify, fail }) {
+    const { confirm, confirmDialog } = useAdminConfirm()
     const [editingPromotion, setEditingPromotion] = useState(null)
     const [isAdding, setIsAdding] = useState(false)
     const [savingId, setSavingId] = useState(null)
@@ -129,7 +130,7 @@ export function AdminPromotionsTab({ promotions, setPromotions, adminName, notif
     }
 
     const deletePromotion = async id => {
-        if (!window.confirm('คุณต้องการลบโปรโมชั่นนี้ใช่หรือไม่?')) return
+        if (!await confirm('คุณต้องการลบโปรโมชั่นนี้ใช่หรือไม่?', { confirmLabel: 'ลบโปรโมชั่น' })) return
         setDeletingId(id)
         try {
             await adminApi.deleteCoupon(id)
@@ -279,6 +280,7 @@ export function AdminPromotionsTab({ promotions, setPromotions, adminName, notif
                     )
                 })}
             </div>
+            {confirmDialog}
         </>
     )
 }

@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 import { useLanguage } from '../../lib/LanguageContext'
+import { orderItemOptionLabel } from '../../lib/productOptions'
 
 const statusTranslation = {
     'รอยืนยัน': 'Pending',
@@ -77,7 +78,7 @@ export function ProfileOrdersTab({
                             <ul>
                                 {order.items.map(item => (
                                     <li key={item.id}>
-                                        <span>{item.productName} × {item.quantity}</span>
+                                        <span>{item.productName} × {item.quantity}{orderItemOptionLabel(item) && <small className="staff-item-options">{orderItemOptionLabel(item)}</small>}</span>
                                         <b>{money(item.priceAtTime * item.quantity)}</b>
                                     </li>
                                 ))}

@@ -1,17 +1,59 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { OrderNavbar } from './OrderNavbar'
 import { CartSidebar } from './Cart'
 import { useLanguage } from '../lib/LanguageContext'
 import { categoryNameTranslations } from '../locales/translations'
 import './OrderPage.css'
+import { ProductOptionsModal } from './ProductOptionsModal'
+import { selectableOptionGroups, buildCartLines, makeCartLineKey } from '../lib/productOptions'
 
-export function OrderPage({ onHome, user, onAuth, onLogout, products, categories, cart, setCart, itemNotes, setItemNotes, onCheckout, pointsToUse, setPointsToUse }) {
+export function OrderPage({ onHome, user, onAuth, onLogout, onCart, products, categories, cart, setCart, itemNotes, setItemNotes, onCheckout, pointsToUse, setPointsToUse }) {
     const { lang, isEn, t } = useLanguage()
+    const [searchParams] = useSearchParams()
+    const handledProductRef = useRef(null)
     const [query, setQuery] = useState('')
     const [cat, setCat] = useState('promo')
+    const [optionProduct, setOptionProduct] = useState(null)
+    const [highlightedProductId, setHighlightedProductId] = useState(null)
+    const targetProductId = searchParams.get('product')
 
-    const add = (p) => setCart(prev => ({ ...prev, [p.id]: (prev[p.id] || 0) + 1 }))
-    const remove = (p) => setCart(prev => ({ ...prev, [p.id]: Math.max(0, (prev[p.id] || 0) - 1) }))
+    useEffect(() => {
+        const promoCode = searchParams.get('promo')
+        if (promoCode) sessionStorage.setItem('limeleaf_pending_promo', promoCode)
+    }, [searchParams])
+
+    useEffect(() => {
+        if (!targetProductId || handledProductRef.current === targetProductId || !products.length) return
+        const product = products.find(item => String(item.id) === targetProductId)
+        if (!product) return
+        handledProductRef.current = targetProductId
+        setHighlightedProductId(targetProductId)
+        setCat(product.categoryId || 'promo')
+        window.setTimeout(() => {
+            const card = document.querySelector(`[data-product-id="${CSS.escape(targetProductId)}"]`)
+            card?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+            card?.focus({ preventScroll: true })
+        }, 100)
+    }, [products, targetProductId])
+
+    useEffect(() => {
+        if (!highlightedProductId) return undefined
+        const timer = window.setTimeout(() => {
+            setHighlightedProductId(null)
+            document.querySelector(`[data-product-id="${CSS.escape(highlightedProductId)}"]`)?.blur()
+        }, 2200)
+        return () => window.clearTimeout(timer)
+    }, [highlightedProductId])
+
+    const addLine = (product, selection = {}, details = {}) => {
+        const lineKey = makeCartLineKey(product.id, selection)
+        const quantity = Math.max(1, Number(details.quantity || 1))
+        setCart(prev => ({ ...prev, [lineKey]: (prev[lineKey] || 0) + quantity }))
+        if (details.note) setItemNotes(prev => ({ ...prev, [lineKey]: details.note }))
+        setOptionProduct(null)
+    }
+    const add = product => selectableOptionGroups(product).length ? setOptionProduct(product) : addLine(product)
 
     const getCategoryLabel = (name, catObj) => {
         if (!name && !catObj) return ''
@@ -26,9 +68,8 @@ export function OrderPage({ onHome, user, onAuth, onLogout, products, categories
         return matchCat && matchQ
     })
 
-    const cartItems = products.filter(p => cart[p.id])
-    const total = cartItems.reduce((s, p) => s + p.price * cart[p.id], 0)
-    const count = cartItems.reduce((s, p) => s + cart[p.id], 0)
+    const cartLines = buildCartLines(cart, products)
+    const count = cartLines.reduce((sum, line) => sum + line.quantity, 0)
 
     const promoTabLabel = isEn ? 'New & Promos' : 'เมนูและโปรโมชั่นใหม่'
 
@@ -56,7 +97,7 @@ export function OrderPage({ onHome, user, onAuth, onLogout, products, categories
                 onAuth={onAuth}
                 onLogout={onLogout}
                 cartCount={count}
-                onCheckout={onCheckout}
+                onCheckout={onCart || onCheckout}
                 onHome={onHome}
             />
 
@@ -66,12 +107,12 @@ export function OrderPage({ onHome, user, onAuth, onLogout, products, categories
 
                     {/* Search row */}
                     <div className="op-search-row">
-                        <div>
+                        <div className="op-section-heading">
                             <h2 className="op-section-title">
                                 {currentCategoryTitle}
                             </h2>
                             {currentCategorySubTitle && (
-                                <span className="op-section-subtitle" style={{ fontSize: '13px', color: '#68776b', fontWeight: 600, display: 'block', marginTop: '2px' }}>
+                                <span className="op-section-subtitle">
                                     {currentCategorySubTitle}
                                 </span>
                             )}
@@ -94,7 +135,7 @@ export function OrderPage({ onHome, user, onAuth, onLogout, products, categories
                             const mainName = isEn && p.en ? p.en : p.name
                             const subName = isEn && p.en ? p.name : (p.en || '')
                             return (
-                                <article className="op-card" key={p.id}>
+                                <article className={`op-card ${String(p.id) === highlightedProductId ? 'op-card-target' : ''}`} key={p.id} data-product-id={p.id} tabIndex={String(p.id) === highlightedProductId ? -1 : undefined}>
                                     <div className="op-card-img">
                                         <img src={p.img} alt={mainName} />
                                     </div>
@@ -106,6 +147,7 @@ export function OrderPage({ onHome, user, onAuth, onLogout, products, categories
                                                 {p.description}
                                             </p>
                                         )}
+                                        {selectableOptionGroups(p).length > 0 && <span className="op-option-badge"><i className="bi bi-ui-radios" /> {isEn ? 'Customizable' : 'มีตัวเลือก'}</span>}
                                         <span className="op-card-label">{isEn ? 'Price' : 'ราคา'}</span>
                                         <div className="op-card-footer">
                                             <span className="op-price">฿{p.price}</span>
@@ -140,6 +182,7 @@ export function OrderPage({ onHome, user, onAuth, onLogout, products, categories
                     setPointsToUse={setPointsToUse}
                 />
             </div>
+            {optionProduct && <ProductOptionsModal product={optionProduct} onConfirm={(selection, details) => addLine(optionProduct, selection, details)} onClose={() => setOptionProduct(null)} />}
         </div>
     )
 }

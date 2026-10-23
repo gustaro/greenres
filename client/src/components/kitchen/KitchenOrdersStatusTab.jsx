@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { fetchOrders } from '../../lib/database'
 import { Empty, money, orderCode } from '../StaffShared'
+import { orderItemOptionLabel } from '../../lib/productOptions'
 
 export function KitchenOrdersStatusTab() {
     const [orders, setOrders] = useState([])
@@ -262,6 +263,7 @@ export function KitchenOrdersStatusTab() {
                                                             {isComp ? <i className="bi bi-check2" /> : isCanc ? <i className="bi bi-x" /> : <i className="bi bi-circle-fill" style={{ fontSize: 5 }} />}
                                                         </span>
                                                         <strong>{item.productName || item.displayName || 'สินค้า'}</strong>
+                                                        {orderItemOptionLabel(item) && <small className="staff-item-options" style={{ marginLeft: 20 }}>{orderItemOptionLabel(item)}</small>}
                                                         {item.isAddedLater && (
                                                             <span style={{ fontSize: 10, background: '#fee2e2', color: '#b91c1c', padding: '1px 5px', borderRadius: 4, marginLeft: 4, fontWeight: 700 }}>
                                                                 สั่งเพิ่ม

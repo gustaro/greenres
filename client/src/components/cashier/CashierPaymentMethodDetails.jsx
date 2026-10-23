@@ -20,6 +20,8 @@ export function CashierPaymentMethodDetails({
     setIsQrPaid,
     qrData,
     setQrData,
+    isEdcApproved = false,
+    setIsEdcApproved,
 }) {
     if (selectedPaymentMethod === 'CASH') {
         const cash = Number(cashReceived) || 0
@@ -213,6 +215,15 @@ export function CashierPaymentMethodDetails({
                         <p style={{ fontSize: 12, color: '#6d7b6e', margin: '10px 0 0' }}>
                             รองรับบัตรเครดิต และเดบิต Visa, Mastercard, JCB, UnionPay
                         </p>
+                        <button
+                            type="button"
+                            className={isEdcApproved ? 'cashier-edc-confirm is-approved' : 'cashier-edc-confirm'}
+                            onClick={() => setIsEdcApproved?.(!isEdcApproved)}
+                            aria-pressed={isEdcApproved}
+                        >
+                            <i className={`bi ${isEdcApproved ? 'bi-check-circle-fill' : 'bi-circle'}`} />
+                            {isEdcApproved ? 'เครื่อง EDC อนุมัติแล้ว' : 'กดยืนยันเมื่อเครื่อง EDC อนุมัติ'}
+                        </button>
                     </div>
                 ) : (
                     <div>

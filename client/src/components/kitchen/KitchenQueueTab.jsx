@@ -23,6 +23,12 @@ export function KitchenQueueTab({
     startOrder,
     finishOrder,
     cancelKitchenOrder,
+    realtimeStatus,
+    isOnline,
+    soundEnabled,
+    onToggleSound,
+    keepAwake,
+    onToggleWakeLock,
 }) {
     const [modalOrderId, setModalOrderId] = useState(null)
     const currentModalOrder = modalOrderId ? (queue.find(o => o.id === modalOrderId) || null) : null
@@ -33,6 +39,27 @@ export function KitchenQueueTab({
         refreshData: loadKitchenData,
         addToast,
     })
+
+    const renderCard = order => (
+        <KitchenOuterCard
+            key={order.id}
+            order={order}
+            onOpenModal={o => setModalOrderId(o.id)}
+            actionLoadingId={actionLoadingId}
+            onDispatchAll={dispatchAllRemaining}
+            startOrder={startOrder}
+            finishOrder={finishOrder}
+            cancelKitchenOrder={cancelKitchenOrder}
+        />
+    )
+
+    const connectionState = !isOnline
+        ? { label: 'ออฟไลน์', className: 'offline' }
+        : realtimeStatus === 'SUBSCRIBED'
+            ? { label: 'Real-time ออนไลน์', className: 'online' }
+            : ['ERROR', 'CHANNEL_ERROR', 'TIMED_OUT', 'CLOSED'].includes(realtimeStatus)
+                ? { label: 'เชื่อมต่อใหม่...', className: 'warning' }
+                : { label: 'ระบบสำรอง 30 วินาที', className: 'fallback' }
 
     return (
         <section>
@@ -130,6 +157,22 @@ export function KitchenQueueTab({
                 </div>
             </div>
 
+            <div className="kitchen-live-toolbar">
+                <span className={`kitchen-connection-state ${connectionState.className}`}>
+                    <i className="bi bi-circle-fill" /> {connectionState.label}
+                </span>
+                <div>
+                    <button type="button" className={soundEnabled ? 'active' : ''} onClick={onToggleSound}>
+                        <i className={`bi ${soundEnabled ? 'bi-volume-up-fill' : 'bi-volume-mute-fill'}`} />
+                        {soundEnabled ? 'เปิดเสียงแจ้งเตือน' : 'ปิดเสียงแจ้งเตือน'}
+                    </button>
+                    <button type="button" className={keepAwake ? 'active' : ''} onClick={onToggleWakeLock}>
+                        <i className={`bi ${keepAwake ? 'bi-display-fill' : 'bi-display'}`} />
+                        {keepAwake ? 'หน้าจอไม่ดับ' : 'ป้องกันหน้าจอดับ'}
+                    </button>
+                </div>
+            </div>
+
             {stats && (
                 <div className="staff-metrics">
                     <article><small>รอเริ่มทำ</small><strong style={{ color: '#b45309' }}>{stats.confirmed ?? waiting.length}</strong></article>
@@ -141,26 +184,28 @@ export function KitchenQueueTab({
 
             {/* Container Box wrapping all order cards with internal scrollbar */}
             <div className={`kitchen-queue-container-box ${(loading || displayedOrders.length === 0) ? 'is-empty' : ''}`}>
-                <div className={`staff-order-grid ${(loading || displayedOrders.length === 0) ? 'is-empty' : ''}`}>
-                    {loading ? (
-                        <Empty text="กำลังโหลดคิวครัว..." />
-                    ) : displayedOrders.length === 0 ? (
-                        <Empty text="ไม่มีออเดอร์ในหมวดนี้" />
-                    ) : (
-                        displayedOrders.map(order => (
-                            <KitchenOuterCard
-                                key={order.id}
-                                order={order}
-                                onOpenModal={o => setModalOrderId(o.id)}
-                                actionLoadingId={actionLoadingId}
-                                onDispatchAll={dispatchAllRemaining}
-                                startOrder={startOrder}
-                                finishOrder={finishOrder}
-                                cancelKitchenOrder={cancelKitchenOrder}
-                            />
-                        ))
-                    )}
-                </div>
+                {loading ? (
+                    <div className="staff-order-grid is-empty"><Empty text="กำลังโหลดคิวครัว..." /></div>
+                ) : statusFilter === 'active' ? (
+                    <div className="kitchen-kanban-board">
+                        {[
+                            { key: 'waiting', title: 'รอทำ', icon: 'bi-clock-history', items: waiting },
+                            { key: 'preparing', title: 'กำลังทำ', icon: 'bi-fire', items: preparing },
+                            { key: 'ready', title: 'พร้อมเสิร์ฟ', icon: 'bi-check2-circle', items: ready },
+                        ].map(column => (
+                            <section className={`kitchen-kanban-column ${column.key}`} key={column.key}>
+                                <header><span><i className={`bi ${column.icon}`} /> {column.title}</span><b>{column.items.length}</b></header>
+                                <div className="kitchen-kanban-list">
+                                    {column.items.length > 0 ? column.items.map(renderCard) : <Empty text={`ไม่มีออเดอร์${column.title}`} />}
+                                </div>
+                            </section>
+                        ))}
+                    </div>
+                ) : (
+                    <div className={`staff-order-grid ${displayedOrders.length === 0 ? 'is-empty' : ''}`}>
+                        {displayedOrders.length === 0 ? <Empty text="ไม่มีออเดอร์ในหมวดนี้" /> : displayedOrders.map(renderCard)}
+                    </div>
+                )}
             </div>
 
             {/* Item-by-item Dispatch Popup Modal */}

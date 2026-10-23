@@ -98,6 +98,32 @@ export const refreshToken = async (req, res, next) => {
   }
 };
 
+export const resetPassword = async (req, res, next) => {
+  try {
+    const { email, name, newPassword } = req.body;
+    if (!email || !name || !newPassword) {
+      return res.status(400).json({ message: "Email, name, and new password are required" });
+    }
+    if (newPassword.length < 6) {
+      return res.status(400).json({ message: "Password must be at least 6 characters" });
+    }
+
+    const user = await prisma.user.findUnique({ where: { email } });
+    if (!user || user.name.trim().toLowerCase() !== String(name).trim().toLowerCase()) {
+      return res.status(400).json({ message: "Email or name does not match" });
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 12);
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { password: hashedPassword, refreshToken: null },
+    });
+    res.json({ message: "Password updated" });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const logout = async (req, res, next) => {
   try {
     await prisma.user.update({

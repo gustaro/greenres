@@ -62,24 +62,25 @@ model Category {
 }
 
 model Product {
-  id          String             @id @default(cuid())
-  categoryId  String
-  name        String
-  slug        String             @unique
-  description String?
-  price       Decimal            @db.Decimal(10, 2)
-  imageUrl    String?
-  isActive    Boolean            @default(true)
-  isFeatured  Boolean            @default(false)
-  prepTime    Int                @default(15)
-  stock       Int                @default(999)
-  createdAt   DateTime           @default(now())
-  updatedAt   DateTime           @updatedAt
-  cartItems   CartItem[]
-  inventory   Inventory?
-  recipeItems RecipeIngredient[]
-  orderItems  OrderItem[]
-  category    Category           @relation(fields: [categoryId], references: [id])
+  id           String               @id @default(cuid())
+  categoryId   String
+  name         String
+  slug         String               @unique
+  description  String?
+  price        Decimal              @db.Decimal(10, 2)
+  imageUrl     String?
+  isActive     Boolean              @default(true)
+  isFeatured   Boolean              @default(false)
+  prepTime     Int                  @default(15)
+  stock        Int                  @default(999)
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
+  cartItems    CartItem[]
+  inventory    Inventory?
+  recipeItems  RecipeIngredient[]
+  orderItems   OrderItem[]
+  optionGroups ProductOptionGroup[]
+  category     Category             @relation(fields: [categoryId], references: [id])
 
   @@map("products")
 }
@@ -98,23 +99,65 @@ model IngredientCategory {
 }
 
 model Ingredient {
-  id           String             @id @default(cuid())
-  categoryId   String
-  name         String
-  nameEn       String?
-  quantity     Decimal            @default(0) @db.Decimal(12, 3)
-  unit         String             @default("g")
-  lowThreshold Decimal            @default(0) @db.Decimal(12, 3)
-  isActive     Boolean            @default(true)
-  expiresAt    DateTime?
-  createdAt    DateTime           @default(now())
-  updatedAt    DateTime           @updatedAt
-  category     IngredientCategory @relation(fields: [categoryId], references: [id])
-  recipeItems  RecipeIngredient[]
+  id             String             @id @default(cuid())
+  categoryId     String
+  name           String
+  nameEn         String?
+  quantity       Decimal            @default(0) @db.Decimal(12, 3)
+  unit           String             @default("g")
+  lowThreshold   Decimal            @default(0) @db.Decimal(12, 3)
+  isActive       Boolean            @default(true)
+  expiresAt      DateTime?
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+  category       IngredientCategory @relation(fields: [categoryId], references: [id])
+  recipeItems    RecipeIngredient[]
+  productOptions ProductOption[]
 
   @@unique([name, unit])
   @@index([categoryId])
   @@map("ingredients")
+}
+
+model ProductOptionGroup {
+  id            String          @id @default(cuid())
+  productId     String
+  name          String
+  nameEn        String?
+  selectionType String          @default("SINGLE")
+  isRequired    Boolean         @default(true)
+  minSelections Int             @default(1)
+  maxSelections Int             @default(1)
+  sortOrder     Int             @default(0)
+  isActive      Boolean         @default(true)
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  product       Product         @relation(fields: [productId], references: [id], onDelete: Cascade)
+  options       ProductOption[]
+
+  @@index([productId, sortOrder])
+  @@map("product_option_groups")
+}
+
+model ProductOption {
+  id                 String             @id @default(cuid())
+  groupId            String
+  ingredientId       String?
+  name               String
+  nameEn             String?
+  priceAdjustment    Decimal            @default(0) @db.Decimal(10, 2)
+  ingredientQuantity Decimal?           @db.Decimal(12, 3)
+  isDefault          Boolean            @default(false)
+  isActive           Boolean            @default(true)
+  sortOrder          Int                @default(0)
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+  group              ProductOptionGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  ingredient         Ingredient?        @relation(fields: [ingredientId], references: [id], onDelete: SetNull)
+
+  @@index([groupId, sortOrder])
+  @@index([ingredientId])
+  @@map("product_options")
 }
 
 model RecipeIngredient {
@@ -215,15 +258,16 @@ model Order {
 }
 
 model OrderItem {
-  id        String  @id @default(cuid())
-  orderId   String
-  productId String
-  quantity  Int
-  unitPrice Decimal @db.Decimal(10, 2)
-  subtotal  Decimal @db.Decimal(10, 2)
-  note      String?
-  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  product   Product @relation(fields: [productId], references: [id])
+  id              String  @id @default(cuid())
+  orderId         String
+  productId       String
+  quantity        Int
+  unitPrice       Decimal @db.Decimal(10, 2)
+  subtotal        Decimal @db.Decimal(10, 2)
+  note            String?
+  selectedOptions Json?
+  order           Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product         Product @relation(fields: [productId], references: [id])
 
   @@map("order_items")
 }

@@ -57,16 +57,6 @@
     background: radial-gradient(circle, rgba(255, 255, 255, .65) 0%, rgba(255, 255, 255, .12) 70%);
 }
 
-.hero-home.hero-tone-accent .hero-arrow {
-    background: rgba(255, 255, 255, .82);
-    color: var(--brand-primary-dark);
-}
-
-.hero-home.hero-tone-accent .hero-arrow:hover {
-    background: #ffffff;
-    color: var(--brand-primary);
-}
-
 .hero-home.hero-tone-accent .hero-dots button {
     background: rgba(18, 53, 29, .28);
 }
@@ -115,16 +105,6 @@
     background: radial-gradient(circle, rgba(255, 255, 255, .72) 0%, rgba(255, 255, 255, .15) 70%);
 }
 
-.hero-home.hero-tone-highlight .hero-arrow {
-    background: rgba(255, 255, 255, .82);
-    color: var(--brand-primary-dark);
-}
-
-.hero-home.hero-tone-highlight .hero-arrow:hover {
-    background: #ffffff;
-    color: var(--brand-primary);
-}
-
 .hero-home.hero-tone-highlight .hero-dots button {
     background: rgba(18, 53, 29, .22);
 }
@@ -149,15 +129,16 @@
     to { opacity: 1; transform: translateX(0) }
 }
 
-.hero-copy { position: relative; z-index: 2 }
+.hero-copy { position: relative; z-index: 2; min-width: 0 }
 .hero-copy>span { display: inline-block; margin-bottom: 12px; font-size: 13px; font-weight: 900; letter-spacing: 2.5px; transition: color .4s ease }
-.hero-copy h1 { max-width: 570px; margin: 0; font-size: clamp(52px, 6.2vw, 88px); line-height: .94; letter-spacing: -4px; transition: color .4s ease }
+.hero-copy h1 { max-width: 570px; margin: 0; font-size: clamp(50px, 5.8vw, 82px); line-height: 1.08; letter-spacing: -2.5px; overflow-wrap: anywhere; transition: color .4s ease }
 .hero-copy p { max-width: 530px; margin: 22px 0 30px; font-size: clamp(17px, 1.6vw, 22px); line-height: 1.55; font-weight: 700; transition: color .4s ease }
 .hero-copy button { min-width: 155px; min-height: 52px; padding: 0 22px; border: 0; border-radius: 4px; font-weight: 900; cursor: pointer; transition: all .2s ease }
 .hero-copy button b { margin-left: 10px; color: var(--chart); font-size: 18px }
 
 .hero-picture {
     width: 100%;
+    min-width: 0;
     min-height: 440px;
     position: relative;
     display: flex;
@@ -208,28 +189,14 @@
     transform: scale(1.04);
 }
 
-.hero-arrow {
-    position: absolute;
-    top: 50%;
-    z-index: 4;
-    width: 44px;
-    height: 54px;
-    border: 0;
-    border-radius: 8px;
-    display: grid;
-    place-items: center;
-    font-size: 20px;
-    line-height: 1;
-    transform: translateY(-50%);
-    box-shadow: 0 6px 18px rgba(0, 0, 0, .15);
-    cursor: pointer;
-    transition: all .2s ease;
-}
-.hero-arrow.previous { left: 22px }
-.hero-arrow.next { right: 22px }
-.hero-dots { position: absolute; z-index: 4; left: 50%; bottom: 22px; display: flex; gap: 9px; transform: translateX(-50%) }
-.hero-dots button { width: 9px; height: 9px; padding: 0; border: 0; border-radius: 50%; cursor: pointer; transition: all .25s ease }
-.hero-dots button.active { width: 28px; border-radius: 10px }
+.hero-dots { position: absolute; z-index: 4; left: 50%; bottom: 10px; display: flex; align-items: center; transform: translateX(-50%) }
+.hero-dots button { width: 44px; height: 44px; padding: 0; border: 0; background: transparent !important; cursor: pointer; position: relative }
+.hero-dots button::before { content: ''; position: absolute; width: 9px; height: 9px; left: 50%; top: 50%; border-radius: 50%; background: rgba(18, 53, 29, .28); transform: translate(-50%, -50%); transition: all .25s ease }
+.hero-dots button.active::before { width: 28px; border-radius: 10px; background: var(--brand-primary-dark) }
+.hero-dots .hero-pause { margin-left: 2px; border-radius: 50%; color: var(--brand-primary-dark); font-size: 18px }
+.hero-dots .hero-pause::before { display: none }
+.hero-dots .hero-pause:hover,
+.hero-dots .hero-pause:focus-visible { background: rgba(255, 255, 255, .45) !important }
 
 .promotion-section {
     padding: 46px max(25px, calc((100% - 1000px) / 2)) 52px;
@@ -242,18 +209,44 @@
 .promotion-heading h2 { margin: 5px 0 0; color: #fff; font-size: clamp(28px, 3vw, 38px); letter-spacing: -1.2px }
 .promotion-heading>p { max-width: 390px; margin: 0 0 5px; color: var(--brand-accent-soft); line-height: 1.6 }
 .promotion-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 28px }
-.promotion-grid article { min-width: 0 }
+.promotion-grid article { min-width: 0; display: flex; flex-direction: column }
 .promotion-grid article>h3 { min-height: 44px; margin: 0 0 10px; color: #fff; font-size: 19px; line-height: 1.08 }
-.promotion-mini-card { height: 118px; display: grid; grid-template-columns: 42% 58%; overflow: hidden; border-radius: 5px; background: var(--brand-accent); box-shadow: 0 8px 18px rgba(7, 92, 27, .2); transition: transform .2s ease }
+.promotion-mini-card { min-height: 156px; flex: 1; display: grid; grid-template-columns: 42% 58%; overflow: hidden; border-radius: 9px; background: var(--brand-accent); box-shadow: 0 8px 18px rgba(7, 92, 27, .2); transition: transform .2s ease }
 .promotion-grid article:hover .promotion-mini-card { transform: translateY(-3px) }
-.promotion-image { height: 118px; position: relative; overflow: hidden; background: var(--brand-primary-dark) }
+.promotion-image { min-height: 156px; height: 100%; position: relative; overflow: hidden; background: var(--brand-primary-dark) }
 .promotion-image img { width: 100%; height: 100%; object-fit: cover; transition: transform .3s ease }
 .promotion-grid article:hover .promotion-image img { transform: scale(1.04) }
 .promotion-image span { position: absolute; left: 7px; top: 7px; padding: 4px 6px; border-radius: 3px; background: var(--brand-primary-dark); color: var(--brand-accent); font-size: 10px; font-weight: 900 }
 .promotion-copy { min-width: 0; padding: 12px 11px; display: flex; flex-direction: column; align-items: flex-start }
 .promotion-copy small { color: var(--brand-primary-dark); font-size: 8px; font-weight: 900; letter-spacing: 1px }
-.promotion-copy p { display: -webkit-box; min-height: 0; margin: 6px 0; overflow: hidden; color: var(--brand-primary-dark); font-size: 10px; line-height: 1.35; -webkit-box-orient: vertical; -webkit-line-clamp: 3 }
-.promotion-copy button { margin-top: auto; border: 0; background: transparent; color: var(--brand-primary-dark); padding: 0; font-size: 9px; font-weight: 900 }
+.promotion-copy p { display: -webkit-box; min-height: 0; margin: 6px 0; overflow: hidden; color: var(--brand-primary-dark); font-size: 10px; line-height: 1.35; -webkit-box-orient: vertical; -webkit-line-clamp: 2 }
+.promotion-meta { display: flex; flex-wrap: wrap; gap: 3px; margin-bottom: 7px }
+.promotion-meta span { padding: 2px 5px; border-radius: 999px; background: rgba(7, 92, 27, .1); color: var(--brand-primary-dark); font-size: 8px; font-weight: 800 }
+.promotion-copy button { min-height: 32px; margin-top: auto; border: 1px solid var(--brand-primary-dark); border-radius: 6px; background: var(--brand-primary-dark); color: #fff; padding: 4px 9px; font-size: 9px; font-weight: 900; cursor: pointer }
+.promotion-copy button:hover { background: var(--brand-primary); border-color: var(--brand-primary) }
+
+.home-service-strip {
+    width: min(1000px, calc(100% - 50px));
+    margin: 40px auto 0;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+}
+.home-service-strip article { min-width: 0; min-height: 96px; padding: 18px; display: flex; align-items: center; gap: 14px; border: 1px solid rgba(7, 92, 27, .18); border-radius: 16px; background: var(--brand-accent-soft); color: var(--brand-primary-dark) }
+.home-service-strip i { width: 42px; height: 42px; flex: 0 0 42px; display: grid; place-items: center; border-radius: 12px; background: var(--brand-primary); color: #fff; font-size: 19px }
+.home-service-strip strong,
+.home-service-strip span { display: block }
+.home-service-strip strong { margin-bottom: 3px; font-size: 15px }
+.home-service-strip span { color: var(--brand-muted); font-size: 11px; line-height: 1.45 }
+
+.home-skeleton { display: block; border-radius: 8px; background: linear-gradient(90deg, rgba(7, 92, 27, .08) 25%, rgba(184, 255, 53, .3) 50%, rgba(7, 92, 27, .08) 75%); background-size: 200% 100%; animation: home-skeleton-shimmer 1.25s linear infinite }
+.promotion-skeleton .line { width: 55%; height: 18px; margin-bottom: 10px }
+.promotion-skeleton .promo { height: 156px }
+.home-product-skeleton .home-skeleton-image { width: 100%; height: 170px; border-bottom: 2px solid var(--brand-primary-dark); border-radius: 0 }
+.home-product-skeleton .line { width: 62%; height: 13px; margin-bottom: 10px }
+.home-product-skeleton .line.wide { width: 88%; height: 18px }
+.home-product-skeleton .button { width: 100%; height: 38px; margin-top: 30px }
+@keyframes home-skeleton-shimmer { to { background-position: -200% 0 } }
 
 .food-preview { width: min(1000px, calc(100% - 50px)); margin: 76px auto 82px }
 .menu-frame {
@@ -339,6 +332,23 @@
     overflow: hidden;
 }
 .preview-grid small { font-size: 9px; color: var(--brand-muted); min-height: 14px; display: block; }
+.preview-grid .preview-product-subtitle {
+    min-height: 17px;
+    color: var(--brand-primary-dark);
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.35;
+}
+.preview-grid .preview-product-description {
+    display: -webkit-box;
+    margin: 3px 0 4px;
+    overflow: hidden;
+    color: var(--brand-muted);
+    font-size: 10px;
+    line-height: 1.35;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+}
 .preview-grid strong { display: block; font-size: 18px; color: var(--brand-primary); margin: 8px 0 12px }
 .preview-grid button {
     margin-top: auto;
@@ -357,10 +367,11 @@
 @media(max-width:900px) {
     .hero-home { min-height: 560px }
     .hero-slide { width: min(100% - 80px, 760px); min-height: 500px; grid-template-columns: 1fr 1fr; gap: 10px }
-    .hero-copy h1 { font-size: clamp(44px, 8vw, 68px) }
+    .hero-copy h1 { font-size: clamp(42px, 7.5vw, 64px); line-height: 1.1 }
     .hero-picture { height: auto; min-height: 0 }
     .hero-picture-frame { max-width: 440px; border-radius: 20px; border-width: 3px }
     .promotion-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) }
+    .home-service-strip { grid-template-columns: 1fr }
     .preview-grid { grid-template-columns: repeat(2, 1fr) }
     .menu-frame { padding-inline: 22px }
 }
@@ -370,37 +381,38 @@
     .hero-home::before { inset: 68% -20% -20% 10% }
     .hero-slide { width: calc(100% - 42px); min-height: 610px; padding: 42px 0 50px; grid-template-columns: 1fr; align-content: center; text-align: center }
     .hero-copy>span { font-size: 10px }
-    .hero-copy h1 { margin: auto; font-size: 48px; letter-spacing: -2.5px }
+    .hero-copy { width: 100%; max-width: calc(100vw - 42px) }
+    .hero-copy h1 { width: 100%; max-width: 100%; margin: auto; font-size: clamp(34px, 10vw, 42px); line-height: 1.14; letter-spacing: -.8px; word-break: normal; overflow-wrap: anywhere }
     .hero-copy p { margin: 16px auto 20px; font-size: 15px }
     .hero-copy button { min-height: 46px }
     .hero-picture { height: auto; min-height: 0; order: -1; margin-bottom: 20px }
-    .hero-picture-frame { max-width: 380px; aspect-ratio: 16 / 10; border-radius: 18px; border-width: 2.5px }
+    .hero-picture-frame { max-width: min(380px, calc(100vw - 42px)); aspect-ratio: 16 / 10; border-radius: 18px; border-width: 2.5px }
     .hero-picture-frame img,
     .hero-picture img { transform: none }
-    .hero-arrow { width: 36px; height: 44px; font-size: 16px }
-    .hero-arrow.previous { left: 7px }
-    .hero-arrow.next { right: 7px }
     .promotion-section { padding-block: 48px }
     .promotion-heading { display: block }
     .promotion-heading>p { margin-top: 10px; font-size: 13px }
     .promotion-grid, .preview-grid { grid-template-columns: 1fr }
-    .promotion-mini-card,.promotion-image { height: 112px }
+    .promotion-mini-card,.promotion-image { min-height: 150px }
+    .home-service-strip { width: calc(100% - 32px); margin-top: 28px }
     .food-preview { width: calc(100% - 32px); margin-block: 68px 76px }
     .menu-frame { padding: 34px 14px 18px; border-radius: 20px; box-shadow: 7px 7px 0 var(--brand-accent-soft) }
     .menu-frame-new { margin-top: 84px }
     .menu-frame::before { left: -8px; top: -10px }
     .menu-frame::after { right: -8px; bottom: -10px }
     .preview-head { align-items: center; gap: 10px; margin-bottom: 18px }
-    .preview-title-frame { min-width: 0; width: min(275px, 78%); grid-template-columns: 50px 1fr; transform: translateY(-53px); margin-bottom: -43px; box-shadow: 4px 4px 0 var(--brand-accent) }
+    .preview-title-frame { min-width: 0; width: min(275px, 78%); grid-template-columns: 50px 1fr; transform: none; margin-bottom: 0; box-shadow: 4px 4px 0 var(--brand-accent) }
     .preview-title-frame>div { padding: 8px 12px }
     .preview-head h2 { font-size: 21px }
     .preview-head small { font-size: 7px; letter-spacing: 1.4px }
     .preview-head>button { font-size: 0 }
     .preview-head>button i { margin: 0; font-size: 20px }
-    .preview-grid img { height: 210px }
+    .preview-grid img,
+    .home-product-skeleton .home-skeleton-image { height: 210px }
 }
 
 @media(prefers-reduced-motion:reduce) {
     .hero-slide { animation: none }
     .promotion-grid article, .promotion-image img, .preview-grid article { transition: none }
+    .home-skeleton { animation: none }
 }

@@ -169,6 +169,7 @@ export const updateSiteSettings = async (req, res) => {
         if (payload.footerDescription !== undefined) settings.footerDescription = payload.footerDescription;
         if (payload.footerAbout !== undefined) settings.footerAbout = payload.footerAbout;
         if (payload.footerCopyright !== undefined) settings.footerCopyright = payload.footerCopyright;
+        if (payload.footerCredit !== undefined) settings.footerCredit = payload.footerCredit;
         if (payload.footerLinks !== undefined) settings.footerLinks = payload.footerLinks;
         if (payload.storeHours !== undefined) settings.storeHours = payload.storeHours;
         if (payload.contactEmail !== undefined) settings.contactEmail = payload.contactEmail;
@@ -518,4 +519,3 @@ export const testCloudinaryConnection = async (req, res) => {
         });
     }
 };
-

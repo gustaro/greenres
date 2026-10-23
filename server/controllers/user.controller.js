@@ -182,6 +182,31 @@ export const updateUserRole = async (req, res, next) => {
   }
 };
 
+export const updateUserPassword = async (req, res, next) => {
+  try {
+    const password = String(req.body?.password || req.body?.newPassword || "");
+    if (password.length < 6) {
+      return res.status(400).json({ message: "Password must be at least 6 characters" });
+    }
+
+    const existing = await prisma.user.findUnique({
+      where: { id: req.params.id },
+      select: { id: true },
+    });
+    if (!existing) return res.status(404).json({ message: "User not found" });
+
+    const hashed = await bcrypt.hash(password, 12);
+    await prisma.user.update({
+      where: { id: req.params.id },
+      data: { password: hashed, refreshToken: null },
+    });
+
+    res.json({ message: "Password updated successfully" });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const deleteUser = async (req, res, next) => {
   try {
     await prisma.user.delete({ where: { id: req.params.id } });
@@ -370,4 +395,3 @@ export const getPointsHistory = async (req, res, next) => {
     next(error);
   }
 };
-

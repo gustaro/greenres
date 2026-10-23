@@ -6,6 +6,7 @@ import { SERVER_CHANGE_EVENT, SERVER_SYNC_KEY } from '../lib/api'
 import { attachRealtimeFallback, subscribeDatabaseChanges } from '../lib/realtime'
 import { DELIVERY_FLOW, DELIVERY_STATUS_LABEL, normalizeJob } from './delivery/DeliveryShared'
 import { DeliveryRiderBar } from './delivery/DeliveryRiderBar'
+import { DeliveryRiderStatusBoard } from './delivery/DeliveryRiderStatusBoard'
 import { DeliveryJobCard } from './delivery/DeliveryJobCard'
 import { DeliveryRiderProfileModal } from './delivery/DeliveryRiderProfileModal'
 import { DeliveryCashModal } from './delivery/DeliveryCashModal'
@@ -18,6 +19,7 @@ export function DeliveryDashboard({ setOrders }) {
     const [tab, setTab] = useState('active')
     const [jobs, setJobs] = useState([])
     const [rider, setRider] = useState(null)
+    const [riders, setRiders] = useState([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
     const [expanded, setExpanded] = useState(null)
@@ -44,9 +46,10 @@ export function DeliveryDashboard({ setOrders }) {
         const request = (async () => {
             try {
                 setError('')
-                const [riderResult, deliveryResult] = await Promise.all([
+                const [riderResult, deliveryResult, riderListResult] = await Promise.all([
                     deliveryApi.riderProfile().catch(() => null),
                     isAdmin ? deliveryApi.list() : deliveryApi.riderDeliveries(),
+                    isAdmin ? deliveryApi.riders() : Promise.resolve([]),
                 ])
 
                 const fetchedJobs = deliveryResult?.deliveries ?? (Array.isArray(deliveryResult) ? deliveryResult : [])
@@ -64,6 +67,7 @@ export function DeliveryDashboard({ setOrders }) {
                 }
 
                 if (finalRider) setRider(finalRider)
+                if (isAdmin) setRiders(Array.isArray(riderListResult) ? riderListResult : [])
                 setJobs(fetchedJobs)
             } catch (loadError) {
                 setError(loadError.message)
@@ -96,7 +100,7 @@ export function DeliveryDashboard({ setOrders }) {
 
         const unsubscribeRealtime = subscribeDatabaseChanges({
             channelName: 'limeleaf-delivery',
-            tables: ['deliveries', 'tracking_events', 'orders'],
+            tables: ['deliveries', 'tracking_events', 'orders', ...(isAdmin ? ['riders'] : [])],
             onChange: refresh,
             onStatus: (status, err) => {
                 if (status === 'SUBSCRIBED') console.info('[Realtime] Delivery connected')
@@ -144,6 +148,11 @@ export function DeliveryDashboard({ setOrders }) {
             setActiveDeliveryJob(job)
             return
         }
+
+        const currentLabel = DELIVERY_STATUS_LABEL[delivStatus] ?? delivStatus
+        const nextLabel = DELIVERY_STATUS_LABEL[nextStatus] ?? flow[1]
+        const confirmed = window.confirm(`ยืนยันเปลี่ยนสถานะจาก “${currentLabel}” เป็น “${nextLabel}” หรือไม่?`)
+        if (!confirmed) return
 
         const targetId = job.deliveryId ?? job.id
         setAdvancingJobId(targetId)
@@ -281,6 +290,8 @@ export function DeliveryDashboard({ setOrders }) {
                 toggleAvailability={toggleAvailability}
                 setShowProfileModal={setShowProfileModal}
             />
+
+            {isAdmin && <DeliveryRiderStatusBoard riders={riders} loading={loading} />}
 
             {error && (
                 <div className="staff-alert" style={{ background: '#fef2f2', borderColor: '#fca5a5', color: '#b91c1c' }}>

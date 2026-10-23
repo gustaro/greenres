@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { money, orderCode } from '../StaffShared'
 import { CashierPaymentMethodDetails } from './CashierPaymentMethodDetails'
 
@@ -13,15 +13,7 @@ export function CashierPaymentModal({
     onCancel,
     loading,
 }) {
-    if (!order) return null
-
-    const total = Number(order.totalAmount) || 0
-    const cash = Number(cashReceived) || 0
-    const change = cash - total
-    const isCashShort = selectedPaymentMethod === 'CASH' && cash < total
-
-    // Card mode & card form states
-    const [cardMode, setCardMode] = useState('edc') // 'edc' | 'manual'
+    const [cardMode, setCardMode] = useState('edc')
     const [cardData, setCardData] = useState({
         cardNumber: '',
         cleanNumber: '',
@@ -34,9 +26,35 @@ export function CashierPaymentModal({
     })
     const [isQrPaid, setIsQrPaid] = useState(false)
     const [qrData, setQrData] = useState(null)
+    const [isEdcApproved, setIsEdcApproved] = useState(false)
+
+    useEffect(() => {
+        setCardMode('edc')
+        setCardData({
+            cardNumber: '',
+            cleanNumber: '',
+            cardHolder: '',
+            expiry: '',
+            cvv: '',
+            cardType: 'GENERIC',
+            isValid: false,
+            maskedCard: '',
+        })
+        setIsQrPaid(false)
+        setQrData(null)
+        setIsEdcApproved(false)
+    }, [order?.id])
+
+    if (!order) return null
+
+    const total = Number(order.totalAmount) || 0
+    const cash = Number(cashReceived) || 0
+    const change = cash - total
+    const isCashShort = selectedPaymentMethod === 'CASH' && cash < total
 
     const isCardManualInvalid = selectedPaymentMethod === 'CARD' && cardMode === 'manual' && !cardData.isValid
-    const isConfirmDisabled = loading || isCashShort || isCardManualInvalid
+    const isEdcPending = selectedPaymentMethod === 'CARD' && cardMode === 'edc' && !isEdcApproved
+    const isConfirmDisabled = loading || isCashShort || isCardManualInvalid || isEdcPending
 
     const handleConfirm = () => {
         if (isConfirmDisabled) return
@@ -54,7 +72,7 @@ export function CashierPaymentModal({
 
     return (
         <div className="overlay" style={{ zIndex: 1200, display: 'grid', placeItems: 'center', background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(3px)' }}>
-            <div style={{ background: '#fff', borderRadius: 16, padding: 24, width: '92%', maxWidth: 520, maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 25px 35px -5px rgba(0,0,0,0.25)', border: '1px solid var(--brand-accent-soft, #effbdc)' }}>
+            <div className="cashier-payment-modal" style={{ background: '#fff', borderRadius: 16, padding: 24, width: '92%', maxWidth: 520, maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 25px 35px -5px rgba(0,0,0,0.25)', border: '1px solid var(--brand-accent-soft, #effbdc)' }}>
                 {/* Modal Header */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
                     <div>
@@ -158,10 +176,12 @@ export function CashierPaymentModal({
                     setIsQrPaid={setIsQrPaid}
                     qrData={qrData}
                     setQrData={setQrData}
+                    isEdcApproved={isEdcApproved}
+                    setIsEdcApproved={setIsEdcApproved}
                 />
 
                 {/* Action Buttons */}
-                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 10 }}>
+                <div className="cashier-payment-actions" style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 10 }}>
                     <button
                         type="button"
                         className="staff-secondary"
@@ -195,6 +215,8 @@ export function CashierPaymentModal({
                             <><i className="bi bi-arrow-repeat spin me-1" /> กำลังบันทึกการชำระเงิน...</>
                         ) : isCardManualInvalid ? (
                             <><i className="bi bi-exclamation-circle"></i> กรุณากรอกข้อมูลบัตรให้ครบถ้วน</>
+                        ) : isEdcPending ? (
+                            <><i className="bi bi-credit-card"></i> กรุณายืนยันผลจากเครื่อง EDC</>
                         ) : selectedPaymentMethod === 'QR' && isQrPaid ? (
                             <><i className="bi bi-check-circle-fill"></i> ยืนยันรับชำระเงิน QR ({money(total)})</>
                         ) : (

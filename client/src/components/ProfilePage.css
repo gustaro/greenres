@@ -1035,6 +1035,17 @@
         width: 100%;
         padding: 13px
     }
+
+    .ad-address-row {
+        grid-template-columns: 1fr
+    }
+
+    .pf-order-list {
+        max-height: none;
+        min-height: 0;
+        overflow: visible;
+        padding-right: 0
+    }
 }
 
 /* ─── Address Form (New) ───────────────────────────────────────── */

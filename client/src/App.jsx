@@ -1,14 +1,8 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { BrowserRouter, Routes, Route, useNavigate } from 'react-router-dom'
 import { OrderPage } from './components/OrderPage'
 import { HomePage } from './components/HomePage'
-import { ProfilePage } from './components/ProfilePage'
-import { StoreMapPage } from './components/StoreMapPage'
-import { KitchenDashboard } from './components/KitchenDashboard'
-import { DeliveryDashboard } from './components/DeliveryDashboard'
-import { CashierDashboard } from './components/CashierDashboard'
-import { AdminDashboard } from './components/AdminDashboard'
-import { AuthProvider, useAuth } from './lib/AuthContext'
+import { AuthProvider, SIGN_OUT_EVENT, useAuth } from './lib/AuthContext'
 import { LanguageProvider, useLanguage } from './lib/LanguageContext'
 import { deliveryApi, ensureDeliveryForOrder, fetchCatalog, fetchOrders, placeOrder, getRoleDashboardPath, normalizeRole } from './lib/database'
 import { SERVER_CHANGE_EVENT, SERVER_SYNC_KEY } from './lib/api'
@@ -18,6 +12,23 @@ import { CheckoutModal } from './components/Checkout'
 import { ScrollToTop } from './components/ScrollToTop'
 import { AuthModal } from './components/auth/AuthModal'
 import { RoleRoute } from './components/auth/RoleRoute'
+import { buildCartLines } from './lib/productOptions'
+
+const ProfilePage = lazy(() => import('./components/ProfilePage').then(module => ({ default: module.ProfilePage })))
+const StoreMapPage = lazy(() => import('./components/StoreMapPage').then(module => ({ default: module.StoreMapPage })))
+const KitchenDashboard = lazy(() => import('./components/KitchenDashboard').then(module => ({ default: module.KitchenDashboard })))
+const DeliveryDashboard = lazy(() => import('./components/DeliveryDashboard').then(module => ({ default: module.DeliveryDashboard })))
+const CashierDashboard = lazy(() => import('./components/CashierDashboard').then(module => ({ default: module.CashierDashboard })))
+const AdminDashboard = lazy(() => import('./components/AdminDashboard').then(module => ({ default: module.AdminDashboard })))
+
+function RouteLoading() {
+  return (
+    <div className="app-loading" role="status" aria-label="Loading" style={{ minHeight: '60vh', display: 'grid', placeContent: 'center', justifyItems: 'center' }}>
+      <div className="app-loading-mark"><i /><i /></div>
+      <span className="app-loading-spinner" />
+    </div>
+  )
+}
 
 function Success({ onHome }) {
   const { t } = useLanguage()
@@ -86,6 +97,18 @@ function MainApp() {
 
   useEffect(() => localStorage.setItem('lime-cart', JSON.stringify(cart)), [cart])
   useEffect(() => localStorage.setItem('lime-cart-notes', JSON.stringify(itemNotes)), [itemNotes])
+  useEffect(() => {
+    const clearCartAfterSignOut = () => {
+      setCart({})
+      setItemNotes({})
+      setPointsToUse(0)
+      setDrawer(false)
+      setCheckout(false)
+    }
+
+    window.addEventListener(SIGN_OUT_EVENT, clearCartAfterSignOut)
+    return () => window.removeEventListener(SIGN_OUT_EVENT, clearCartAfterSignOut)
+  }, [])
   useEffect(() => {
     fetchCatalog().then(data => {
       setProducts(data.products)
@@ -175,7 +198,8 @@ function MainApp() {
     return () => { cancelled = true }
   }, [session, profile?.role, orders])
 
-  const count = useMemo(() => products.reduce((sum, product) => sum + (cart[product.id] || 0), 0), [cart, products])
+  const cartLines = useMemo(() => buildCartLines(cart, products), [cart, products])
+  const count = useMemo(() => cartLines.reduce((sum, line) => sum + line.quantity, 0), [cartLines])
 
   const openCheckout = () => {
     if (!count) return setDrawer(true)
@@ -190,14 +214,15 @@ function MainApp() {
 
   const handlePlaceOrder = async details => {
     try {
-      const validCart = Object.fromEntries(products.filter(product => cart[product.id] > 0).map(product => [product.id, cart[product.id]]))
-      await placeOrder({ cart: validCart, ...details, itemNotes, pointsUsed: details.pointsUsed !== undefined ? details.pointsUsed : pointsToUse })
+      const validCart = Object.fromEntries(cartLines.filter(line => line.quantity > 0).map(line => [line.lineKey, line.quantity]))
+      await placeOrder({ cart: validCart, products, ...details, itemNotes: details.itemNotes || itemNotes, pointsUsed: details.pointsUsed !== undefined ? details.pointsUsed : pointsToUse })
       await refreshProfile()
       await refreshOrders()
       const catalog = await fetchCatalog()
       setProducts(catalog.products)
       setCheckout(false)
       setCart({})
+      setItemNotes({})
       setPointsToUse(0)
       navigate('/success')
     } catch (error) {
@@ -221,17 +246,19 @@ function MainApp() {
 
   return (
     <>
-      <Routes>
-        <Route path="/" element={<HomePage onOrder={() => navigate('/order')} {...navProps} />} />
-        <Route path="/order" element={<OrderPage onHome={() => navigate('/')} {...navProps} products={products} categories={categories} cart={cart} setCart={setCart} itemNotes={itemNotes} setItemNotes={setItemNotes} onCheckout={openCheckout} pointsToUse={pointsToUse} setPointsToUse={setPointsToUse} />} />
-        <Route path="/map" element={<StoreMapPage {...navProps} onHome={() => navigate('/')} onOrder={() => navigate('/order')} />} />
-        <Route path="/profile" element={<ProfilePage onOrder={() => navigate('/order')} {...navProps} />} />
-        <Route path="/success" element={<Success onHome={() => navigate('/')} />} />
-        <Route path="/kitchen" element={<RoleRoute session={session} profile={profile} loading={loading} roles={['kitchen', 'admin']} onAuth={() => setAuth(true)}><KitchenDashboard orders={orders} setOrders={setOrders} /></RoleRoute>} />
-        <Route path="/delivery" element={<RoleRoute session={session} profile={profile} loading={loading} roles={['delivery', 'rider', 'admin']} onAuth={() => setAuth(true)}><DeliveryDashboard orders={orders} setOrders={setOrders} /></RoleRoute>} />
-        <Route path="/cashier" element={<RoleRoute session={session} profile={profile} loading={loading} roles={['cashier', 'staff', 'admin']} onAuth={() => setAuth(true)}><CashierDashboard orders={orders} setOrders={setOrders} refreshOrders={refreshOrders} /></RoleRoute>} />
-        <Route path="/admin" element={<RoleRoute session={session} profile={profile} loading={loading} roles={['admin']} onAuth={() => setAuth(true)}><AdminDashboard orders={orders} setOrders={setOrders} products={products} setProducts={setProducts} categories={categories} setCategories={setCategories} /></RoleRoute>} />
-      </Routes>
+      <Suspense fallback={<RouteLoading />}>
+        <Routes>
+          <Route path="/" element={<HomePage onOrder={() => navigate('/order')} {...navProps} />} />
+          <Route path="/order" element={<OrderPage onHome={() => navigate('/')} {...navProps} products={products} categories={categories} cart={cart} setCart={setCart} itemNotes={itemNotes} setItemNotes={setItemNotes} onCheckout={openCheckout} pointsToUse={pointsToUse} setPointsToUse={setPointsToUse} />} />
+          <Route path="/map" element={<StoreMapPage {...navProps} onHome={() => navigate('/')} onOrder={() => navigate('/order')} />} />
+          <Route path="/profile" element={<ProfilePage onOrder={() => navigate('/order')} {...navProps} />} />
+          <Route path="/success" element={<Success onHome={() => navigate('/')} />} />
+          <Route path="/kitchen" element={<RoleRoute session={session} profile={profile} loading={loading} roles={['kitchen', 'admin']} onAuth={() => setAuth(true)}><KitchenDashboard orders={orders} setOrders={setOrders} /></RoleRoute>} />
+          <Route path="/delivery" element={<RoleRoute session={session} profile={profile} loading={loading} roles={['delivery', 'rider', 'admin']} onAuth={() => setAuth(true)}><DeliveryDashboard orders={orders} setOrders={setOrders} /></RoleRoute>} />
+          <Route path="/cashier" element={<RoleRoute session={session} profile={profile} loading={loading} roles={['cashier', 'staff', 'admin']} onAuth={() => setAuth(true)}><CashierDashboard orders={orders} setOrders={setOrders} refreshOrders={refreshOrders} /></RoleRoute>} />
+          <Route path="/admin" element={<RoleRoute session={session} profile={profile} loading={loading} roles={['admin']} onAuth={() => setAuth(true)}><AdminDashboard orders={orders} setOrders={setOrders} products={products} setProducts={setProducts} categories={categories} setCategories={setCategories} /></RoleRoute>} />
+        </Routes>
+      </Suspense>
       {auth && <AuthModal onClose={() => setAuth(false)} onSuccess={handleLoginSuccess} />}
       {drawer && <CartDrawer cart={cart} setCart={setCart} products={products} itemNotes={itemNotes} setItemNotes={setItemNotes} onClose={() => setDrawer(false)} onCheckout={openCheckout} pointsToUse={pointsToUse} setPointsToUse={setPointsToUse} onAuth={() => { setDrawer(false); setAuth(true); }} />}
       {checkout && <CheckoutModal cart={cart} products={products} itemNotes={itemNotes} onClose={() => setCheckout(false)} onDone={handlePlaceOrder} pointsToUse={pointsToUse} setPointsToUse={setPointsToUse} />}

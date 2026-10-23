@@ -1,4 +1,5 @@
 import { orderCode, scheduleLabel } from '../StaffShared'
+import { orderItemOptionLabel } from '../../lib/productOptions'
 
 export function KitchenOuterCard({
     order,
@@ -17,18 +18,17 @@ export function KitchenOuterCard({
     const readyItems = items.filter(i => i.itemStatus === 'READY' || i.itemStatus === 'SERVED')
     const activeItems = items.filter(i => i.itemStatus !== 'READY' && i.itemStatus !== 'SERVED')
     const hasAddedLater = items.some(i => i.isAddedLater)
+    const hasCriticalNote = /แพ้|allerg|ห้าม|ไม่ใส่|งด/i.test(order.notes || '')
     const progressPercent = items.length > 0 ? Math.round((readyItems.length / items.length) * 100) : 0
     const isAllReady = items.length > 0 && readyItems.length === items.length
 
     return (
         <article
             className={`kitchen-outer-white-card status-${(order.serverStatus || 'CONFIRMED').toLowerCase()}${isCancelled ? ' is-cancelled' : ''}`}
-            onClick={isCancelled ? undefined : () => onOpenModal?.(order)}
             style={{
-                cursor: isCancelled ? 'default' : 'pointer',
                 opacity: isCancelled ? 0.78 : 1,
             }}
-            title={isCancelled ? 'ออเดอร์ถูกยกเลิกแล้ว (ไม่สามารถดำเนินการได้)' : 'คลิกเพื่อดูและส่งทีละรายการ (Popup)'}
+            title={isCancelled ? 'ออเดอร์ถูกยกเลิกแล้ว (ไม่สามารถดำเนินการได้)' : undefined}
         >
             {/* Header */}
             <header className="kitchen-outer-header">
@@ -100,9 +100,9 @@ export function KitchenOuterCard({
 
             {/* Order Notes */}
             {order.notes && (
-                <div className="kitchen-notes-callout">
+                <div className={`kitchen-notes-callout${hasCriticalNote ? ' is-critical' : ''}`}>
                     <i className="bi bi-chat-left-text me-1"></i>
-                    <strong>หมายเหตุโต๊ะ:</strong> {order.notes}
+                    <strong>{hasCriticalNote ? 'ข้อควรระวัง:' : 'หมายเหตุโต๊ะ:'}</strong> {order.notes}
                 </div>
             )}
 
@@ -131,6 +131,8 @@ export function KitchenOuterCard({
                                     </span>
                                     <span style={{ fontWeight: isDone ? 500 : 700 }}>
                                         {item.productName || item.displayName || 'สินค้า'}
+                                        {orderItemOptionLabel(item) && <small className="staff-item-options kitchen-option-callout">{orderItemOptionLabel(item)}</small>}
+                                        {item.cleanNote && <small className={`kitchen-item-note${/แพ้|allerg|ห้าม|ไม่ใส่|งด/i.test(item.cleanNote) ? ' is-critical' : ''}`}>{item.cleanNote}</small>}
                                     </span>
                                     {item.isAddedLater && (
                                         <span className="kitchen-batch-pill" style={{ fontSize: 10, padding: '1px 6px' }}>
@@ -151,8 +153,11 @@ export function KitchenOuterCard({
             </div>
 
             {/* Click to open popup hint banner */}
-            <div
+            <button
+                type="button"
                 className={`kitchen-card-open-hint ${isCancelled ? 'disabled' : ''}`}
+                onClick={() => !isCancelled && onOpenModal?.(order)}
+                disabled={isCancelled}
                 style={isCancelled ? {
                     background: '#f9fafb',
                     color: '#9ca3af',
@@ -163,7 +168,7 @@ export function KitchenOuterCard({
             >
                 <i className={`bi ${isCancelled ? 'bi-slash-circle' : 'bi-cursor-fill'} me-1`}></i>
                 {isCancelled ? 'ออเดอร์ถูกยกเลิกแล้ว (ปิดการสั่งทำ)' : 'คลิกการ์ดนี้เพื่อเปิดส่งทีละรายการ (Popup)'}
-            </div>
+            </button>
 
             {/* Quick Actions Footer */}
             <footer
