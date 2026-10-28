@@ -165,7 +165,6 @@ export function OrderPage({ onHome, user, onAuth, onLogout, onCart, products, ca
                                 <article className={`op-card ${isSoldOut ? 'op-card-soldout' : ''} ${String(p.id) === highlightedProductId ? 'op-card-target' : ''}`} key={p.id} data-product-id={p.id} tabIndex={String(p.id) === highlightedProductId ? -1 : undefined}>
                                     <div className="op-card-img">
                                         <img src={p.img} alt={mainName} />
-                                        {isSoldOut && <span className="op-soldout-badge">{t('outOfStock')}</span>}
                                     </div>
                                     <div className="op-card-body">
                                         <h3>{mainName}</h3>

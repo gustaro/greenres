@@ -256,21 +256,12 @@
     transform: none;
 }
 
-.op-soldout-badge {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%) rotate(-8deg);
-    background: var(--brand-primary-dark, #075c1b);
-    color: #fff;
-    font-weight: 900;
-    font-size: 18px;
-    letter-spacing: .04em;
-    padding: 6px 18px;
-    border-radius: 10px;
-    border: 2px solid var(--brand-accent, #b8ff35);
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
-    pointer-events: none;
+.op-card-soldout .op-add-btn:disabled {
+    background: #e7e5e4;
+    color: #78716c;
+    border-color: #d6d3d1;
+    cursor: not-allowed;
+    box-shadow: none;
 }
 
 .op-card-body {
