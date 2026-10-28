@@ -4193,3 +4193,18 @@
 @media (prefers-reduced-motion: reduce) {
     .cashier-sound-unlock { animation: none; }
 }
+
+/* Rider page: new-job alert settings (reuses the cashier sound controls) */
+.rider-alerts {
+    margin-bottom: 14px;
+}
+
+.rider-alerts-hint {
+    color: var(--brand-muted, #778076);
+    font-size: 11px;
+    line-height: 1.4;
+}
+
+span.cashier-sound-toggle {
+    cursor: default;
+}

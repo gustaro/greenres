@@ -12,6 +12,9 @@ import { DeliveryRiderProfileModal } from './delivery/DeliveryRiderProfileModal'
 import { DeliveryCashModal } from './delivery/DeliveryCashModal'
 import { DeliveryCompleteModal } from './delivery/DeliveryCompleteModal'
 import { DeliveryImageLightbox } from './delivery/DeliveryImageLightbox'
+import { DeliveryAlertControls } from './delivery/DeliveryAlertControls'
+import { useRiderJobAlerts } from './delivery/useRiderJobAlerts'
+import { ToastContainer } from './ToastNotification'
 
 export function DeliveryDashboard({ setOrders }) {
     const { profile, session } = useAuth()
@@ -259,6 +262,8 @@ export function DeliveryDashboard({ setOrders }) {
         }
     }, [expanded])
 
+    const jobAlerts = useRiderJobAlerts({ jobs, rider, isAdmin })
+
     const normalizedJobs = jobs.map(normalizeJob)
     const activeJobs = normalizedJobs.filter(j => !['DELIVERED', 'FAILED', 'CANCELLED'].includes(j.status))
     const completedJobs = normalizedJobs.filter(j => j.status === 'DELIVERED')
@@ -282,6 +287,8 @@ export function DeliveryDashboard({ setOrders }) {
                 { key: 'completed', label: 'จัดส่งสำเร็จ', icon: 'bi-check-circle' },
             ]}
         >
+            <ToastContainer toasts={jobAlerts.toasts} onDismiss={jobAlerts.dismissToast} />
+
             <DeliveryRiderBar
                 rider={rider}
                 session={session}
@@ -291,6 +298,8 @@ export function DeliveryDashboard({ setOrders }) {
                 toggleAvailability={toggleAvailability}
                 setShowProfileModal={setShowProfileModal}
             />
+
+            {!isAdmin && <DeliveryAlertControls alerts={jobAlerts} />}
 
             {isAdmin && <DeliveryRiderStatusBoard riders={riders} loading={loading} />}
 

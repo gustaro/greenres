@@ -359,6 +359,7 @@ export const mapDelivery = row => {
         foodStatus: deliveryStatusLabel(row.status),
         serverDeliveryStatus: row.status,
         provider: row.provider,
+        riderId: row.riderId ?? null,
         rider: row.rider,
         estimatedMinutes: row.estimatedMinutes,
         deliveryFee: Number(row.deliveryFee ?? mappedOrder.deliveryFee ?? 0),
