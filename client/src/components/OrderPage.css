@@ -797,3 +797,9 @@
     cursor: not-allowed;
     box-shadow: none;
 }
+
+/* Cart + button when the cart already holds all remaining stock */
+.cart-qty-ui button:disabled {
+    opacity: .35;
+    cursor: not-allowed;
+}

@@ -169,18 +169,44 @@ const getIngredientUsage = async (client, items) => {
   return [...usage.values()];
 };
 
-// Products without a recipe use their own stock count; zero means sold out.
-const findSoldOutProduct = async (products) => {
-  const zeroStock = products.filter(product => product && Number(product.stock ?? 1) <= 0);
-  if (zeroStock.length === 0) return null;
-  const withRecipe = await prisma.recipeIngredient.findMany({
-    where: { productId: { in: zeroStock.map(product => product.id) } },
-    select: { productId: true },
-    distinct: ["productId"],
-  });
-  const recipeIds = new Set(withRecipe.map(row => row.productId));
-  return zeroStock.find(product => !recipeIds.has(product.id)) || null;
+const sumProductQuantities = (items) => {
+  const quantities = new Map();
+  for (const item of items) {
+    const quantity = Number(item.quantity || 0);
+    if (item.productId && quantity > 0) quantities.set(item.productId, (quantities.get(item.productId) || 0) + quantity);
+  }
+  return quantities;
 };
+
+// Product stock is the sellable count shown in admin: 0 means sold out, for every product.
+const findStockProblem = (products, items) => {
+  const quantities = sumProductQuantities(items);
+  for (const product of products) {
+    const wanted = quantities.get(product?.id) || 0;
+    if (!wanted) continue;
+    const stock = Number(product.stock ?? 0);
+    if (stock <= 0) return `${product.name} หมดแล้ว`;
+    if (wanted > stock) return `${product.name} เหลือเพียง ${stock} ชิ้น`;
+  }
+  return null;
+};
+
+// Runs inside the order transaction; the stock guard stops two orders taking the last item.
+const takeProductStock = async (tx, items) => {
+  for (const [productId, quantity] of sumProductQuantities(items)) {
+    const result = await tx.product.updateMany({
+      where: { id: productId, stock: { gte: quantity } },
+      data: { stock: { decrement: quantity } },
+    });
+    if (result.count === 0) {
+      throw Object.assign(new Error("สินค้าบางรายการหมดระหว่างสั่งซื้อ กรุณาลองใหม่"), { status: 400 });
+    }
+  }
+};
+
+const restoreProductStockOps = (client, items) => [...sumProductQuantities(items)].map(([productId, quantity]) =>
+  client.product.updateMany({ where: { id: productId }, data: { stock: { increment: quantity } } })
+);
 
 const findInsufficientIngredient = (usage) => usage.find(({ ingredient, required }) =>
   !ingredient.isActive || Number(ingredient.quantity) < required
@@ -231,15 +257,15 @@ export const createOrder = async (req, res, next) => {
       return res.status(400).json({ message: "Cart is empty" });
     }
 
-    // Product availability is controlled by active state; physical stock comes from recipes.
+    // Availability: active flag, the product's own stock count, and recipe ingredients.
     for (const item of cartItems) {
       if (!item.product.isActive) {
         return res.status(400).json({ message: `${item.product.name} is no longer available` });
       }
     }
-    const soldOut = await findSoldOutProduct(cartItems.map(item => item.product));
-    if (soldOut) {
-      return res.status(400).json({ message: `${soldOut.name} หมดแล้ว` });
+    const stockProblem = findStockProblem(cartItems.map(item => item.product), cartItems);
+    if (stockProblem) {
+      return res.status(400).json({ message: stockProblem });
     }
 
     const ingredientUsage = await getIngredientUsage(prisma, cartItems);
@@ -376,6 +402,7 @@ export const createOrder = async (req, res, next) => {
           data: { quantity: { decrement: required } },
         })
       ));
+      await takeProductStock(tx, cartItems);
 
       // Increment coupon usage
       if (coupon) {
@@ -490,14 +517,15 @@ export const updateOrderStatus = async (req, res, next) => {
     if (status === "CANCELLED" && order.status !== "CANCELLED") {
       const items = await prisma.orderItem.findMany({ where: { orderId: order.id } });
       const ingredientUsage = await getIngredientUsage(prisma, items);
-      await prisma.$transaction(
-        ingredientUsage.map(({ ingredient, required }) =>
+      await prisma.$transaction([
+        ...ingredientUsage.map(({ ingredient, required }) =>
           prisma.ingredient.update({
             where: { id: ingredient.id },
             data: { quantity: { increment: required } },
           })
-        )
-      );
+        ),
+        ...restoreProductStockOps(prisma, items),
+      ]);
     }
 
     const updated = await prisma.order.update({
@@ -644,6 +672,7 @@ export const cancelOrder = async (req, res, next) => {
           data: { quantity: { increment: required } },
         })
       ),
+      ...restoreProductStockOps(prisma, order.items),
     ];
 
     if (pointsToRefund > 0) {
@@ -763,9 +792,10 @@ export const appendOrderItems = async (req, res, next) => {
     const products = await prisma.product.findMany({ where: { id: { in: productIds } }, include: optionGroupInclude });
     const productMap = new Map(products.map(p => [p.id, p]));
 
-    const unavailable = products.find(product => !product.isActive) || await findSoldOutProduct(products);
-    if (unavailable) {
-      return res.status(400).json({ message: `${unavailable.name} หมดแล้ว` });
+    const inactive = products.find(product => !product.isActive);
+    const stockProblem = inactive ? `${inactive.name} หมดแล้ว` : findStockProblem(products, items);
+    if (stockProblem) {
+      return res.status(400).json({ message: stockProblem });
     }
 
     let addedSubtotal = 0;
@@ -861,6 +891,7 @@ export const appendOrderItems = async (req, res, next) => {
           data: { quantity: { decrement: required } },
         });
       }
+      await takeProductStock(tx, itemsToCreate);
 
       const updatedNotes = `[${orderSource}] ${prefix}${JSON.stringify(meta)}`;
 

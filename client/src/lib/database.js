@@ -160,7 +160,8 @@ export const mapProduct = row => {
         price: Number(row.price),
         img: row.imageUrl || '/assets/basil-rice.png',
         imageUrl: row.imageUrl,
-        status: !row.isActive || (Number(row.stock || 0) <= 0 && !row.recipeItems?.length)
+        // Stock is the sellable count set in admin and reduced by every order: 0 = sold out.
+        status: !row.isActive || (row.stock != null && Number(row.stock) <= 0)
             ? 'หมด'
             : hasUnavailableRequiredOptions || (row.recipeItems?.length && row.recipeItems.some(item => !item.ingredient?.isActive || Number(item.ingredient?.quantity || 0) < Number(item.quantityRequired || 0)))
                 ? 'วัตถุดิบไม่เพียงพอ'

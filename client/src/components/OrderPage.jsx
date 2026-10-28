@@ -6,7 +6,7 @@ import { useLanguage } from '../lib/LanguageContext'
 import { categoryNameTranslations } from '../locales/translations'
 import './OrderPage.css'
 import { ProductOptionsModal } from './ProductOptionsModal'
-import { selectableOptionGroups, buildCartLines, makeCartLineKey } from '../lib/productOptions'
+import { selectableOptionGroups, buildCartLines, makeCartLineKey, productIdFromLineKey } from '../lib/productOptions'
 
 export function OrderPage({ onHome, user, onAuth, onLogout, onCart, products, categories, cart, setCart, itemNotes, setItemNotes, onCheckout, pointsToUse, setPointsToUse }) {
     const { lang, isEn, t } = useLanguage()
@@ -49,6 +49,12 @@ export function OrderPage({ onHome, user, onAuth, onLogout, onCart, products, ca
     const addLine = (product, selection = {}, details = {}) => {
         const lineKey = makeCartLineKey(product.id, selection)
         const quantity = Math.max(1, Number(details.quantity || 1))
+        // Never let the cart hold more than the remaining stock of this product.
+        const inCart = Object.entries(cart || {}).reduce((sum, [key, qty]) => sum + (productIdFromLineKey(key) === product.id ? Number(qty) || 0 : 0), 0)
+        if (inCart + quantity > Number(product.stock ?? Infinity)) {
+            window.alert(isEn ? `Only ${product.stock} left in stock` : `${product.name} เหลือเพียง ${product.stock} ชิ้น`)
+            return
+        }
         setCart(prev => ({ ...prev, [lineKey]: (prev[lineKey] || 0) + quantity }))
         if (details.note) setItemNotes(prev => ({ ...prev, [lineKey]: details.note }))
         setOptionProduct(null)

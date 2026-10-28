@@ -5,7 +5,13 @@ import { useLanguage } from '../lib/LanguageContext'
 import { validatePromotion } from '../lib/database'
 import { cleanAddressText } from '../lib/geo'
 import { CartPointsWidget } from './cart/CartPointsWidget'
-import { buildCartLines } from '../lib/productOptions'
+import { buildCartLines, productIdFromLineKey } from '../lib/productOptions'
+
+// True when the cart already holds all remaining stock of this line's product (across option variants).
+const reachedStock = (cart, line) => {
+    const inCart = Object.entries(cart || {}).reduce((sum, [key, qty]) => sum + (productIdFromLineKey(key) === line.productId ? Number(qty) || 0 : 0), 0)
+    return inCart >= Number(line.product?.stock ?? Infinity)
+}
 
 export const SERVER_DELIVERY_FEE = Number(import.meta.env.VITE_DELIVERY_FEE || 35)
 export const SERVER_FREE_DELIVERY_THRESHOLD = Number(import.meta.env.VITE_FREE_DELIVERY_THRESHOLD || 300)
@@ -179,7 +185,7 @@ export function CartDrawer({ cart, setCart, products, itemNotes, setItemNotes, o
                                                     <i className="bi bi-dash"></i>
                                                 </button>
                                                 <span>{line.quantity}</span>
-                                                <button onClick={() => setCart(v => ({ ...v, [line.lineKey]: (v[line.lineKey] || 0) + 1 }))}>
+                                                <button disabled={reachedStock(cart, line)} title={reachedStock(cart, line) ? (isEn ? 'No more stock' : 'สินค้าเหลือเท่านี้') : undefined} onClick={() => setCart(v => ({ ...v, [line.lineKey]: (v[line.lineKey] || 0) + 1 }))}>
                                                     <i className="bi bi-plus"></i>
                                                 </button>
                                             </div>
@@ -541,7 +547,7 @@ export function CartSidebar({ cart, setCart, products, itemNotes, setItemNotes, 
                                     <div className="op-qty cart-qty-ui">
                                         <button onClick={() => remove(line)}><i className="bi bi-dash"></i></button>
                                         <span>{line.quantity}</span>
-                                        <button onClick={() => add(line)}><i className="bi bi-plus"></i></button>
+                                        <button disabled={reachedStock(cart, line)} title={reachedStock(cart, line) ? (isEn ? 'No more stock' : 'สินค้าเหลือเท่านี้') : undefined} onClick={() => add(line)}><i className="bi bi-plus"></i></button>
                                     </div>
                                 </div>
                             </div>
