@@ -1,10 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { updateOrder, kitchenApi } from '../../lib/database'
 import { orderCode, formatCashierPaymentMethod, formatPaymentOverview } from '../StaffShared'
-import { playNotificationChime } from '../ToastNotification'
+import { playAlert, unlockAudio, getAudioState, onAudioStateChange } from '../../lib/alertSounds'
 import { useCashierCounter } from './useCashierCounter'
 import { useCashierOperations } from './useCashierOperations'
 import { exportPdf, PDF_BASE_CSS } from '../../lib/exportPdf'
+
+const SOUND_PREF_KEY = 'cashier-sound-enabled'
+// Orders arrive right after the page opens; anything already ready then is treated as known (no alert burst).
+const ALERT_WARMUP_MS = 4000
 
 export function useCashierDashboard(orders, setOrders, refreshOrders) {
     const [tab, setTab] = useState('ready')
@@ -118,33 +122,98 @@ export function useCashierDashboard(orders, setOrders, refreshOrders) {
         }
     }
 
-    const knownReadyOrderIdsRef = useRef(null)
+    // ── Kitchen alerts: sound + toast for every dish that comes out, not only an order's first one ──
+    const [soundEnabled, setSoundEnabledState] = useState(() => {
+        try { return localStorage.getItem(SOUND_PREF_KEY) !== 'off' } catch { return true }
+    })
+    const [audioState, setAudioState] = useState(getAudioState)
+    const soundEnabledRef = useRef(soundEnabled)
+    soundEnabledRef.current = soundEnabled
+
+    const setSoundEnabled = value => {
+        setSoundEnabledState(value)
+        try { localStorage.setItem(SOUND_PREF_KEY, value ? 'on' : 'off') } catch { /* private mode */ }
+        if (value) unlockAudio()
+    }
+    const testSound = kind => unlockAudio().then(() => playAlert(kind))
+
     useEffect(() => {
-        const currentReadyIds = new Set(readyOrders.map(o => o.id))
-        if (knownReadyOrderIdsRef.current === null) {
-            knownReadyOrderIdsRef.current = currentReadyIds
+        const stopListening = onAudioStateChange(setAudioState)
+        // Browsers only allow sound after an interaction; any click or key on the page unlocks it.
+        const unlock = () => { unlockAudio() }
+        document.addEventListener('pointerdown', unlock)
+        document.addEventListener('keydown', unlock)
+        return () => {
+            stopListening()
+            document.removeEventListener('pointerdown', unlock)
+            document.removeEventListener('keydown', unlock)
+        }
+    }, [])
+
+    const readyItemKeys = validOrders
+        .filter(order => order.deliveryType !== 'ให้จัดส่ง' && !['DELIVERED', 'CANCELLED'].includes(order.serverStatus))
+        .flatMap(order => (order.items || []).filter(item => item.itemStatus === 'READY').map(item => `${order.id}:${item.id}`))
+    const riderReadyIds = deliveryOrders.filter(order => order.serverStatus === 'READY').map(order => order.id)
+    const alertSignature = `${readyItemKeys.join('|')}#${riderReadyIds.join('|')}`
+
+    const mountedAtRef = useRef(Date.now())
+    const knownAlertsRef = useRef(null)
+    useEffect(() => {
+        const known = knownAlertsRef.current
+        if (!known || Date.now() - mountedAtRef.current < ALERT_WARMUP_MS) {
+            knownAlertsRef.current = { items: new Set(readyItemKeys), rider: new Set(riderReadyIds) }
             return
         }
 
-        readyOrders.forEach(order => {
-            if (!knownReadyOrderIdsRef.current.has(order.id)) {
-                knownReadyOrderIdsRef.current.add(order.id)
-                playNotificationChime()
+        const newItemKeys = readyItemKeys.filter(key => !known.items.has(key))
+        const newRiderIds = riderReadyIds.filter(id => !known.rider.has(id))
+        newItemKeys.forEach(key => known.items.add(key))
+        newRiderIds.forEach(id => known.rider.add(id))
+
+        if (newItemKeys.length > 0) {
+            if (soundEnabledRef.current) playAlert('serve')
+            const itemIdsByOrder = new Map()
+            newItemKeys.forEach(key => {
+                const [orderId, itemId] = key.split(':')
+                itemIdsByOrder.set(orderId, [...(itemIdsByOrder.get(orderId) || []), itemId])
+            })
+            itemIdsByOrder.forEach((itemIds, orderId) => {
+                const order = validOrders.find(o => o.id === orderId)
+                if (!order) return
                 const code = orderCode(order)
                 const tableText = order.deliveryType === 'ทานที่ร้าน' && order.tableNumber ? `โต๊ะ ${order.tableNumber}` : order.deliveryType || 'สั่งกลับบ้าน'
+                const newItems = (order.items || []).filter(item => itemIds.includes(item.id))
+                const allDone = (order.items || []).every(item => item.itemStatus === 'READY' || item.itemStatus === 'SERVED')
                 addToast({
                     type: 'food_ready',
-                    title: 'อาหารพร้อมเสิร์ฟ!',
+                    title: allDone ? 'อาหารพร้อมเสิร์ฟ!' : `มีเมนูพร้อมเสิร์ฟ ${newItems.length} รายการ`,
                     message: `${code} · ${tableText} (${customerLabel(order)})`,
+                    itemsSummary: newItems.map(item => `${item.productName} ×${item.quantity}`).join(', '),
                     orderNumber: order.orderNumber || code,
                     tableNumber: order.tableNumber,
-                    actionLabel: 'ส่งมอบแล้ว',
-                    onAction: () => completeCounterOrder(order),
-                    duration: 8000
+                    ...(allDone ? { actionLabel: 'ส่งมอบแล้ว', onAction: () => completeCounterOrder(order) } : {}),
+                    duration: 8000,
                 })
-            }
-        })
-    }, [readyOrders])
+            })
+        }
+
+        if (newRiderIds.length > 0) {
+            // Leave a gap after the serve sound so the two alerts stay distinguishable.
+            if (soundEnabledRef.current) window.setTimeout(() => playAlert('rider'), newItemKeys.length > 0 ? 1900 : 0)
+            newRiderIds.forEach(orderId => {
+                const order = validOrders.find(o => o.id === orderId)
+                if (!order) return
+                addToast({
+                    type: 'food_ready',
+                    title: 'อาหารพร้อม รอไรเดอร์มารับ',
+                    message: `${orderCode(order)} · จัดส่ง (${customerLabel(order)})`,
+                    meta: order.riderName ? `ไรเดอร์: ${order.riderName}` : 'ยังไม่มีไรเดอร์รับงาน',
+                    orderNumber: order.orderNumber || orderCode(order),
+                    duration: 8000,
+                })
+            })
+        }
+    }, [alertSignature])
 
     const normalizedSearch = search.trim().toLowerCase()
     const matchesSearch = order => {
@@ -356,6 +425,7 @@ export function useCashierDashboard(orders, setOrders, refreshOrders) {
         period, setPeriod,
         ordersFilter, setOrdersFilter,
         toasts, dismissToast,
+        soundEnabled, setSoundEnabled, audioState, testSound,
         ...counter,
         ...ops,
         visibleAddItemsGroups,

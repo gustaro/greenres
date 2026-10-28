@@ -13,6 +13,7 @@ import { CashierPaymentsTab } from './cashier/CashierPaymentsTab'
 import { CashierHistoryTab } from './cashier/CashierHistoryTab'
 import { CashierSummaryTab } from './cashier/CashierSummaryTab'
 import { CashierCancelModal } from './cashier/CashierCancelModal'
+import { CashierSoundControls } from './cashier/CashierSoundControls'
 import { ProductOptionsModal } from './ProductOptionsModal'
 
 export function CashierDashboard({ orders = [], setOrders, refreshOrders }) {
@@ -25,6 +26,7 @@ export function CashierDashboard({ orders = [], setOrders, refreshOrders }) {
         period, setPeriod,
         ordersFilter, setOrdersFilter,
         toasts, dismissToast,
+        soundEnabled, setSoundEnabled, audioState, testSound,
         counterProducts,
         counterSource, setCounterSource,
         counterTableNumber, setCounterTableNumber,
@@ -79,6 +81,7 @@ export function CashierDashboard({ orders = [], setOrders, refreshOrders }) {
             ]}
         >
             <ToastContainer toasts={toasts} onDismiss={dismissToast} />
+            <CashierSoundControls soundEnabled={soundEnabled} setSoundEnabled={setSoundEnabled} audioState={audioState} testSound={testSound} />
             {tab === 'payments' && <div className="staff-alert">ออเดอร์ออนไลน์ใหม่ต้องกด "ยืนยันออเดอร์" ก่อนเข้าครัว · ออเดอร์เก็บเงินปลายทางไรเดอร์เป็นผู้เก็บเงิน</div>}
             {tab === 'ready' && <div className="staff-alert">ตรวจสอบรายการที่พร้อมเสิร์ฟ นำไปเสิร์ฟที่โต๊ะ และกด "ส่งมอบแล้ว"</div>}
             {counterNotice && <div className="staff-alert" style={{ borderColor: 'var(--brand-primary, #12852f)', color: 'var(--brand-primary, #12852f)' }}><i className="bi bi-check-circle-fill me-2" />{counterNotice}</div>}
