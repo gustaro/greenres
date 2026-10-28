@@ -523,9 +523,24 @@
     color: #9c6412
 }
 
-.admin-badge.blocked {
-    background: #ffe8e5;
-    color: #b84539
+.admin-badge.blocked,
+.admin-badge.cancelled {
+    background: #fee2e2;
+    color: #dc2626;
+    border: 1px solid #fca5a5;
+}
+
+.admin-responsive-table tbody tr.is-cancelled {
+    background: #fffcfc;
+}
+
+.admin-responsive-table tbody tr.is-cancelled td {
+    color: #991b1b;
+}
+
+.admin-order-list > div.is-cancelled {
+    background: #fffcfc;
+    border-left: 3px solid #ef4444;
 }
 
 .admin-top-products>div {

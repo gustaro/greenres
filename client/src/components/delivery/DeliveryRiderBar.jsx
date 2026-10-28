@@ -87,8 +87,8 @@ export function DeliveryRiderBar({ rider, session, profile, isAdmin, activeJobsC
                                 <i className="bi bi-circle-fill" style={{ fontSize: 8 }}></i> กำลังส่งงาน ({activeJobsCount} งาน)
                             </span>
                         ) : (
-                            <span style={{ color: '#6d7b6e', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                                <i className="bi bi-circle-fill" style={{ fontSize: 8 }}></i> ออฟไลน์
+                            <span style={{ color: '#dc2626', display: 'inline-flex', alignItems: 'center', gap: 4, fontWeight: 700 }}>
+                                <i className="bi bi-circle-fill" style={{ fontSize: 8 }}></i> ไม่พร้อมรับงาน
                             </span>
                         )}
                     </small>
@@ -104,7 +104,7 @@ export function DeliveryRiderBar({ rider, session, profile, isAdmin, activeJobsC
                         style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, padding: '6px 12px', color: 'var(--brand-primary, #12852f)', borderColor: 'var(--brand-primary, #12852f)', background: '#fff' }}
                         title="เคลียร์สถานะเป็นพร้อมรับงานทันที"
                     >
-                        <i className="bi bi-arrow-repeat"></i> เคลียร์สถานะเป็นว่าง
+                        <i className="bi bi-arrow-repeat"></i> เคลียร์สถานะเป็นพร้อมรับงาน
                     </button>
                 )}
                 <button
@@ -117,12 +117,25 @@ export function DeliveryRiderBar({ rider, session, profile, isAdmin, activeJobsC
                 </button>
                 <button
                     type="button"
-                    className="staff-primary"
+                    className={effectiveStatus === 'AVAILABLE' ? 'staff-secondary' : 'staff-primary'}
                     disabled={effectiveStatus === 'BUSY'}
                     onClick={() => toggleAvailability()}
-                    style={{ fontSize: 12, padding: '6px 14px' }}
+                    style={{
+                        fontSize: 12,
+                        padding: '6px 14px',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 6,
+                        ...(effectiveStatus === 'AVAILABLE' ? {
+                            background: '#fee2e2',
+                            color: '#dc2626',
+                            border: '1px solid #fca5a5'
+                        } : {})
+                    }}
+                    title={effectiveStatus === 'AVAILABLE' ? 'คลิกเพื่อเปลี่ยนเป็นไม่พร้อมรับงาน' : 'คลิกเพื่อเปลี่ยนเป็นพร้อมรับงาน'}
                 >
-                    {effectiveStatus === 'BUSY' ? 'กำลังส่งงาน' : effectiveStatus === 'AVAILABLE' ? 'ตั้งเป็น OFFLINE' : 'พร้อมรับงาน'}
+                    <i className={`bi ${effectiveStatus === 'AVAILABLE' ? 'bi-pause-circle' : effectiveStatus === 'BUSY' ? 'bi-bicycle' : 'bi-check-circle-fill'}`}></i>
+                    {effectiveStatus === 'BUSY' ? 'กำลังส่งงาน' : effectiveStatus === 'AVAILABLE' ? 'ไม่พร้อมรับงาน' : 'พร้อมรับงาน'}
                 </button>
             </div>
         </div>

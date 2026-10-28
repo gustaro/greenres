@@ -206,7 +206,7 @@ export function KitchenOrdersStatusTab() {
                                 <article
                                     key={order.id}
                                     style={{
-                                        background: '#ffffff',
+                                        background: isCanc ? '#fef2f2' : '#ffffff',
                                         border: `2px solid ${isComp ? 'var(--brand-accent, #9fe51f)' : isCanc ? '#fca5a5' : '#93c5fd'}`,
                                         borderTop: `5px solid ${isComp ? 'var(--brand-primary, #12852f)' : isCanc ? '#dc2626' : '#2563eb'}`,
                                         borderRadius: 16,

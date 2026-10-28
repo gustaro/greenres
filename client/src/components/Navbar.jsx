@@ -176,7 +176,7 @@ export function Navbar({ onOrder, user, onAuth, onLogout, cartCount, onCart, bre
                     )}
                     {currentUser && <span className="logged-dot" />}
                 </button>
-                <button type="button" className="cart-head" onClick={onCart} title={t('navCart')}>
+                <button type="button" className="cart-head" onClick={() => { closeMenu(); onCart?.(); }} title={t('navCart')}>
                     <i className="bi bi-cart" style={{ fontSize: 24 }}></i>
                     {cartCount > 0 && <b>{cartCount}</b>}
                 </button>

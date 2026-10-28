@@ -81,6 +81,26 @@ export function OrderPage({ onHome, user, onAuth, onLogout, onCart, products, ca
         ? (isEn ? 'Signature & Limited Deals' : 'เมนูแนะนำและโปรโมชั่นพิเศษ')
         : (activeCatObj ? (isEn ? activeCatObj.name : (activeCatObj.nameEn || categoryNameTranslations[activeCatObj.name]?.en || '')) : '')
 
+    const handleNavCartClick = () => {
+        if (typeof window !== 'undefined' && window.innerWidth <= 980) {
+            if (onCart) onCart()
+            else onCheckout?.()
+        } else {
+            const cartEl = document.querySelector('.op-cart')
+            if (cartEl) {
+                cartEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+                cartEl.classList.remove('op-cart-pulse')
+                void cartEl.offsetWidth
+                cartEl.classList.add('op-cart-pulse')
+                setTimeout(() => cartEl.classList.remove('op-cart-pulse'), 1200)
+            } else if (onCart) {
+                onCart()
+            } else {
+                onCheckout?.()
+            }
+        }
+    }
+
     return (
         <div className="op-page">
             <OrderNavbar
@@ -97,7 +117,7 @@ export function OrderPage({ onHome, user, onAuth, onLogout, onCart, products, ca
                 onAuth={onAuth}
                 onLogout={onLogout}
                 cartCount={count}
-                onCheckout={onCart || onCheckout}
+                onCheckout={handleNavCartClick}
                 onHome={onHome}
             />
 
@@ -134,10 +154,12 @@ export function OrderPage({ onHome, user, onAuth, onLogout, onCart, products, ca
                         {list.map(p => {
                             const mainName = isEn && p.en ? p.en : p.name
                             const subName = isEn && p.en ? p.name : (p.en || '')
+                            const isSoldOut = ['หมด', 'วัตถุดิบไม่เพียงพอ'].includes(p.status)
                             return (
-                                <article className={`op-card ${String(p.id) === highlightedProductId ? 'op-card-target' : ''}`} key={p.id} data-product-id={p.id} tabIndex={String(p.id) === highlightedProductId ? -1 : undefined}>
+                                <article className={`op-card ${isSoldOut ? 'op-card-soldout' : ''} ${String(p.id) === highlightedProductId ? 'op-card-target' : ''}`} key={p.id} data-product-id={p.id} tabIndex={String(p.id) === highlightedProductId ? -1 : undefined}>
                                     <div className="op-card-img">
                                         <img src={p.img} alt={mainName} />
+                                        {isSoldOut && <span className="op-soldout-badge">{t('outOfStock')}</span>}
                                     </div>
                                     <div className="op-card-body">
                                         <h3>{mainName}</h3>
@@ -153,10 +175,10 @@ export function OrderPage({ onHome, user, onAuth, onLogout, onCart, products, ca
                                             <span className="op-price">฿{p.price}</span>
                                             <button
                                                 className="op-add-btn"
-                                                disabled={['หมด', 'วัตถุดิบไม่เพียงพอ'].includes(p.status)}
+                                                disabled={isSoldOut}
                                                 onClick={() => add(p)}
                                             >
-                                                {p.status === 'หมด' ? t('outOfStock') : p.status === 'วัตถุดิบไม่เพียงพอ' ? (isEn ? 'Out of Stock' : 'วัตถุดิบไม่พอ') : (isEn ? 'Add' : 'สั่งซื้อ')}
+                                                {isSoldOut ? (isEn ? 'Sold Out' : 'หมด') : (isEn ? 'Add' : 'สั่งซื้อ')}
                                             </button>
                                         </div>
                                     </div>

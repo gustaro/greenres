@@ -48,5 +48,16 @@
   "googleMapsApiKey": "",
   "footerDescription": "อาหารไทยและฟิวชั่น ทำสดทุกออเดอร์\nส่งตรงถึงบ้านทุกวัน",
   "restaurantAddress": "123 ถนนศรีอยุธยา แขวงถนนพญาไท เขตราชเทวี กรุงเทพฯ",
-  "freeDeliveryThreshold": 300
+  "freeDeliveryThreshold": 300,
+  "bankName": "ธนาคารกสิกรไทย (KBANK)",
+  "bankAccountNumber": "123-4-56789-0",
+  "bankAccountName": "LimeLeaf Kitchen",
+  "bankAccounts": [
+    { "id": "bank-kbank", "bankName": "ธนาคารกสิกรไทย (KBANK)", "accountNumber": "123-4-56789-0", "accountName": "LimeLeaf Kitchen" },
+    { "id": "bank-scb", "bankName": "ธนาคารไทยพาณิชย์ (SCB)", "accountNumber": "407-2-34567-8", "accountName": "บจก. ไลม์ลีฟ คิทเช่น" },
+    { "id": "bank-ktb", "bankName": "ธนาคารกรุงไทย (KTB)", "accountNumber": "982-0-11223-4", "accountName": "LimeLeaf Kitchen (สาขาราชเทวี)" }
+  ],
+  "promptpayNumber": "081-234-5678",
+  "promptpayQrUrl": "",
+  "bankTransferNote": "เมื่อโอนเงินเรียบร้อยแล้ว กรุณาแนบสลิปหลักฐานการโอนเงินเพื่อความรวดเร็วในการจัดเตรียมอาหาร"
 }

@@ -9,3 +9,4 @@ export const isStaffOrAdmin          = requireRole("STAFF", "ADMIN");
 export const isKitchenOrAdmin        = requireRole("KITCHEN", "ADMIN");
 export const isRiderOrAdmin          = requireRole("RIDER", "ADMIN");
 export const isKitchenOrStaffOrAdmin = requireRole("KITCHEN", "STAFF", "ADMIN");
+export const isAnyStaff              = requireRole("STAFF", "KITCHEN", "RIDER", "ADMIN");

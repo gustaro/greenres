@@ -126,6 +126,7 @@ export function DeliveryDashboard({ setOrders }) {
         try {
             const updated = await deliveryApi.setRiderStatus(next)
             setRider(current => ({ ...current, ...updated, status: next }))
+            notify(next === 'AVAILABLE' ? 'เปลี่ยนสถานะเป็น: พร้อมรับงาน' : 'เปลี่ยนสถานะเป็น: ไม่พร้อมรับงาน')
             if (next === 'AVAILABLE' && navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(
                     pos => deliveryApi.updateRiderLocation(pos.coords.latitude, pos.coords.longitude).catch(() => { }),

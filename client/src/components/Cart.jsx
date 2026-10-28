@@ -29,8 +29,36 @@ const formatSavedAddress = address => {
 // ─── Cart Drawer (Global Header Cart) ───────────────────────────────────────
 export function CartDrawer({ cart, setCart, products, itemNotes, setItemNotes, onClose, onCheckout, pointsToUse = 0, setPointsToUse, onAuth }) {
     const { isEn, t } = useLanguage()
+    const navigate = useNavigate()
     const items = buildCartLines(cart, products)
-    const { settings } = useAuth()
+    const { session, profile, updateProfile, settings } = useAuth()
+    const [showDrawerPhoneForm, setShowDrawerPhoneForm] = useState(false)
+    const [savingDrawerPhone, setSavingDrawerPhone] = useState(false)
+    const [drawerPhoneError, setDrawerPhoneError] = useState('')
+    const [drawerPhoneSuccess, setDrawerPhoneSuccess] = useState('')
+    const [drawerPhoneInput, setDrawerPhoneInput] = useState(profile?.phone || '')
+
+    const saveDrawerPhone = async () => {
+        const cleaned = drawerPhoneInput.trim()
+        if (!cleaned) {
+            setDrawerPhoneError(isEn ? 'Please enter a phone number' : 'กรุณากรอกเบอร์โทรศัพท์')
+            return
+        }
+        setSavingDrawerPhone(true)
+        setDrawerPhoneError('')
+        setDrawerPhoneSuccess('')
+        const { error } = await updateProfile({ phone: cleaned })
+        setSavingDrawerPhone(false)
+        if (error) {
+            setDrawerPhoneError(error.message)
+            return
+        }
+        setDrawerPhoneSuccess(isEn ? 'Saved to profile!' : 'บันทึกลงโปรไฟล์แล้ว')
+        setTimeout(() => {
+            setDrawerPhoneSuccess('')
+            setShowDrawerPhoneForm(false)
+        }, 1200)
+    }
     const total = items.reduce((sum, line) => sum + line.unitPrice * line.quantity, 0)
     const redeemRate = Number(settings?.pointsRedeemRate || 10)
     const pointsDiscount = pointsToUse > 0 ? Math.floor(pointsToUse / redeemRate) : 0
@@ -44,10 +72,86 @@ export function CartDrawer({ cart, setCart, products, itemNotes, setItemNotes, o
                         <small>YOUR ORDER</small>
                         <h2>{t('cartTitle')}</h2>
                     </div>
-                    <button onClick={onClose}>×</button>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        {items.length > 0 && (
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    if (window.confirm(isEn ? 'Clear all items from your cart?' : 'ต้องการล้างสินค้าในตะกร้าทั้งหมดใช่หรือไม่?')) {
+                                        setCart?.({})
+                                        setItemNotes?.({})
+                                        setPointsToUse?.(0)
+                                        localStorage.removeItem('lime-cart')
+                                        localStorage.removeItem('lime-cart-notes')
+                                    }
+                                }}
+                                style={{
+                                    background: '#fee2e2',
+                                    border: '1px solid #fca5a5',
+                                    borderRadius: 6,
+                                    padding: '5px 10px',
+                                    fontSize: 12,
+                                    fontWeight: 700,
+                                    color: '#dc2626',
+                                    cursor: 'pointer',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: 5,
+                                    transition: 'all 0.15s',
+                                }}
+                                title={t('clearCart')}
+                            >
+                                <i className="bi bi-trash3" />
+                                <span>{t('clearCart')}</span>
+                            </button>
+                        )}
+                        <button onClick={onClose} style={{ fontSize: 24, lineHeight: 1 }}>×</button>
+                    </div>
                 </div>
                 {items.length === 0 ? (
-                    <div className="drawer-empty">{t('cartEmpty')}</div>
+                    <div className="drawer-empty">
+                        <div style={{ textAlign: 'center', padding: '32px 16px' }}>
+                            <div style={{
+                                width: 80,
+                                height: 80,
+                                borderRadius: '50%',
+                                background: 'var(--brand-accent-soft, #f0fae8)',
+                                color: 'var(--brand-primary, #0c4d1d)',
+                                display: 'grid',
+                                placeItems: 'center',
+                                margin: '0 auto 16px',
+                                fontSize: 36
+                            }}>
+                                <i className="bi bi-cart-x"></i>
+                            </div>
+                            <p style={{ fontSize: 16, fontWeight: 800, color: 'var(--brand-primary-dark, #0c2e14)', margin: '0 0 6px' }}>
+                                {t('cartEmpty')}
+                            </p>
+                            <p style={{ fontSize: 13, color: 'var(--brand-muted, #778076)', margin: '0 0 24px', maxWidth: 260, lineHeight: 1.5 }}>
+                                {isEn ? 'Explore our menu and add your favorite dishes to the cart.' : 'เลือกเมนูอร่อยที่คุณชอบและเพิ่มลงในตะกร้าได้เลย'}
+                            </p>
+                            <button
+                                type="button"
+                                className="primary"
+                                style={{
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    gap: 8,
+                                    padding: '12px 28px',
+                                    fontSize: 14,
+                                    borderRadius: 99
+                                }}
+                                onClick={() => {
+                                    onClose?.()
+                                    navigate('/order')
+                                }}
+                            >
+                                <i className="bi bi-bag-plus"></i>
+                                <span>{isEn ? 'Order Food' : 'สั่งอาหาร'}</span>
+                            </button>
+                        </div>
+                    </div>
                 ) : (
                     <>
                         <div className="drawer-items">
@@ -103,6 +207,70 @@ export function CartDrawer({ cart, setCart, products, itemNotes, setItemNotes, o
                                 </div>
                             </>
                         )}
+                        <div style={{ margin: '8px 0 12px', padding: '10px 14px', background: 'var(--brand-surface, #fbfdfa)', border: '1px solid var(--brand-border-soft, #e5ede3)', borderRadius: 8 }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 12 }}>
+                                <span style={{ fontWeight: 800, color: 'var(--brand-primary-dark)', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                                    <i className="bi bi-telephone-fill text-success" />
+                                    {isEn ? 'Contact Phone' : 'เบอร์โทรติดต่อ'}
+                                </span>
+                                <button
+                                    type="button"
+                                    className="op-edit-btn"
+                                    style={{ fontSize: 11 }}
+                                    onClick={() => {
+                                        if (!session) { onAuth?.(); return }
+                                        setDrawerPhoneError('')
+                                        setDrawerPhoneSuccess('')
+                                        setDrawerPhoneInput(profile?.phone || '')
+                                        setShowDrawerPhoneForm(!showDrawerPhoneForm)
+                                    }}
+                                >
+                                    {showDrawerPhoneForm ? (isEn ? 'Cancel' : 'ยกเลิก') : (profile?.phone ? (isEn ? 'Edit' : 'แก้ไข') : (isEn ? '+ Add Phone' : '+ เพิ่มเบอร์โทร'))}
+                                </button>
+                            </div>
+                            {!showDrawerPhoneForm ? (
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 4 }}>
+                                    <span style={{ fontSize: 13, fontWeight: profile?.phone ? 700 : 500, color: profile?.phone ? 'var(--brand-primary-dark)' : 'var(--brand-muted)' }}>
+                                        {profile?.phone || (isEn ? 'No phone number yet' : 'ยังไม่ได้ระบุเบอร์โทรศัพท์')}
+                                    </span>
+                                    {session && (
+                                        <button
+                                            type="button"
+                                            className="op-address-manage"
+                                            style={{ margin: 0, padding: 0, fontSize: 11 }}
+                                            onClick={() => { onClose?.(); navigate('/profile?tab=info') }}
+                                            title={isEn ? 'Go to Profile' : 'ไปที่หน้าโปรไฟล์'}
+                                        >
+                                            <i className="bi bi-person-gear me-1" />{isEn ? 'Profile' : 'โปรไฟล์'}
+                                        </button>
+                                    )}
+                                </div>
+                            ) : (
+                                <div style={{ marginTop: 8 }}>
+                                    <div style={{ display: 'flex', gap: 6 }}>
+                                        <input
+                                            type="tel"
+                                            value={drawerPhoneInput}
+                                            onChange={e => setDrawerPhoneInput(e.target.value)}
+                                            placeholder="08x-xxx-xxxx"
+                                            style={{ flex: 1, padding: '7px 10px', borderRadius: 6, border: '1px solid #c2cdc1', fontSize: 12 }}
+                                        />
+                                        <button
+                                            type="button"
+                                            className="primary"
+                                            style={{ padding: '7px 14px', fontSize: 12, borderRadius: 6, width: 'auto' }}
+                                            onClick={saveDrawerPhone}
+                                            disabled={savingDrawerPhone}
+                                        >
+                                            {savingDrawerPhone ? (isEn ? '...' : '...') : (isEn ? 'Save' : 'บันทึก')}
+                                        </button>
+                                    </div>
+                                    {drawerPhoneError && <small style={{ color: '#b91c1c', fontSize: 10, display: 'block', marginTop: 3 }}>{drawerPhoneError}</small>}
+                                    {drawerPhoneSuccess && <small style={{ color: '#16a34a', fontSize: 10, fontWeight: 700, display: 'block', marginTop: 3 }}><i className="bi bi-check-circle-fill me-1" />{drawerPhoneSuccess}</small>}
+                                </div>
+                            )}
+                        </div>
+
                         <div className="drawer-total">
                             <span>{t('netTotal')}</span>
                             <b>฿{netTotal}</b>
@@ -118,7 +286,45 @@ export function CartDrawer({ cart, setCart, products, itemNotes, setItemNotes, o
 // ─── Cart Sidebar (Order Page) ──────────────────────────────────────────────
 export function CartSidebar({ cart, setCart, products, itemNotes, setItemNotes, onCheckout, onAuth, pointsToUse = 0, setPointsToUse }) {
     const { isEn, t } = useLanguage()
-    const { session, profile, addAddress, settings } = useAuth()
+    const { session, profile, addAddress, updateProfile, settings } = useAuth()
+    const [showPhoneForm, setShowPhoneForm] = useState(false)
+    const [savingPhone, setSavingPhone] = useState(false)
+    const [phoneError, setPhoneError] = useState('')
+    const [phoneSuccess, setPhoneSuccess] = useState('')
+    const [phoneInput, setPhoneInput] = useState(profile?.phone || '')
+
+    const openPhoneForm = () => {
+        if (!session) {
+            onAuth?.()
+            return
+        }
+        setPhoneError('')
+        setPhoneSuccess('')
+        setPhoneInput(profile?.phone || '')
+        setShowPhoneForm(current => !current)
+    }
+
+    const savePhone = async () => {
+        const cleaned = phoneInput.trim()
+        if (!cleaned) {
+            setPhoneError(isEn ? 'Please enter a phone number' : 'กรุณากรอกเบอร์โทรศัพท์')
+            return
+        }
+        setSavingPhone(true)
+        setPhoneError('')
+        setPhoneSuccess('')
+        const { error } = await updateProfile({ phone: cleaned })
+        setSavingPhone(false)
+        if (error) {
+            setPhoneError(error.message)
+            return
+        }
+        setPhoneSuccess(isEn ? 'Saved to profile!' : 'บันทึกลงโปรไฟล์แล้ว')
+        setTimeout(() => {
+            setPhoneSuccess('')
+            setShowPhoneForm(false)
+        }, 1200)
+    }
     const navigate = useNavigate()
     const cartItems = buildCartLines(cart, products)
     const total = cartItems.reduce((sum, line) => sum + line.unitPrice * line.quantity, 0)
@@ -165,7 +371,41 @@ export function CartSidebar({ cart, setCart, products, itemNotes, setItemNotes, 
 
     return (
         <aside className="op-cart">
-            <div className="op-cart-header">{t('cartTitle')}</div>
+            <div className="op-cart-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span>{t('cartTitle')}</span>
+                {cartItems.length > 0 && (
+                    <button
+                        type="button"
+                        onClick={() => {
+                            if (window.confirm(isEn ? 'Clear all items from your cart?' : 'ต้องการล้างสินค้าในตะกร้าทั้งหมดใช่หรือไม่?')) {
+                                setCart?.({})
+                                setItemNotes?.({})
+                                setPointsToUse?.(0)
+                                localStorage.removeItem('lime-cart')
+                                localStorage.removeItem('lime-cart-notes')
+                            }
+                        }}
+                        style={{
+                            background: '#fee2e2',
+                            border: '1px solid #fca5a5',
+                            borderRadius: 6,
+                            padding: '4px 8px',
+                            fontSize: 11,
+                            fontWeight: 700,
+                            color: '#dc2626',
+                            cursor: 'pointer',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: 4,
+                            transition: 'all 0.15s',
+                        }}
+                        title={t('clearCart')}
+                    >
+                        <i className="bi bi-trash3" />
+                        <span>{t('clearCart')}</span>
+                    </button>
+                )}
+            </div>
             <div className="op-cart-info">
                 <div className="op-cart-info-row">
                     <span><i className="bi bi-geo-alt-fill me-1 text-danger" />{isEn ? 'Delivery Address' : 'ที่อยู่จัดส่ง'}</span>
@@ -218,6 +458,59 @@ export function CartSidebar({ cart, setCart, products, itemNotes, setItemNotes, 
                     </div>
                 )}
             </div>
+            <div className="op-cart-info op-cart-phone">
+                <div className="op-cart-info-row">
+                    <span><i className="bi bi-telephone-fill me-1 text-success" />{isEn ? 'Contact Phone' : 'เบอร์โทรติดต่อ'}</span>
+                    <button type="button" className="op-edit-btn" onClick={openPhoneForm}>
+                        {showPhoneForm ? (isEn ? 'Cancel' : 'ยกเลิก') : (profile?.phone ? (isEn ? 'Edit' : 'แก้ไข') : (isEn ? '+ Add Phone' : '+ เพิ่มเบอร์โทร'))}
+                    </button>
+                </div>
+                {!showPhoneForm ? (
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginTop: 3 }}>
+                        <p className={`op-addr-text ${profile?.phone ? 'has-address' : ''}`} style={{ fontWeight: profile?.phone ? 700 : 500, margin: 0 }}>
+                            {profile?.phone || (isEn ? 'Enter your contact phone' : 'ยังไม่ได้ระบุเบอร์โทรศัพท์')}
+                        </p>
+                        {session && (
+                            <button
+                                type="button"
+                                className="op-address-manage"
+                                style={{ margin: 0, padding: 0, fontSize: 10, whiteSpace: 'nowrap' }}
+                                onClick={() => navigate('/profile?tab=info')}
+                                title={isEn ? 'Manage in Profile' : 'จัดการในหน้าโปรไฟล์'}
+                            >
+                                <i className="bi bi-person-gear me-1" />{isEn ? 'Profile' : 'โปรไฟล์'}
+                            </button>
+                        )}
+                    </div>
+                ) : (
+                    <div className="op-phone-form">
+                        <div style={{ display: 'flex', gap: 6 }}>
+                            <input
+                                type="tel"
+                                value={phoneInput}
+                                onChange={event => setPhoneInput(event.target.value)}
+                                placeholder="08x-xxx-xxxx"
+                                autoFocus
+                            />
+                            <button
+                                type="button"
+                                className="op-address-save"
+                                onClick={savePhone}
+                                disabled={savingPhone}
+                                style={{ width: 'auto', padding: '0 12px', margin: 0, whiteSpace: 'nowrap' }}
+                            >
+                                {savingPhone ? (isEn ? 'Saving...' : 'กำลังบันทึก...') : (isEn ? 'Save' : 'บันทึก')}
+                            </button>
+                        </div>
+                        {phoneError && <small className="op-address-error">{phoneError}</small>}
+                        {phoneSuccess && (
+                            <small style={{ color: '#16a34a', fontWeight: 700, fontSize: 10, display: 'flex', alignItems: 'center', gap: 4 }}>
+                                <i className="bi bi-check-circle-fill" /> {phoneSuccess}
+                            </small>
+                        )}
+                    </div>
+                )}
+            </div>
             <div className="op-cart-info op-cart-time">
                 <div className="op-cart-info-row">
                     <span><i className="bi bi-clock-fill me-1 text-primary" />{isEn ? 'Delivery Time' : 'เวลาจัดส่ง'}</span>
@@ -259,7 +552,50 @@ export function CartSidebar({ cart, setCart, products, itemNotes, setItemNotes, 
             )}
 
             {cartItems.length === 0 && (
-                <div className="op-cart-empty">{t('cartEmpty')}</div>
+                <div className="op-cart-empty">
+                    <div style={{
+                        width: 56,
+                        height: 56,
+                        borderRadius: '50%',
+                        background: 'var(--brand-accent-soft, #f0fae8)',
+                        color: 'var(--brand-primary, #0c4d1d)',
+                        display: 'grid',
+                        placeItems: 'center',
+                        margin: '0 auto 12px',
+                        fontSize: 26
+                    }}>
+                        <i className="bi bi-cart-x"></i>
+                    </div>
+                    <p style={{ margin: '0 0 14px', color: 'var(--brand-text, #2d372e)', fontWeight: 700, fontSize: 14 }}>
+                        {t('cartEmpty')}
+                    </p>
+                    <button
+                        type="button"
+                        className="primary"
+                        style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: 6,
+                            padding: '9px 22px',
+                            fontSize: 13,
+                            borderRadius: 99
+                        }}
+                        onClick={() => {
+                            const searchEl = document.querySelector('.op-search-input input')
+                            const menuGrid = document.querySelector('.op-menu-grid')
+                            if (searchEl) {
+                                searchEl.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                                searchEl.focus()
+                            } else if (menuGrid) {
+                                menuGrid.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                            }
+                        }}
+                    >
+                        <i className="bi bi-bag-plus"></i>
+                        <span>{isEn ? 'Order Food' : 'สั่งอาหาร'}</span>
+                    </button>
+                </div>
             )}
 
             {cartItems.length > 0 && (

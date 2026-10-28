@@ -2,6 +2,7 @@ import { prisma } from "../config/prisma.js";
 import {
   createDelivery, autoAssignRider, assignRider,
   updateDeliveryStatus, updateRiderLocation, findNearestRider,
+  ensureDeliveryForOrder,
 } from "../services/delivery.service.js";
 import {
   createGrabDelivery, createLalamoveDelivery,
@@ -390,6 +391,19 @@ export const updateMyStatus = async (req, res, next) => {
     }
     if (!rider) return res.status(404).json({ message: "Rider profile not found" });
     const updated = await prisma.rider.update({ where: { id: rider.id }, data: { status } });
+
+    if (status === "AVAILABLE") {
+      try {
+        const pending = await prisma.delivery.findMany({
+          where: { riderId: null, status: "PENDING" },
+          take: 3,
+        });
+        for (const d of pending) {
+          try { await autoAssignRider(d.id); } catch (_) {}
+        }
+      } catch (_) {}
+    }
+
     res.json(updated);
   } catch (err) { next(err); }
 };
@@ -410,10 +424,72 @@ export const updateMyLocation = async (req, res, next) => {
 export const getMyDeliveries = async (req, res, next) => {
   try {
     const { status } = req.query;
-    const rider = await prisma.rider.findUnique({ where: { userId: req.user.id } });
-    
-    // If admin testing without a dedicated rider row, return all deliveries
-    const where = rider && req.user.role !== "ADMIN" ? { riderId: rider.id } : {};
+    let rider = await prisma.rider.findUnique({ where: { userId: req.user.id } });
+    if (!rider && req.user.role === "ADMIN") {
+      rider = await prisma.rider.create({
+        data: {
+          userId: req.user.id,
+          vehicleType: "motorcycle",
+          licensePlate: "แอดมิน-9999",
+          isVerified: true,
+          status: "AVAILABLE",
+        },
+      });
+    }
+
+    // Auto-create any missing delivery records for READY/CONFIRMED/PREPARING delivery orders
+    // Only delivery orders: dine-in/takeaway orders used to fill the 20 slots and push
+    // real delivery orders out, so riders never saw them.
+    const pendingOrdersWithoutDelivery = await prisma.order.findMany({
+      where: {
+        status: { in: ["READY", "PREPARING", "CONFIRMED"] },
+        delivery: null,
+        OR: [
+          { addressId: { not: null } },
+          { notes: { contains: '"deliveryType":"ให้จัดส่ง"' } },
+        ],
+      },
+      select: { id: true },
+      orderBy: { createdAt: "desc" },
+      take: 20,
+    });
+    for (const ord of pendingOrdersWithoutDelivery) {
+      try {
+        await ensureDeliveryForOrder(ord.id);
+      } catch (_) {}
+    }
+
+    // Jobs auto-assigned to an admin's preview rider before the fix are invisible to real riders;
+    // return the ones not yet picked up to the open pool.
+    if (req.user.role !== "ADMIN") {
+      await prisma.delivery.updateMany({
+        where: { status: "ASSIGNED", rider: { user: { role: "ADMIN" } } },
+        data: { riderId: null, status: "PENDING", assignedAt: null },
+      });
+    }
+
+    // If rider is available or admin, try auto-assigning pending deliveries
+    if (rider && (rider.status === "AVAILABLE" || req.user.role === "ADMIN")) {
+      const unassigned = await prisma.delivery.findMany({
+        where: { riderId: null, status: "PENDING" },
+        take: 5,
+      });
+      for (const del of unassigned) {
+        try {
+          await autoAssignRider(del.id);
+        } catch (_) {}
+      }
+    }
+
+    // Riders see deliveries assigned to them + unassigned pending deliveries ready for pickup
+    const where = rider && req.user.role !== "ADMIN"
+      ? {
+          OR: [
+            { riderId: rider.id },
+            { riderId: null, status: { in: ["PENDING", "ASSIGNED"] } },
+          ],
+        }
+      : {};
     if (status) where.status = status;
 
     const deliveries = await prisma.delivery.findMany({
@@ -455,14 +531,34 @@ export const getMyDeliveries = async (req, res, next) => {
 export const riderUpdateStatus = async (req, res, next) => {
   try {
     const { status, lat, lng, note, proofImageUrl } = req.body;
-    const allowed = ["PICKED_UP", "ON_THE_WAY", "ARRIVED", "DELIVERED", "FAILED"];
+    const allowed = ["ASSIGNED", "PICKED_UP", "ON_THE_WAY", "ARRIVED", "DELIVERED", "FAILED"];
     if (!allowed.includes(status)) {
       return res.status(400).json({ message: `Status must be one of: ${allowed.join(", ")}` });
     }
     const rider = await prisma.rider.findUnique({ where: { userId: req.user.id } });
-    const where = req.user.role === "ADMIN" ? { id: req.params.id } : { id: req.params.id, riderId: rider?.id };
-    const delivery = await prisma.delivery.findFirst({ where });
+    
+    let delivery;
+    if (req.user.role === "ADMIN") {
+      delivery = await prisma.delivery.findUnique({ where: { id: req.params.id } });
+    } else {
+      delivery = await prisma.delivery.findFirst({
+        where: {
+          id: req.params.id,
+          OR: [
+            { riderId: rider?.id },
+            { riderId: null },
+          ],
+        },
+      });
+    }
     if (!delivery) return res.status(404).json({ message: "Delivery not found or not yours" });
+
+    // If accepting an unassigned delivery, assign it to this rider immediately
+    if (status === "ASSIGNED" || (!delivery.riderId && rider)) {
+      if (rider) {
+        await assignRider(delivery.id, rider.id);
+      }
+    }
 
     const updated = await updateDeliveryStatus(delivery.id, status, lat, lng, note, proofImageUrl);
     res.json(updated);

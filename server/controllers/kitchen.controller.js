@@ -1,4 +1,5 @@
 import { prisma } from "../config/prisma.js";
+import { ensureDeliveryForOrder } from "../services/delivery.service.js";
 
 export const getKitchenQueue = async (req, res, next) => {
   try {
@@ -67,6 +68,11 @@ export const markReady = async (req, res, next) => {
       where: { id: req.params.id },
       data: { status: "READY" },
     });
+    try {
+      await ensureDeliveryForOrder(updated.id);
+    } catch (deliveryErr) {
+      console.warn("[kitchen markReady] ensureDeliveryForOrder error:", deliveryErr.message);
+    }
     res.json(updated);
   } catch (error) {
     next(error);
@@ -146,6 +152,14 @@ export const updateOrderItemStatus = async (req, res, next) => {
         user: { select: { name: true } },
       },
     });
+
+    if (nextOrderStatus === "READY") {
+      try {
+        await ensureDeliveryForOrder(id);
+      } catch (deliveryErr) {
+        console.warn("[kitchen updateOrderItemStatus] ensureDeliveryForOrder error:", deliveryErr.message);
+      }
+    }
 
     res.json(updated);
   } catch (error) {

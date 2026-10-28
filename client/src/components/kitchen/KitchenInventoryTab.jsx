@@ -155,7 +155,7 @@ export function KitchenInventoryTab({ inventory, setInventory }) {
                             <th style={{ padding: '14px 16px' }}>วัตถุดิบ</th>
                             <th style={{ padding: '14px 16px' }}>คงเหลือปัจจุบัน</th>
                             <th style={{ padding: '14px 16px' }}>สถานะสต๊อก</th>
-                            <th style={{ padding: '14px 16px', textAlign: 'center' }}>ปรับเพิ่ม / ลด</th>
+                            <th style={{ padding: '14px 16px', textAlign: 'center', minWidth: 170 }}>ปรับเพิ่ม / ลด</th>
                             <th style={{ padding: '14px 16px', textAlign: 'center' }}>จัดการ</th>
                         </tr>
                     </thead>
@@ -185,7 +185,7 @@ export function KitchenInventoryTab({ inventory, setInventory }) {
                                             {item.ingredientNameEn && <small style={{ display: 'block', color: '#6d7b6e', marginTop: 2 }}>{item.ingredientNameEn}</small>}
                                             <small style={{ display: 'block', color: 'var(--brand-primary, #12852f)', marginTop: 3 }}>ใช้ใน {item.recipeCount || 0} สูตร</small>
                                             {isChanged && (
-                                                <span style={{ marginLeft: 8, fontSize: 11, color: 'var(--brand-primary, #12852f)', fontWeight: 800 }}>
+                                                <span style={{ marginLeft: 8, fontSize: 11, color: 'var(--brand-primary, #12852f)', fontWeight: 600 }}>
                                                     (เปลี่ยนจาก {item.quantity} → {currentDraft})
                                                 </span>
                                             )}
@@ -207,7 +207,7 @@ export function KitchenInventoryTab({ inventory, setInventory }) {
                                                 {isOut ? 'หมดสต๊อก' : isLow ? 'ใกล้หมด' : 'พร้อมใช้'}
                                             </span>
                                         </td>
-                                        <td style={{ padding: '14px 16px', textAlign: 'center' }}>
+                                        <td style={{ padding: '14px 16px', textAlign: 'center', whiteSpace: 'nowrap' }}>
                                             <div className="kitchen-inventory-stepper">
                                                 <button
                                                     type="button"

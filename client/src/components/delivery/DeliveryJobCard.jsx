@@ -18,14 +18,15 @@ export function DeliveryJobCard({ job, isAdmin, tab, isOpen, onToggle, advance, 
     const canNavigate = Boolean(job.deliveryAddress || hasCoords)
     const currentStatusLabel = DELIVERY_STATUS_LABEL[job.status] ?? job.status
     const nextStatusLabel = flow ? DELIVERY_STATUS_LABEL[flow[0]] ?? flow[1] : ''
+    const isCancelled = job.status === 'CANCELLED' || job.status === 'FAILED' || job.foodStatus === 'ยกเลิก'
 
     return (
         <article
-            className={`delivery-card${isOpen ? ' expanded' : ''}`}
+            className={`delivery-card${isOpen ? ' expanded' : ''}${isCancelled ? ' is-cancelled' : ''}`}
             style={{
-                borderLeft: '5px solid var(--brand-primary, #12852f)',
+                borderLeft: isCancelled ? '5px solid #ef4444' : '5px solid var(--brand-primary, #12852f)',
                 borderRadius: 14,
-                boxShadow: '0 4px 14px rgba(0, 193, 74, 0.12)',
+                boxShadow: isCancelled ? '0 4px 14px rgba(239, 68, 68, 0.12)' : '0 4px 14px rgba(0, 193, 74, 0.12)',
             }}
         >
             {/* Card Header */}

@@ -29,13 +29,22 @@ export const estimateTime = (distanceKm) => Math.ceil(10 + distanceKm * 4);
 // หา rider ที่ว่างและใกล้ที่สุด
 export const findNearestRider = async (lat, lng) => {
   const { restaurantLat, restaurantLng } = getActiveSettings();
-  const searchLat = lat || restaurantLat;
-  const searchLng = lng || restaurantLng;
+  const searchLat = lat != null ? parseFloat(lat) : (restaurantLat != null ? parseFloat(restaurantLat) : 13.75664);
+  const searchLng = lng != null ? parseFloat(lng) : (restaurantLng != null ? parseFloat(restaurantLng) : 100.541838);
 
-  const riders = await prisma.rider.findMany({
-    where: { status: "AVAILABLE", isVerified: true },
+  // Admins get a rider record just for previewing the rider page; never auto-assign real jobs to it,
+  // otherwise the food never shows up for actual riders.
+  const notAdmin = { user: { role: { not: "ADMIN" } } };
+  let riders = await prisma.rider.findMany({
+    where: { status: "AVAILABLE", isVerified: true, ...notAdmin },
     include: { user: { select: { name: true, phone: true } } },
   });
+  if (!riders.length) {
+    riders = await prisma.rider.findMany({
+      where: { status: "AVAILABLE", ...notAdmin },
+      include: { user: { select: { name: true, phone: true } } },
+    });
+  }
   if (!riders.length) return null;
 
   return riders
@@ -48,10 +57,15 @@ export const findNearestRider = async (lat, lng) => {
 
 // สร้าง delivery record
 export const createDelivery = async (orderId, dropAddress, dropLat, dropLng, provider = "INTERNAL") => {
+  const existing = await prisma.delivery.findUnique({ where: { orderId } });
+  if (existing) return existing;
+
   const { restaurantLat, restaurantLng, restaurantAddress } = getActiveSettings();
+  const restLat = restaurantLat != null ? parseFloat(restaurantLat) : 13.75664;
+  const restLng = restaurantLng != null ? parseFloat(restaurantLng) : 100.541838;
 
   const distanceKm = dropLat && dropLng
-    ? calcDistance(restaurantLat, restaurantLng, dropLat, dropLng)
+    ? calcDistance(restLat, restLng, parseFloat(dropLat), parseFloat(dropLng))
     : 5;
 
   const deliveryFee = calcDeliveryFee(distanceKm);
@@ -62,12 +76,12 @@ export const createDelivery = async (orderId, dropAddress, dropLat, dropLng, pro
       orderId,
       provider,
       status: "PENDING",
-      pickupAddress: restaurantAddress,
-      pickupLat: restaurantLat,
-      pickupLng: restaurantLng,
+      pickupAddress: restaurantAddress || "ร้านอาหาร",
+      pickupLat: restLat,
+      pickupLng: restLng,
       dropAddress,
-      dropLat,
-      dropLng,
+      dropLat: dropLat != null ? parseFloat(dropLat) : null,
+      dropLng: dropLng != null ? parseFloat(dropLng) : null,
       deliveryFee,
       estimatedMinutes,
     },
@@ -77,6 +91,71 @@ export const createDelivery = async (orderId, dropAddress, dropLat, dropLng, pro
   await addTrackingEvent(delivery.id, "PENDING", null, null, "รอ Rider รับงาน");
 
   return delivery;
+};
+
+// ตรวจสอบและสร้าง delivery record สำหรับ order ถ้ายังไม่มี
+export const ensureDeliveryForOrder = async (orderId) => {
+  const order = await prisma.order.findUnique({
+    where: { id: orderId },
+    include: { address: true, delivery: true, user: true },
+  });
+  if (!order) return null;
+  if (order.delivery) {
+    if (order.delivery.status === "PENDING" && !order.delivery.riderId) {
+      try { await autoAssignRider(order.delivery.id); } catch (_) {}
+    }
+    return order.delivery;
+  }
+
+  // แยก meta จาก notes
+  const notes = order.notes || "";
+  let meta = {};
+  const prefix = "LIMELEAF_META:";
+  const idx = notes.indexOf(prefix);
+  if (idx !== -1) {
+    try {
+      meta = JSON.parse(notes.slice(idx + prefix.length));
+    } catch (_) {}
+  }
+
+  const isDelivery = meta.deliveryType === "ให้จัดส่ง" || Boolean(order.addressId) || Boolean(meta.deliveryAddress);
+  if (!isDelivery) return null;
+
+  let dropAddress = meta.deliveryAddress || order.address?.street || "ที่อยู่จัดส่ง";
+  dropAddress = typeof dropAddress === "string"
+    ? dropAddress.replace(/<!--geo:[^>]+-->/g, "").replace(/\[geo:[^\]]+\]/g, "").trim()
+    : dropAddress;
+
+  let dropLat = meta.dropLat != null ? Number(meta.dropLat) : null;
+  let dropLng = meta.dropLng != null ? Number(meta.dropLng) : null;
+
+  if ((dropLat == null || dropLng == null) && order.address?.street) {
+    const match = order.address.street.match(/(?:<!--geo:([0-9.-]+),([0-9.-]+)-->|\[geo:([0-9.-]+),([0-9.-]+)\])/);
+    if (match) {
+      dropLat = parseFloat(match[1] || match[3]);
+      dropLng = parseFloat(match[2] || match[4]);
+    }
+  }
+
+  const delivery = await createDelivery(
+    order.id,
+    dropAddress,
+    dropLat != null && !isNaN(dropLat) ? dropLat : null,
+    dropLng != null && !isNaN(dropLng) ? dropLng : null,
+    "INTERNAL"
+  );
+
+  // Auto assign rider
+  try {
+    await autoAssignRider(delivery.id);
+  } catch (err) {
+    console.warn("[autoAssignRider] Failed to auto assign rider:", err.message);
+  }
+
+  return await prisma.delivery.findUnique({
+    where: { id: delivery.id },
+    include: { rider: { include: { user: true } }, order: { include: { user: true } } },
+  });
 };
 
 // Assign rider ให้ delivery
@@ -127,6 +206,14 @@ export const updateDeliveryStatus = async (deliveryId, status, lat, lng, note, p
   });
 
   await addTrackingEvent(deliveryId, status, lat, lng, note);
+
+  // ไรเดอร์รับอาหารแล้ว → order เป็น DELIVERING (หน้าแคชเชียร์จะแสดงปุ่มสีเทา)
+  if (["PICKED_UP", "ON_THE_WAY", "ARRIVED"].includes(status)) {
+    await prisma.order.updateMany({
+      where: { id: delivery.orderId, status: { notIn: ["DELIVERING", "DELIVERED", "CANCELLED"] } },
+      data: { status: "DELIVERING" },
+    });
+  }
 
   // ถ้าส่งแล้ว → คืน rider เป็น AVAILABLE (ถ้ามี) + อัป order status + คำนวณแต้มสะสมให้ลูกค้า
   if (status === "DELIVERED") {

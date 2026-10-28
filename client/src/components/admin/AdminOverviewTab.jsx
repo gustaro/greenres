@@ -69,14 +69,17 @@ export function AdminOverviewTab({
                         <button className="admin-link" onClick={() => handleTabChange?.('orders')}>ดูทั้งหมด <i className="bi bi-arrow-right" /></button>
                     </div>
                     <div className="admin-order-list">
-                        {(orders || []).slice(-5).reverse().map(order => (
-                            <div key={order.id}>
+                        {(orders || []).slice(-5).reverse().map(order => {
+                            const isCancelled = order.foodStatus === 'ยกเลิก' || order.serverStatus === 'CANCELLED' || order.status === 'CANCELLED'
+                            return (
+                            <div key={order.id} className={isCancelled ? 'is-cancelled' : ''}>
                                 <span className="admin-order-icon"><i className="bi bi-bag-check" /></span>
                                 <div><b>{order.orderNumber || order.id}</b><small>{order.customerId} · {order.items?.length || 0} รายการ</small></div>
                                 <strong>{money(order.totalAmount)}</strong>
-                                <i className={`admin-badge ${order.foodStatus === 'รอยืนยัน' ? 'pending' : ''}`}>{order.foodStatus}</i>
+                                <i className={`admin-badge ${isCancelled ? 'cancelled' : order.foodStatus === 'รอยืนยัน' ? 'pending' : ''}`}>{isCancelled ? 'ยกเลิก' : order.foodStatus}</i>
                             </div>
-                        ))}
+                            )
+                        })}
                     </div>
                 </section>
                 <section className="admin-panel">

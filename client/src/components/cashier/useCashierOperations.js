@@ -1,11 +1,16 @@
 import { useRef, useState } from 'react'
-import { updateOrderMeta, markOrderPaid, addItemsToOrder } from '../../lib/database'
+import { updateOrderMeta, markOrderPaid, addItemsToOrder, confirmOrder, cancelOrder, deliveryApi } from '../../lib/database'
 import { money, orderCode } from '../StaffShared'
 import { playNotificationChime } from '../ToastNotification'
 import { selectableOptionGroups, buildCartLines, makeCartLineKey, optionIdsFromLineKey, productIdFromLineKey } from '../../lib/productOptions'
+import { isProductSoldOut } from './useCashierCounter'
 
-export function useCashierOperations({ setOrders, refreshOrders, addToast, counterProducts }) {
+// Amount the cashier still has to collect (only the new balance when items were added after payment).
+export const orderAmountDue = order => order.isPaid ? 0 : Number(order.amountDue ?? order.totalAmount) || 0
+
+export function useCashierOperations({ setOrders, refreshOrders, addToast, counterProducts, refreshCounterCatalog }) {
     const paymentRequestRef = useRef(false)
+    const actionRequestRef = useRef(false)
     // Modal states
     const [moveTableOrder, setMoveTableOrder] = useState(null)
     const [newTableInput, setNewTableInput] = useState('')
@@ -26,6 +31,83 @@ export function useCashierOperations({ setOrders, refreshOrders, addToast, count
     const [switchDineInOrder, setSwitchDineInOrder] = useState(null)
     const [switchTableInput, setSwitchTableInput] = useState('')
     const [switchTableLoading, setSwitchTableLoading] = useState(false)
+
+    const [cancelModalOrder, setCancelModalOrder] = useState(null)
+    const [cancelLoading, setCancelLoading] = useState(false)
+    const [actionLoadingId, setActionLoadingId] = useState(null)
+
+    // Wraps one-click order actions so double clicks never send two requests.
+    const runOrderAction = async (order, action) => {
+        if (actionRequestRef.current) return
+        actionRequestRef.current = true
+        setActionLoadingId(order.id)
+        try {
+            await action()
+        } catch (error) {
+            window.alert('เกิดข้อผิดพลาด: ' + error.message)
+        } finally {
+            actionRequestRef.current = false
+            setActionLoadingId(null)
+        }
+    }
+
+    const handleConfirmOrder = order => runOrderAction(order, async () => {
+        await confirmOrder(order.id)
+        setOrders(prev => prev.map(o => o.id === order.id ? { ...o, serverStatus: 'CONFIRMED', foodStatus: 'รอครัว' } : o))
+        playNotificationChime()
+        addToast({
+            type: 'success',
+            title: 'ยืนยันออเดอร์แล้ว',
+            orderCode: orderCode(order),
+            message: 'ส่งออเดอร์เข้าคิวครัวเรียบร้อย',
+            duration: 4000,
+        })
+        refreshOrders?.()
+    })
+
+    // Cashier confirms the rider has collected the food; the card's button then turns grey.
+    const handleRiderHandoff = order => runOrderAction(order, async () => {
+        if (!order.deliveryId) throw new Error('ยังไม่มีรายการจัดส่งสำหรับออเดอร์นี้')
+        await deliveryApi.updateStatus(order.deliveryId, 'PICKED_UP')
+        setOrders(prev => prev.map(o => o.id === order.id ? { ...o, deliveryStatus: 'PICKED_UP', serverStatus: 'DELIVERING', foodStatus: 'กำลังจัดส่ง' } : o))
+        addToast({
+            type: 'success',
+            title: 'ไรเดอร์รับอาหารแล้ว',
+            orderCode: orderCode(order),
+            message: `${order.riderName || 'ไรเดอร์'} รับออเดอร์ไปจัดส่งแล้ว`,
+            duration: 4000,
+        })
+        refreshOrders?.()
+    })
+
+    const handleConfirmCancel = async ({ reason, refundMethod }) => {
+        if (!cancelModalOrder || cancelLoading) return
+        const order = cancelModalOrder
+        setCancelLoading(true)
+        try {
+            const result = await cancelOrder(order.id, { reason, refundMethod })
+            setOrders(prev => prev.map(o => o.id === order.id ? {
+                ...o,
+                serverStatus: 'CANCELLED',
+                foodStatus: 'ยกเลิก',
+                ...(result?.refund ? { isPaid: false, isRefunded: true, paymentStatus: 'REFUNDED', refund: result.refund } : {}),
+            } : o))
+            addToast({
+                type: 'info',
+                title: result?.refund ? 'ยกเลิกและคืนเงินแล้ว' : 'ยกเลิกออเดอร์แล้ว',
+                orderCode: orderCode(order),
+                message: result?.refund ? `${result.refund.label} ${money(result.refund.amount)} เรียบร้อย` : 'ยกเลิกออเดอร์เรียบร้อย',
+                duration: 5000,
+            })
+            setCancelModalOrder(null)
+            refreshOrders?.()
+            refreshCounterCatalog?.()
+        } catch (error) {
+            window.alert('ยกเลิกออเดอร์ไม่สำเร็จ: ' + error.message)
+        } finally {
+            setCancelLoading(false)
+        }
+    }
 
     const handleMoveTable = async () => {
         if (!moveTableOrder || !newTableInput.trim()) return
@@ -111,13 +193,13 @@ export function useCashierOperations({ setOrders, refreshOrders, addToast, count
     const handleOpenPaymentModal = (order) => {
         setPaymentModalOrder(order)
         setSelectedPaymentMethod('CASH')
-        setCashReceived(String(Math.ceil(order.totalAmount || 0)))
+        setCashReceived(String(Math.ceil(orderAmountDue(order))))
     }
 
     const handleConfirmPayment = async (details = {}) => {
         if (!paymentModalOrder || paymentRequestRef.current) return
         const order = paymentModalOrder
-        const total = Number(order.totalAmount) || 0
+        const total = orderAmountDue(order)
 
         let paymentDetail = details?.paymentDetail || 'เงินสด'
         let stripePaymentId = null
@@ -148,6 +230,8 @@ export function useCashierOperations({ setOrders, refreshOrders, addToast, count
                 ...item,
                 isPaid: true,
                 paymentStatus: 'PAID',
+                paidAmount: item.totalAmount,
+                amountDue: 0,
                 paymentMethod: paymentDetail,
                 stripePaymentId: stripePaymentId || item.stripePaymentId,
                 meta: { ...item.meta, paymentMethod: paymentDetail, paymentMethodDetail: paymentDetail, stripePaymentId: stripePaymentId || item.meta?.stripePaymentId }
@@ -158,7 +242,7 @@ export function useCashierOperations({ setOrders, refreshOrders, addToast, count
                 title: 'รับชำระเงินสำเร็จ!',
                 orderCode: orderCode(order),
                 meta: order.deliveryType === 'ทานที่ร้าน' ? `โต๊ะ ${order.tableNumber || '—'}` : order.deliveryType || 'สั่งกลับบ้าน',
-                message: `รับชำระเงิน ${paymentDetail} ยอด ${money(order.totalAmount)} เรียบร้อยแล้ว`,
+                message: `รับชำระเงิน ${paymentDetail} ยอด ${money(total)} เรียบร้อยแล้ว`,
                 duration: 6000,
             })
             setPaymentModalOrder(null)
@@ -172,6 +256,7 @@ export function useCashierOperations({ setOrders, refreshOrders, addToast, count
     }
 
     const addItemsAdd = product => {
+        if (isProductSoldOut(product)) return
         if (selectableOptionGroups(product).length) return setAddItemsOptionProduct(product)
         setAddItemsCart(prev => ({ ...prev, [product.id]: (prev[product.id] || 0) + 1 }))
     }
@@ -222,6 +307,7 @@ export function useCashierOperations({ setOrders, refreshOrders, addToast, count
             setAddItemsCart({})
             setAddItemsTakeawayMap({})
             refreshOrders?.()
+            refreshCounterCatalog?.()
 
             playNotificationChime()
             addToast({
@@ -263,5 +349,7 @@ export function useCashierOperations({ setOrders, refreshOrders, addToast, count
         switchDineInOrder, setSwitchDineInOrder,
         switchTableInput, setSwitchTableInput,
         switchTableLoading, handleToggleTakeaway, handleConfirmSwitchDineIn,
+        cancelModalOrder, setCancelModalOrder, cancelLoading, handleConfirmCancel,
+        actionLoadingId, handleConfirmOrder, handleRiderHandoff,
     }
 }

@@ -7,18 +7,11 @@ export function CreditCardForm({
     compact = false,
 }) {
     const [cardNumber, setCardNumber] = useState(value.cardNumber || '')
-    const [cardHolder, setCardHolder] = useState(value.cardHolder || defaultName || '')
+    const [cardHolder, setCardHolder] = useState(value.cardHolder || '')
     const [expiry, setExpiry] = useState(value.expiry || '')
     const [cvv, setCvv] = useState(value.cvv || '')
     const [showCvv, setShowCvv] = useState(false)
     const [focusedField, setFocusedField] = useState(null)
-
-    // Sync defaultName if cardHolder is empty
-    useEffect(() => {
-        if (!cardHolder && defaultName) {
-            setCardHolder(defaultName.toUpperCase())
-        }
-    }, [defaultName])
 
     // Detect Card Brand
     const cleanNumber = cardNumber.replace(/\s+/g, '')
@@ -225,7 +218,7 @@ export function CreditCardForm({
                             overflow: 'hidden',
                             textOverflow: 'ellipsis',
                         }}>
-                            {cardHolder || 'SOMCHAI JAIDEE'}
+                            {cardHolder || 'NAME SURNAME'}
                         </div>
                     </div>
                     <div style={{ textAlign: 'right' }}>

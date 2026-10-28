@@ -1,6 +1,8 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { fetchCatalog, placeCounterOrder, addItemsToOrder } from '../../lib/database'
 import { selectableOptionGroups, buildCartLines, makeCartLineKey, optionIdsFromLineKey, productIdFromLineKey } from '../../lib/productOptions'
+
+export const isProductSoldOut = product => ['หมด', 'วัตถุดิบไม่เพียงพอ'].includes(product?.status)
 
 export function useCashierCounter(refreshOrders, setOrders, orders = []) {
     const submitRequestRef = useRef(false)
@@ -20,12 +22,17 @@ export function useCashierCounter(refreshOrders, setOrders, orders = []) {
     const [counterNotice, setCounterNotice] = useState('')
     const [counterOptionProduct, setCounterOptionProduct] = useState(null)
 
+    const refreshCounterCatalog = useCallback(() => fetchCatalog().then(result => {
+        setCounterProducts(result.products || [])
+        setCounterCategories(result.categories || [])
+    }).catch(() => { }), [])
+
     useEffect(() => {
-        fetchCatalog().then(result => {
-            setCounterProducts(result.products || [])
-            setCounterCategories(result.categories || [])
-        }).catch(() => { })
-    }, [])
+        refreshCounterCatalog()
+        // Stock moves with every order (online, kitchen, other cashiers), so keep sold-out flags fresh.
+        const timer = window.setInterval(refreshCounterCatalog, 60000)
+        return () => window.clearInterval(timer)
+    }, [refreshCounterCatalog])
 
     const addCounterLine = (product, selection = {}, details = {}) => {
         const lineKey = makeCartLineKey(product.id, selection)
@@ -33,7 +40,10 @@ export function useCashierCounter(refreshOrders, setOrders, orders = []) {
         setCounterCart(prev => ({ ...prev, [lineKey]: (prev[lineKey] || 0) + quantity }))
         setCounterOptionProduct(null)
     }
-    const counterAdd = product => selectableOptionGroups(product).length ? setCounterOptionProduct(product) : addCounterLine(product)
+    const counterAdd = product => {
+        if (isProductSoldOut(product)) return
+        return selectableOptionGroups(product).length ? setCounterOptionProduct(product) : addCounterLine(product)
+    }
     const counterRemove = product => setCounterCart(prev => {
         const lineKey = Object.keys(prev).reverse().find(key => productIdFromLineKey(key) === product.id && Number(prev[key]) > 0)
         return lineKey ? { ...prev, [lineKey]: Math.max(0, Number(prev[lineKey]) - 1) } : prev
@@ -54,8 +64,9 @@ export function useCashierCounter(refreshOrders, setOrders, orders = []) {
     const counterItems = buildCartLines(counterCart, counterProducts)
     const counterTotal = counterItems.reduce((sum, line) => sum + line.unitPrice * line.quantity, 0)
 
+    // Sold-out products stay listed (greyed out with a "หมด" badge) so the cashier can tell customers.
     const counterGroups = useMemo(() => {
-        const available = counterProducts.filter(product => !['หมด', 'วัตถุดิบไม่เพียงพอ'].includes(product.status))
+        const available = [...counterProducts].sort((a, b) => Number(isProductSoldOut(a)) - Number(isProductSoldOut(b)))
         const categories = [...counterCategories].sort((a, b) => (a.sortOrder ?? a.sort_order ?? 0) - (b.sortOrder ?? b.sort_order ?? 0))
         const categoryIds = new Set(categories.map(category => category.id))
         const groups = categories.map(category => ({
@@ -126,6 +137,7 @@ export function useCashierCounter(refreshOrders, setOrders, orders = []) {
             setCounterNote('')
             window.setTimeout(() => setCounterNotice(''), 3000)
             refreshOrders?.()
+            refreshCounterCatalog()
         } catch (error) {
             window.alert('เกิดข้อผิดพลาด: ' + error.message)
         } finally {
@@ -135,7 +147,7 @@ export function useCashierCounter(refreshOrders, setOrders, orders = []) {
     }
 
     return {
-        counterProducts,
+        counterProducts, refreshCounterCatalog,
         counterCategory, setCounterCategory,
         counterCart, setCounterCart,
         counterTakeawayMap, setCounterTakeawayMap,

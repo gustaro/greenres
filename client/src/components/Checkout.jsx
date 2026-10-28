@@ -12,7 +12,7 @@ export const SERVER_DELIVERY_FEE = Number(import.meta.env.VITE_DELIVERY_FEE || 3
 export const SERVER_FREE_DELIVERY_THRESHOLD = Number(import.meta.env.VITE_FREE_DELIVERY_THRESHOLD || 300)
 
 export function CheckoutModal({ cart, products, itemNotes = {}, onClose, onDone, pointsToUse = 0, setPointsToUse }) {
-    const { profile, settings } = useAuth()
+    const { session, profile, updateProfile, settings } = useAuth()
     const { isEn, t } = useLanguage()
     const [orderMode, setOrderMode] = useState('takeaway') // 'takeaway' | 'dine-in'
     const [takeawayMethod, setTakeawayMethod] = useState('delivery') // 'delivery' | 'pickup'
@@ -98,7 +98,7 @@ export function CheckoutModal({ cart, products, itemNotes = {}, onClose, onDone,
     const [cardData, setCardData] = useState({
         cardNumber: '',
         cleanNumber: '',
-        cardHolder: profile?.name || '',
+        cardHolder: '',
         expiry: '',
         cvv: '',
         cardType: 'GENERIC',
@@ -107,6 +107,8 @@ export function CheckoutModal({ cart, products, itemNotes = {}, onClose, onDone,
     })
     const [isQrPaid, setIsQrPaid] = useState(false)
     const [qrData, setQrData] = useState(null)
+    const [slipFile, setSlipFile] = useState(null)
+    const [slipPreview, setSlipPreview] = useState(null)
     const [isSubmitting, setIsSubmitting] = useState(false)
 
     const isPersonalInfoValid = recipientName.trim().length > 0 && recipientPhone.trim().length >= 9
@@ -168,6 +170,12 @@ export function CheckoutModal({ cart, products, itemNotes = {}, onClose, onDone,
 
         setIsSubmitting(true)
         try {
+            if (session && recipientPhone && recipientPhone.trim() && recipientPhone.trim() !== profile?.phone) {
+                updateProfile?.({ phone: recipientPhone.trim() }).catch(() => {})
+            }
+            if (session && recipientName && recipientName.trim() && !profile?.name) {
+                updateProfile?.({ name: recipientName.trim() }).catch(() => {})
+            }
             await onDone({
                 deliveryAddress: deliveryType === 'ให้จัดส่ง' ? deliveryAddressText : deliveryType === 'ทานที่ร้าน' ? (dineInTable ? `โต๊ะ ${dineInTable}` : 'ทานที่ร้าน') : '',
                 deliveryAddressId: deliveryType === 'ให้จัดส่ง' && addressId !== 'new' ? addressId : null,
@@ -202,6 +210,9 @@ export function CheckoutModal({ cart, products, itemNotes = {}, onClose, onDone,
                 recipientName,
                 recipientPhone,
                 itemNotes: finalItemNotes,
+                slipFile: paymentMethod === 'โอนเงินผ่านระบบ / พร้อมเพย์' ? slipFile : null,
+                slipUrl: paymentMethod === 'โอนเงินผ่านระบบ / พร้อมเพย์' ? slipPreview : null,
+                paymentProofUrl: paymentMethod === 'โอนเงินผ่านระบบ / พร้อมเพย์' ? slipPreview : null,
             })
         } catch (err) {
             console.error(err)
@@ -230,7 +241,14 @@ export function CheckoutModal({ cart, products, itemNotes = {}, onClose, onDone,
                             </div>
                             <div className="chk-grid" style={{ marginTop: 20 }}>
                                 <div className="chk-input-wrap">
-                                    <label>{t('phone')}</label>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                                        <label style={{ margin: 0 }}>{t('phone')}</label>
+                                        {session && (
+                                            <small style={{ color: 'var(--brand-primary, #12852f)', fontSize: 11, fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                                                <i className="bi bi-person-check-fill" /> {isEn ? 'Connected with Profile' : 'เชื่อมต่อกับโปรไฟล์'}
+                                            </small>
+                                        )}
+                                    </div>
                                     <input name="recipientPhone" required value={recipientPhone} onChange={e => setRecipientPhone(e.target.value)} placeholder="08x-xxx-xxxx" />
                                 </div>
                                 <div className="chk-input-wrap">
@@ -342,6 +360,10 @@ export function CheckoutModal({ cart, products, itemNotes = {}, onClose, onDone,
                             setIsQrPaid={setIsQrPaid}
                             qrData={qrData}
                             setQrData={setQrData}
+                            slipFile={slipFile}
+                            setSlipFile={setSlipFile}
+                            slipPreview={slipPreview}
+                            setSlipPreview={setSlipPreview}
                             isSubmitting={isSubmitting}
                         />
                     </form>

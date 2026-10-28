@@ -12,6 +12,7 @@ import { CashierReadyTab } from './cashier/CashierReadyTab'
 import { CashierPaymentsTab } from './cashier/CashierPaymentsTab'
 import { CashierHistoryTab } from './cashier/CashierHistoryTab'
 import { CashierSummaryTab } from './cashier/CashierSummaryTab'
+import { CashierCancelModal } from './cashier/CashierCancelModal'
 import { ProductOptionsModal } from './ProductOptionsModal'
 
 export function CashierDashboard({ orders = [], setOrders, refreshOrders }) {
@@ -22,6 +23,7 @@ export function CashierDashboard({ orders = [], setOrders, refreshOrders }) {
         search, setSearch,
         searchField, setSearchField,
         period, setPeriod,
+        ordersFilter, setOrdersFilter,
         toasts, dismissToast,
         counterProducts,
         counterSource, setCounterSource,
@@ -53,9 +55,11 @@ export function CashierDashboard({ orders = [], setOrders, refreshOrders }) {
         switchDineInOrder, setSwitchDineInOrder,
         switchTableInput, setSwitchTableInput,
         switchTableLoading, handleToggleTakeaway, handleConfirmSwitchDineIn,
+        cancelModalOrder, setCancelModalOrder, cancelLoading, handleConfirmCancel,
+        actionLoadingId, handleConfirmOrder, handleRiderHandoff,
         completeCounterOrder, customerLabel,
         serveItem, serveAllReadyItems,
-        filteredUnpaid, filteredPaid, filteredReady,
+        filteredUnpaid, filteredPaid, filteredReady, filteredDelivery, filteredActive, pendingConfirmCount,
         revenue, periodOrders, paymentMethods, productSales, exportSales, exportSalesPdf,
     } = useCashierDashboard(orders, setOrders, refreshOrders)
 
@@ -63,19 +67,19 @@ export function CashierDashboard({ orders = [], setOrders, refreshOrders }) {
         <StaffShell
             role="cashier"
             title="ระบบแคชเชียร์"
-            subtitle="จัดการรับออเดอร์หน้าร้าน ย้ายโต๊ะ เพิ่มเมนู และชำระเงิน"
+            subtitle="จัดการรับออเดอร์หน้าร้าน ยืนยันออเดอร์ ย้ายโต๊ะ เพิ่มเมนู ยกเลิก/คืนเงิน และชำระเงิน"
             active={tab}
             onTab={setTab}
             tabs={[
                 { key: 'counter', label: 'รับออเดอร์/จองโต๊ะ', icon: 'bi-pencil-square', count: 0 },
-                { key: 'ready', label: 'พร้อมส่งมอบ', icon: 'bi-bell-fill', count: filteredReady.length },
-                { key: 'payments', label: 'รอชำระเงิน', icon: 'bi-wallet2', count: filteredUnpaid.length },
+                { key: 'ready', label: 'พร้อมส่งมอบ', icon: 'bi-bell-fill', count: filteredReady.length + filteredDelivery.length },
+                { key: 'payments', label: 'ออเดอร์ & ชำระเงิน', icon: 'bi-wallet2', count: filteredUnpaid.length + pendingConfirmCount },
                 { key: 'history', label: 'ประวัติและใบเสร็จ', icon: 'bi-receipt', count: 0 },
                 { key: 'summary', label: 'สรุปยอดขาย', icon: 'bi-graph-up-arrow', count: 0 }
             ]}
         >
             <ToastContainer toasts={toasts} onDismiss={dismissToast} />
-            {tab === 'payments' && <div className="staff-alert">กด "ชำระเงินแล้ว" เมื่อลูกค้าชำระเงินสดหรือสแกนจ่ายเรียบร้อย</div>}
+            {tab === 'payments' && <div className="staff-alert">ออเดอร์ออนไลน์ใหม่ต้องกด "ยืนยันออเดอร์" ก่อนเข้าครัว · ออเดอร์เก็บเงินปลายทางไรเดอร์เป็นผู้เก็บเงิน</div>}
             {tab === 'ready' && <div className="staff-alert">ตรวจสอบรายการที่พร้อมเสิร์ฟ นำไปเสิร์ฟที่โต๊ะ และกด "ส่งมอบแล้ว"</div>}
             {counterNotice && <div className="staff-alert" style={{ borderColor: 'var(--brand-primary, #12852f)', color: 'var(--brand-primary, #12852f)' }}><i className="bi bi-check-circle-fill me-2" />{counterNotice}</div>}
 
@@ -120,6 +124,9 @@ export function CashierDashboard({ orders = [], setOrders, refreshOrders }) {
             {tab === 'ready' && (
                 <CashierReadyTab
                     readyOrders={filteredReady}
+                    deliveryOrders={filteredDelivery}
+                    actionLoadingId={actionLoadingId}
+                    onRiderHandoff={handleRiderHandoff}
                     searchField={searchField}
                     setSearchField={setSearchField}
                     search={search}
@@ -139,7 +146,12 @@ export function CashierDashboard({ orders = [], setOrders, refreshOrders }) {
 
             {tab === 'payments' && (
                 <CashierPaymentsTab
-                    unpaidOrders={filteredUnpaid}
+                    orders={filteredActive}
+                    ordersFilter={ordersFilter}
+                    setOrdersFilter={setOrdersFilter}
+                    actionLoadingId={actionLoadingId}
+                    onConfirmOrder={handleConfirmOrder}
+                    onCancelOrder={setCancelModalOrder}
                     searchField={searchField}
                     setSearchField={setSearchField}
                     search={search}
@@ -235,6 +247,14 @@ export function CashierDashboard({ orders = [], setOrders, refreshOrders }) {
                 onConfirm={handleConfirmPayment}
                 onCancel={() => setPaymentModalOrder(null)}
                 loading={paymentLoading}
+            />
+
+            <CashierCancelModal
+                order={cancelModalOrder}
+                customerLabel={customerLabel}
+                onConfirm={handleConfirmCancel}
+                onCancel={() => setCancelModalOrder(null)}
+                loading={cancelLoading}
             />
 
             <CashierReceiptModal

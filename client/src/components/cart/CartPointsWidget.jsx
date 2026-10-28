@@ -130,21 +130,15 @@ export function CartPointsWidget({
                     <span className="cart-points-badge-icon">
                         <i className="bi bi-coin" />
                     </span>
-                    <div>
-                        <b>{t('cartPointsTitle')}</b>
-                        <small className="cart-points-rate">
-                            {t('cartPointsDiscountRateDesc').replace('{rate}', redeemRate)}
-                        </small>
-                    </div>
+                    <b>{t('cartPointsTitle')}</b>
                 </div>
                 <div className="cart-points-balance">
-                    <small>{t('cartPointsBalance')}</small>
-                    <strong>{userPoints.toLocaleString()} <span className="cart-points-unit">{t('profilePointsUnit')}</span></strong>
-                    {userPoints > 0 && maxPotentialDiscount > 0 && (
-                        <span className="cart-points-worth">
-                            ({isEn ? 'Worth' : 'ลดได้'} ฿{maxPotentialDiscount})
-                        </span>
-                    )}
+                    <span>
+                        <strong>{userPoints.toLocaleString()}</strong> <small className="cart-points-unit">{t('profilePointsUnit')}</small>
+                        {userPoints > 0 && maxPotentialDiscount > 0 && (
+                            <span className="cart-points-worth"> (-฿{maxPotentialDiscount})</span>
+                        )}
+                    </span>
                 </div>
             </div>
 

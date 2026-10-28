@@ -32,7 +32,8 @@ export function DeliveryRiderStatusBoard({ riders = [], loading = false }) {
                                 <span
                                     className={`delivery-rider-status-dot ${isOnline ? 'is-online' : 'is-offline'}`}
                                     role="img"
-                                    aria-label={isOnline ? 'ออนไลน์' : 'ออฟไลน์'}
+                                    aria-label={isOnline ? 'พร้อมรับงาน' : 'ไม่พร้อมรับงาน'}
+                                    title={isOnline ? 'พร้อมรับงาน' : 'ไม่พร้อมรับงาน'}
                                 />
                             </article>
                         )

@@ -1,5 +1,6 @@
-import { orderCode } from '../StaffShared'
+import { money, orderCode } from '../StaffShared'
 import { buildCartLines, productIdFromLineKey } from '../../lib/productOptions'
+import { isProductSoldOut } from './useCashierCounter'
 
 export function CashierAddItemsModal({
     order,
@@ -22,6 +23,12 @@ export function CashierAddItemsModal({
 
     const totalAddedCount = Object.values(addItemsCart).reduce((a, b) => a + b, 0)
     const selectedLines = buildCartLines(addItemsCart, counterProducts)
+    const addedTotal = selectedLines.reduce((sum, line) => sum + line.unitPrice * line.quantity, 0)
+    const removeLine = lineKey => setAddItemsCart(prev => {
+        const next = { ...prev }
+        delete next[lineKey]
+        return next
+    })
     const setProductTakeaway = (productId, value) => setAddItemsTakeawayMap(prev => {
         const next = { ...prev }
         Object.keys(addItemsCart).filter(key => productIdFromLineKey(key) === productId).forEach(key => { next[key] = value })
@@ -42,6 +49,12 @@ export function CashierAddItemsModal({
                     </div>
                     <button onClick={onCancel} style={{ border: 0, background: 'transparent', fontSize: 24, cursor: 'pointer' }}>×</button>
                 </div>
+
+                {order.isPaid && (
+                    <div style={{ background: 'var(--brand-accent-soft, #effbdc)', border: '1px solid var(--brand-accent, #9fe51f)', color: 'var(--brand-primary-dark, #075c1b)', borderRadius: 8, padding: '8px 12px', fontSize: 12, fontWeight: 700, marginBottom: 12 }}>
+                        <i className="bi bi-info-circle me-1" /> ออเดอร์นี้ชำระแล้ว {money(order.paidAmount)} — เมนูที่สั่งเพิ่มจะเป็นยอดค้างชำระใหม่ เก็บเงินเฉพาะส่วนต่าง
+                    </div>
+                )}
 
                 {/* Dine-in vs Takeaway Batch Mode Quick Toggle */}
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'var(--brand-surface, #f6faf2)', padding: '10px 14px', borderRadius: 8, marginBottom: 14, border: '1px solid var(--brand-border, #d8e7d2)', flexWrap: 'wrap', gap: 8 }}>
@@ -117,15 +130,25 @@ export function CashierAddItemsModal({
                         const productLines = selectedLines.filter(line => line.productId === p.id)
                         const qty = productLines.reduce((sum, line) => sum + line.quantity, 0)
                         const isTakeaway = productLines.length > 0 && productLines.every(line => Boolean(addItemsTakeawayMap[line.lineKey]))
+                        const soldOut = isProductSoldOut(p)
                         return (
-                            <div key={p.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 12px', border: '1px solid var(--brand-border, #d8e7d2)', borderRadius: 8, background: qty > 0 ? 'var(--brand-accent-soft, #effbdc)' : '#fff' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                                    <img src={p.img} alt={p.name} style={{ width: 44, height: 44, borderRadius: 6, objectFit: 'cover' }} />
+                            <div key={p.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, padding: '8px 12px', border: '1px solid var(--brand-border, #d8e7d2)', borderRadius: 8, background: soldOut ? '#f5f5f4' : qty > 0 ? 'var(--brand-accent-soft, #effbdc)' : '#fff', opacity: soldOut ? 0.65 : 1 }}>
+                                <button
+                                    type="button"
+                                    onClick={() => addItemsAdd(p)}
+                                    disabled={soldOut}
+                                    title={soldOut ? 'สินค้าหมด' : 'กดเพื่อเพิ่มลงตะกร้า'}
+                                    style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, minWidth: 0, border: 0, background: 'transparent', padding: 0, textAlign: 'left', cursor: soldOut ? 'not-allowed' : 'pointer' }}
+                                >
+                                    <img src={p.img} alt={p.name} style={{ width: 44, height: 44, borderRadius: 6, objectFit: 'cover', filter: soldOut ? 'grayscale(1)' : 'none' }} />
                                     <div>
                                         <div style={{ fontWeight: 700, fontSize: 14 }}>{p.name}</div>
-                                        <div style={{ fontSize: 12, color: 'var(--brand-primary, #12852f)', fontWeight: 600 }}>฿{p.price}</div>
+                                        <div style={{ fontSize: 12, color: 'var(--brand-primary, #12852f)', fontWeight: 600 }}>
+                                            ฿{p.price}
+                                            {soldOut && <span className="counter-soldout-badge" style={{ marginLeft: 6 }}>หมด</span>}
+                                        </div>
                                     </div>
-                                </div>
+                                </button>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                                     {qty > 0 && (
                                         <div style={{ display: 'inline-flex', background: 'var(--brand-surface, #f6faf2)', borderRadius: 20, padding: 2, border: '1px solid var(--brand-border, #d8e7d2)' }}>
@@ -169,11 +192,23 @@ export function CashierAddItemsModal({
                                             </button>
                                         </div>
                                     )}
-                                    <div className="counter-qty" style={{ margin: 0 }}>
-                                        <button onClick={() => addItemsRemove(p)}>−</button>
-                                        <span>{qty}</span>
-                                        <button onClick={() => addItemsAdd(p)}>+</button>
-                                    </div>
+                                    {qty > 0 ? (
+                                        <div className="counter-qty" style={{ margin: 0 }}>
+                                            <button onClick={() => addItemsRemove(p)}>−</button>
+                                            <span>{qty}</span>
+                                            <button onClick={() => addItemsAdd(p)} disabled={soldOut}>+</button>
+                                        </div>
+                                    ) : (
+                                        <button
+                                            type="button"
+                                            className="staff-primary"
+                                            onClick={() => addItemsAdd(p)}
+                                            disabled={soldOut}
+                                            style={{ padding: '6px 12px', fontSize: 12, whiteSpace: 'nowrap' }}
+                                        >
+                                            {soldOut ? 'หมด' : <><i className="bi bi-cart-plus me-1" />เพิ่มลงตะกร้า</>}
+                                        </button>
+                                    )}
                                 </div>
                             </div>
                         )
@@ -184,9 +219,9 @@ export function CashierAddItemsModal({
                 <div style={{ borderTop: '1px solid #eee', marginTop: 16, paddingTop: 14 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8, marginBottom: 10 }}>
                         <div>
-                            <span style={{ fontSize: 13, color: '#666' }}>เมนูที่เพิ่ม: </span>
+                            <span style={{ fontSize: 13, color: '#666' }}><i className="bi bi-cart3 me-1" />ตะกร้าสั่งเพิ่ม: </span>
                             <strong style={{ fontSize: 15, color: 'var(--brand-primary-dark, #075c1b)' }}>
-                                {totalAddedCount} รายการ
+                                {totalAddedCount} รายการ · {money(addedTotal)}
                             </strong>
                         </div>
                         <div style={{ display: 'flex', gap: 8 }}>
@@ -216,6 +251,9 @@ export function CashierAddItemsModal({
                                     }}>
                                         <i className={isT ? "bi bi-box2" : "bi bi-shop"}></i>
                                         {prod?.name || 'สินค้า'}{line.selectedOptions.length ? ` — ${line.selectedOptions.map(option => option.name).join(', ')}` : ''} {isT ? '(กลับบ้าน)' : '(ทานร้าน)'} × {line.quantity}
+                                        <button type="button" onClick={() => removeLine(line.lineKey)} aria-label="ลบออกจากตะกร้า" style={{ border: 0, background: 'transparent', color: 'inherit', cursor: 'pointer', padding: 0, marginLeft: 2, lineHeight: 1 }}>
+                                            <i className="bi bi-x-circle-fill" />
+                                        </button>
                                     </span>
                                 )
                             })}

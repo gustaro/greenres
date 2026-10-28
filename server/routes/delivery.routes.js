@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { authenticate } from "../middleware/auth.js";
-import { isAdmin, isStaffOrAdmin, isRiderOrAdmin } from "../middleware/role.js";
+import { isAdmin, isStaffOrAdmin, isRiderOrAdmin, isAnyStaff } from "../middleware/role.js";
 import { upload } from "../middleware/upload.js";
 import {
   // Admin/Staff
@@ -41,13 +41,13 @@ router.get ("/riders",             authenticate, isAdmin,        getAllRiders);
 router.put ("/riders/:id/verify",  authenticate, isAdmin,        verifyRider);
 
 router.get   ("/",          authenticate, isStaffOrAdmin, getDeliveries);
-router.post  ("/",          authenticate, isStaffOrAdmin, createDeliveryForOrder);
+router.post  ("/",          authenticate, isAnyStaff,      createDeliveryForOrder);
 router.get   ("/:id",       authenticate, isStaffOrAdmin, getDeliveryById);
 router.put   ("/:id/status",authenticate, isStaffOrAdmin, updateStatus);
 router.post  ("/:id/proof", authenticate, isStaffOrAdmin, upload.single("proof"), uploadProof);
 router.post  ("/:id/payment-proof", authenticate, isStaffOrAdmin, upload.single("proof"), uploadProof);
 router.post  ("/:id/assign",authenticate, isStaffOrAdmin, assignRiderToDelivery);
-router.post  ("/:id/auto",  authenticate, isStaffOrAdmin, autoAssign);
+router.post  ("/:id/auto",  authenticate, isAnyStaff,      autoAssign);
 router.post  ("/:id/external", authenticate, isStaffOrAdmin, dispatchToExternal);
 router.delete("/:id",       authenticate, isStaffOrAdmin, cancelDelivery);
 

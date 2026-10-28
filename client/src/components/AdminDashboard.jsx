@@ -3,6 +3,7 @@ import { useAuth } from '../lib/AuthContext'
 import { adminApi, heroApi, confirmOrder, updateOrderStatus } from '../lib/database'
 import { WebSettings } from './WebSettings'
 import { WebSocial } from './WebSocial'
+import { WebBankSettings } from './settings/WebBankSettings'
 import { AdminOverviewTab } from './admin/AdminOverviewTab'
 import { AdminOrdersTab } from './admin/AdminOrdersTab'
 import { AdminHeroTab } from './admin/AdminHeroTab'
@@ -50,6 +51,7 @@ const navSections = [
         icon: 'bi-sliders',
         items: [
             ['users', 'ผู้ใช้งาน', 'bi-people'],
+            ['bank', 'บัญชีธนาคารร้าน', 'bi-bank'],
             ['settings', 'ตั้งค่าเว็บไซต์', 'bi-gear'],
             ['integrations', 'บริการเชื่อมต่อ (API)', 'bi-plug'],
             ['social', 'ช่องทางโซเชียล', 'bi-share'],
@@ -336,6 +338,7 @@ export function AdminDashboard({ orders = [], setOrders, products = [], setProdu
                             notify={notify}
                         />
                     )}
+                    {active === 'bank' && <WebBankSettings notify={notify} fail={fail} />}
                     {active === 'settings' && <WebSettings notify={notify} fail={fail} />}
                     {active === 'integrations' && <AdminIntegrationsTab notify={notify} fail={fail} />}
                     {active === 'social' && <WebSocial notify={notify} fail={fail} />}

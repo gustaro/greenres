@@ -1,6 +1,9 @@
+import { useState } from 'react'
 import { useLanguage } from '../../lib/LanguageContext'
+import { useAuth } from '../../lib/AuthContext'
 import { PromptPayQR } from '../payment/PromptPayQR'
 import { CreditCardForm } from '../payment/CreditCardForm'
+import { getShopBankAccounts, bankColor } from '../../lib/bankAccounts'
 
 export function CheckoutPaymentSection({
     promotionCode,
@@ -22,9 +25,37 @@ export function CheckoutPaymentSection({
     setIsQrPaid,
     qrData,
     setQrData,
+    slipFile,
+    setSlipFile,
+    slipPreview,
+    setSlipPreview,
     isSubmitting = false,
 }) {
     const { isEn, t } = useLanguage()
+    const { settings } = useAuth()
+    const bankAccounts = getShopBankAccounts(settings)
+    const [copiedField, setCopiedField] = useState('')
+
+    const copyToClipboard = (text, fieldName) => {
+        if (!text) return
+        navigator.clipboard?.writeText?.(text).then(() => {
+            setCopiedField(fieldName)
+            setTimeout(() => setCopiedField(''), 2000)
+        }).catch(() => {})
+    }
+
+    const handleSlipChange = e => {
+        const file = e.target.files?.[0]
+        if (!file) return
+        setSlipFile?.(file)
+        const objectUrl = URL.createObjectURL(file)
+        setSlipPreview?.(objectUrl)
+    }
+
+    const handleRemoveSlip = () => {
+        setSlipFile?.(null)
+        setSlipPreview?.(null)
+    }
 
     return (
         <>
@@ -155,26 +186,212 @@ export function CheckoutPaymentSection({
                                         <CreditCardForm
                                             value={cardData}
                                             onChange={setCardData}
-                                            defaultName={recipientName}
                                         />
                                     </div>
                                 )}
                             </div>
 
                             {/* Bank Transfer Slip Option */}
-                            <label className={`chk-payment-box ${paymentMethod === 'โอนเงินผ่านระบบ / พร้อมเพย์' ? 'active' : ''}`}>
-                                <input
-                                    type="radio"
-                                    value="โอนเงินผ่านระบบ / พร้อมเพย์"
-                                    checked={paymentMethod === 'โอนเงินผ่านระบบ / พร้อมเพย์'}
-                                    onChange={e => setPaymentMethod(e.target.value)}
-                                />
-                                <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                    <span>{isEn ? 'Bank Transfer (Manual)' : 'โอนเงินผ่านระบบ / แนบสลิป'}</span>
-                                    <small style={{ fontSize: 10, color: '#666' }}>{isEn ? 'Upload payment slip' : 'โอนเงินเข้าบัญชีร้านค้าและแนบสลิป'}</small>
-                                </div>
-                                <i className="bi bi-wallet2 chk-payment-icon"></i>
-                            </label>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                                <label className={`chk-payment-box ${paymentMethod === 'โอนเงินผ่านระบบ / พร้อมเพย์' ? 'active' : ''}`} style={{ borderColor: paymentMethod === 'โอนเงินผ่านระบบ / พร้อมเพย์' ? 'var(--brand-primary, #12852f)' : '', background: paymentMethod === 'โอนเงินผ่านระบบ / พร้อมเพย์' ? 'rgba(18, 133, 47, 0.04)' : '' }}>
+                                    <input
+                                        type="radio"
+                                        value="โอนเงินผ่านระบบ / พร้อมเพย์"
+                                        checked={paymentMethod === 'โอนเงินผ่านระบบ / พร้อมเพย์'}
+                                        onChange={e => setPaymentMethod(e.target.value)}
+                                    />
+                                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                        <span style={{ fontWeight: 700, color: paymentMethod === 'โอนเงินผ่านระบบ / พร้อมเพย์' ? 'var(--brand-primary-dark, #075c1b)' : 'inherit' }}>
+                                            {isEn ? 'Bank Transfer / Attach Slip' : 'โอนเงินผ่านบัญชีธนาคาร / แนบสลิป'}
+                                        </span>
+                                        <small style={{ fontSize: 11, color: '#4b5563' }}>
+                                            {isEn ? 'Transfer to restaurant bank account and attach receipt' : 'โอนเงินเข้าบัญชีร้านค้า และสามารถแนบสลิปได้ทันที'}
+                                        </small>
+                                    </div>
+                                    <i className="bi bi-wallet2 chk-payment-icon" style={{ color: 'var(--brand-primary, #12852f)' }}></i>
+                                </label>
+
+                                {paymentMethod === 'โอนเงินผ่านระบบ / พร้อมเพย์' && (
+                                    <div style={{
+                                        padding: '16px',
+                                        background: '#fff',
+                                        border: '1.5px solid #bbf7d0',
+                                        borderRadius: '12px',
+                                        marginTop: 4,
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        gap: '14px',
+                                        animation: 'fadeIn 0.2s ease-in-out',
+                                    }}>
+                                        {/* Bank details card */}
+                                        <div style={{
+                                            background: '#f8fafc',
+                                            border: '1px solid #e2e8f0',
+                                            borderRadius: '10px',
+                                            padding: '14px',
+                                            display: 'flex',
+                                            flexDirection: 'column',
+                                            gap: '10px',
+                                        }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 700, color: 'var(--brand-primary-dark, #0c4d1d)', fontSize: '0.95rem' }}>
+                                                <i className="bi bi-bank" style={{ color: 'var(--brand-primary, #12852f)' }} />
+                                                <span>{isEn ? 'Transfer to any shop account' : 'โอนเข้าบัญชีร้านบัญชีใดก็ได้'}</span>
+                                            </div>
+
+                                            {bankAccounts.map(account => {
+                                                const copyKey = `acc-${account.id}`
+                                                return (
+                                                    <div key={account.id} style={{ background: '#fff', border: '1px solid #e2e8f0', borderLeft: `4px solid ${bankColor(account.bankName)}`, borderRadius: '8px', padding: '10px 12px', display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '8px' }}>
+                                                        <div style={{ minWidth: 0 }}>
+                                                            <div style={{ fontSize: '0.8rem', fontWeight: 700, color: bankColor(account.bankName) }}>{account.bankName}</div>
+                                                            <div style={{ fontSize: '1.1rem', fontWeight: 800, color: '#0f172a', letterSpacing: '0.5px' }}>{account.accountNumber}</div>
+                                                            <div style={{ fontSize: '0.8rem', color: '#475569' }}>{account.accountName}</div>
+                                                        </div>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => copyToClipboard(account.accountNumber, copyKey)}
+                                                            style={{
+                                                                padding: '6px 12px',
+                                                                borderRadius: '6px',
+                                                                fontSize: '0.8rem',
+                                                                fontWeight: 600,
+                                                                background: copiedField === copyKey ? '#22c55e' : '#f1f5f9',
+                                                                color: copiedField === copyKey ? '#fff' : '#334155',
+                                                                border: '1px solid #cbd5e1',
+                                                                cursor: 'pointer',
+                                                                display: 'inline-flex',
+                                                                alignItems: 'center',
+                                                                gap: '4px',
+                                                            }}
+                                                        >
+                                                            <i className={`bi ${copiedField === copyKey ? 'bi-check-lg' : 'bi-clipboard'}`} />
+                                                            {copiedField === copyKey ? (isEn ? 'Copied!' : 'คัดลอกแล้ว') : (isEn ? 'Copy' : 'คัดลอก')}
+                                                        </button>
+                                                    </div>
+                                                )
+                                            })}
+
+                                            {settings?.promptpayNumber && (
+                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '6px', borderTop: '1px dashed #e2e8f0' }}>
+                                                    <div>
+                                                        <div style={{ fontSize: '0.78rem', color: '#64748b' }}>พร้อมเพย์ (PromptPay)</div>
+                                                        <div style={{ fontSize: '0.95rem', fontWeight: 700, color: '#0284c7' }}>
+                                                            {settings.promptpayNumber}
+                                                        </div>
+                                                    </div>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => copyToClipboard(settings.promptpayNumber, 'pp')}
+                                                        style={{
+                                                            padding: '4px 10px',
+                                                            borderRadius: '6px',
+                                                            fontSize: '0.78rem',
+                                                            fontWeight: 600,
+                                                            background: copiedField === 'pp' ? '#22c55e' : '#f1f5f9',
+                                                            color: copiedField === 'pp' ? '#fff' : '#334155',
+                                                            border: '1px solid #cbd5e1',
+                                                            cursor: 'pointer',
+                                                            display: 'inline-flex',
+                                                            alignItems: 'center',
+                                                            gap: '4px',
+                                                        }}
+                                                    >
+                                                        <i className={`bi ${copiedField === 'pp' ? 'bi-check-lg' : 'bi-clipboard'}`} />
+                                                        {copiedField === 'pp' ? (isEn ? 'Copied!' : 'คัดลอกแล้ว') : (isEn ? 'Copy' : 'คัดลอก')}
+                                                    </button>
+                                                </div>
+                                            )}
+
+                                            {settings?.promptpayQrUrl && (
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', background: '#fff', padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                                                    <img src={settings.promptpayQrUrl} alt="QR Code" style={{ width: '80px', height: '80px', objectFit: 'contain' }} />
+                                                    <div style={{ fontSize: '0.8rem', color: '#64748b' }}>
+                                                        <strong style={{ color: '#0f172a', display: 'block' }}>สแกน QR เพื่อโอนเงิน</strong>
+                                                        ยอดที่ต้องชำระ: <strong style={{ color: 'var(--brand-primary, #12852f)' }}>฿{orderTotal.toLocaleString()}</strong>
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            <div style={{ fontSize: '0.8rem', color: '#64748b', fontStyle: 'italic' }}>
+                                                <i className="bi bi-info-circle me-1" />
+                                                {settings?.bankTransferNote || 'เมื่อโอนเงินเรียบร้อยแล้ว กรุณาแนบสลิปหลักฐานการโอนเงินเพื่อความรวดเร็วในการจัดเตรียมอาหาร'}
+                                            </div>
+                                        </div>
+
+                                        {/* Slip Upload Section */}
+                                        <div style={{
+                                            border: '1.5px dashed #12852f',
+                                            borderRadius: '10px',
+                                            padding: '14px',
+                                            background: '#fcfdfc',
+                                            textAlign: 'center',
+                                        }}>
+                                            {slipPreview ? (
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '14px', textAlign: 'left' }}>
+                                                    <img
+                                                        src={slipPreview}
+                                                        alt="Slip Preview"
+                                                        style={{ width: '70px', height: '70px', objectFit: 'cover', borderRadius: '8px', border: '1px solid #bbf7d0' }}
+                                                    />
+                                                    <div style={{ flex: 1 }}>
+                                                        <div style={{ color: '#15803d', fontWeight: 700, fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                                            <i className="bi bi-check-circle-fill" /> แนบสลิปเรียบร้อยแล้ว
+                                                        </div>
+                                                        <small style={{ color: '#64748b', fontSize: '0.78rem' }}>
+                                                            {slipFile?.name || 'สลิปการโอนเงิน'}
+                                                        </small>
+                                                        <div style={{ marginTop: '6px', display: 'flex', gap: '8px' }}>
+                                                            <label htmlFor="chkSlipFile" style={{ cursor: 'pointer', fontSize: '0.78rem', color: 'var(--brand-primary, #12852f)', fontWeight: 600 }}>
+                                                                เปลี่ยนรูปสลิป
+                                                            </label>
+                                                            <button
+                                                                type="button"
+                                                                onClick={handleRemoveSlip}
+                                                                style={{ background: 'none', border: 'none', color: '#ef4444', fontSize: '0.78rem', cursor: 'pointer', padding: 0 }}
+                                                            >
+                                                                ลบ
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <div>
+                                                    <i className="bi bi-receipt" style={{ fontSize: '1.8rem', color: 'var(--brand-primary, #12852f)', display: 'block', marginBottom: '4px' }} />
+                                                    <div style={{ fontWeight: 700, fontSize: '0.9rem', color: '#1e293b' }}>
+                                                        แนบหลักฐานการโอนเงิน (สลิป)
+                                                    </div>
+                                                    <p style={{ margin: '4px 0 10px', fontSize: '0.8rem', color: '#64748b' }}>
+                                                        แนบสลิปทันที หรือสามารถข้ามไปกดสั่งซื้อก่อน แล้วแนบสลิปในหน้าประวัติคำสั่งซื้อได้
+                                                    </p>
+                                                    <label
+                                                        htmlFor="chkSlipFile"
+                                                        className="primary"
+                                                        style={{
+                                                            display: 'inline-flex',
+                                                            alignItems: 'center',
+                                                            gap: '6px',
+                                                            padding: '7px 18px',
+                                                            borderRadius: '6px',
+                                                            fontSize: '0.85rem',
+                                                            cursor: 'pointer',
+                                                            fontWeight: 600,
+                                                        }}
+                                                    >
+                                                        <i className="bi bi-cloud-arrow-up" /> เลือกรูปภาพสลิป
+                                                    </label>
+                                                </div>
+                                            )}
+                                            <input
+                                                type="file"
+                                                id="chkSlipFile"
+                                                accept="image/*"
+                                                onChange={handleSlipChange}
+                                                hidden
+                                            />
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
                         </>
                     )}
                     {deliveryType === 'ทานที่ร้าน' && (

@@ -77,6 +77,36 @@ export function AdminOrdersTab({
                                     </li>
                                 ))}
                             </ul>
+                            {(order.paymentProofUrl || order.slipUrl) && (
+                                <div style={{ padding: '0 16px 10px', display: 'flex', alignItems: 'center', gap: 8 }}>
+                                    <button
+                                        type="button"
+                                        onClick={() => setLightboxImage({
+                                            url: order.paymentProofUrl || order.slipUrl,
+                                            title: 'สลิปการโอนเงินจากลูกค้า',
+                                            subtitle: `ออเดอร์ ${order.orderNumber || order.id} · ${money(order.totalAmount)}`,
+                                        })}
+                                        style={{
+                                            display: 'inline-flex',
+                                            alignItems: 'center',
+                                            gap: 6,
+                                            padding: '5px 12px',
+                                            borderRadius: 6,
+                                            border: '1px solid #86efac',
+                                            background: '#f0fdf4',
+                                            color: '#15803d',
+                                            fontSize: 12,
+                                            fontWeight: 700,
+                                            cursor: 'pointer',
+                                        }}
+                                    >
+                                        <i className="bi bi-receipt" /> ดูสลิปที่แนบมา
+                                    </button>
+                                    <span style={{ fontSize: 11, color: '#15803d', fontWeight: 600 }}>
+                                        (ลูกค้าแนบสลิปแล้ว)
+                                    </span>
+                                </div>
+                            )}
                             <footer>
                                 <button
                                     className="admin-danger"
@@ -129,8 +159,10 @@ export function AdminOrdersTab({
                             </tr>
                         </thead>
                         <tbody>
-                            {visibleHistory.map(order => (
-                                <tr key={order.id}>
+                            {visibleHistory.map(order => {
+                                const isCancelled = order.foodStatus === 'ยกเลิก' || order.serverStatus === 'CANCELLED' || order.status === 'CANCELLED'
+                                return (
+                                <tr key={order.id} className={isCancelled ? 'is-cancelled' : ''}>
                                     <td data-label="เลขออเดอร์"><b>{order.orderNumber || order.id}</b></td>
                                     <td data-label="ลูกค้า">{order.customerId}</td>
                                     <td data-label="ช่องทาง">
@@ -139,7 +171,7 @@ export function AdminOrdersTab({
                                         </i>
                                     </td>
                                     <td data-label="ยอดรวม">{money(order.totalAmount)}</td>
-                                    <td data-label="สถานะ"><i className="admin-badge">{order.foodStatus}</i></td>
+                                    <td data-label="สถานะ"><i className={`admin-badge ${isCancelled ? 'cancelled' : ''}`}>{isCancelled ? 'ยกเลิก' : order.foodStatus}</i></td>
                                     <td data-label="หลักฐาน">
                                         <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
                                             {order.proofImageUrl && (
@@ -198,7 +230,8 @@ export function AdminOrdersTab({
                                         </div>
                                     </td>
                                 </tr>
-                            ))}
+                                )
+                            })}
                         </tbody>
                     </table>
                 </div>

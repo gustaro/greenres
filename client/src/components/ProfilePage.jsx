@@ -336,6 +336,7 @@ export function ProfilePage({
                     {tab === 'orders' && (
                         <ProfileOrdersTab
                             orders={orders}
+                            setOrders={setOrders}
                             activityLoading={activityLoading}
                             orderSteps={orderSteps}
                             money={money}

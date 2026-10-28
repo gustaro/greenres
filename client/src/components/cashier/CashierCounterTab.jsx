@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { ProductOptionsModal } from '../ProductOptionsModal'
 import { selectableOptionGroups, productIdFromLineKey } from '../../lib/productOptions'
+import { isProductSoldOut } from './useCashierCounter'
 
 export function CashierCounterTab({
     counterSource,
@@ -77,17 +78,20 @@ export function CashierCounterTab({
                             <section className="counter-category-section" key={group.id}>
                                 <div className="counter-category-heading"><h3>{group.name}</h3><span>{group.products.length} เมนู</span></div>
                                 <div className="counter-products">
-                                    {group.products.map(p => (
-                                        <div className="counter-product" key={p.id}>
-                                            <img src={p.img} alt={p.name} />
-                                            <div><b>{p.name}</b><small>฿{p.price}</small>{selectableOptionGroups(p).length > 0 && <small className="counter-option-badge"><i className="bi bi-ui-radios" /> มีตัวเลือก</small>}</div>
-                                            <div className="counter-qty">
-                                                <button onClick={() => counterRemove(p)}>−</button>
-                                                <span>{Object.entries(counterCart).reduce((sum, [key, quantity]) => sum + (productIdFromLineKey(key) === p.id ? Number(quantity) : 0), 0)}</span>
-                                                <button onClick={() => counterAdd(p)}>+</button>
+                                    {group.products.map(p => {
+                                        const soldOut = isProductSoldOut(p)
+                                        return (
+                                            <div className={`counter-product ${soldOut ? 'is-soldout' : ''}`} key={p.id}>
+                                                <img src={p.img} alt={p.name} />
+                                                <div><b>{p.name}</b><small>฿{p.price}</small>{soldOut ? <small className="counter-soldout-badge">หมด</small> : selectableOptionGroups(p).length > 0 && <small className="counter-option-badge"><i className="bi bi-ui-radios" /> มีตัวเลือก</small>}</div>
+                                                <div className="counter-qty">
+                                                    <button onClick={() => counterRemove(p)}>−</button>
+                                                    <span>{Object.entries(counterCart).reduce((sum, [key, quantity]) => sum + (productIdFromLineKey(key) === p.id ? Number(quantity) : 0), 0)}</span>
+                                                    <button onClick={() => counterAdd(p)} disabled={soldOut} title={soldOut ? 'สินค้าหมด' : undefined}>+</button>
+                                                </div>
                                             </div>
-                                        </div>
-                                    ))}
+                                        )
+                                    })}
                                 </div>
                             </section>
                         ))}

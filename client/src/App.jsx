@@ -110,10 +110,20 @@ function MainApp() {
     return () => window.removeEventListener(SIGN_OUT_EVENT, clearCartAfterSignOut)
   }, [])
   useEffect(() => {
-    fetchCatalog().then(data => {
+    const loadCatalog = () => fetchCatalog().then(data => {
       setProducts(data.products)
       setCategories(data.categories)
     }).catch(error => console.error('[API] โหลดสินค้าไม่สำเร็จ', error.message))
+    loadCatalog()
+
+    // Keep sold-out badges current while the menu stays open (stock changes with every order).
+    const onVisible = () => { if (document.visibilityState === 'visible') loadCatalog() }
+    const timer = window.setInterval(onVisible, 60000)
+    document.addEventListener('visibilitychange', onVisible)
+    return () => {
+      window.clearInterval(timer)
+      document.removeEventListener('visibilitychange', onVisible)
+    }
   }, [])
   useEffect(() => {
     refreshOrders()
@@ -155,7 +165,7 @@ function MainApp() {
   }, [session, profile?.role, refreshOrders])
 
   useEffect(() => {
-    if (!session || !['cashier', 'admin'].includes(profile?.role)) return undefined
+    if (!session || !['cashier', 'admin', 'kitchen', 'rider', 'delivery'].includes(profile?.role)) return undefined
 
     const now = Date.now()
     const ready = orders.filter(order =>

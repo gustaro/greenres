@@ -21,7 +21,7 @@ export function KitchenItemModal({
     const progressPercent = items.length > 0 ? Math.round((readyItems.length / items.length) * 100) : 0
     const isAllReady = items.length > 0 && readyItems.length === items.length
     const isDineIn = order.deliveryType === 'ทานที่ร้าน'
-    const isCancelled = order.serverStatus === 'CANCELLED' || order.foodStatus === 'ยกเลิก'
+    const isCancelled = order.serverStatus === 'CANCELLED' || order.foodStatus === 'ยกเลิก' || order.status === 'CANCELLED'
 
     return (
         <div className="kitchen-modal-overlay" onClick={onClose}>

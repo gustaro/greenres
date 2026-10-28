@@ -1,8 +1,12 @@
 import { Empty, money, orderCode, formatCashierPaymentMethod } from '../StaffShared'
 import { orderItemOptionLabel } from '../../lib/productOptions'
+import { CashierDeliveryHandoff } from './CashierDeliveryHandoff'
 
 export function CashierReadyTab({
     readyOrders,
+    deliveryOrders = [],
+    actionLoadingId,
+    onRiderHandoff,
     searchField,
     setSearchField,
     search,
@@ -45,9 +49,17 @@ export function CashierReadyTab({
                 </div>
             </div>
 
+            <CashierDeliveryHandoff
+                orders={deliveryOrders}
+                customerLabel={customerLabel}
+                actionLoadingId={actionLoadingId}
+                onHandoff={onRiderHandoff}
+                onViewReceipt={onViewReceipt}
+            />
+
             <div className="staff-order-grid cashier-grid">
                 {readyOrders.length === 0 ? (
-                    <Empty text={search ? 'ไม่พบรายการที่ค้นหา' : 'ไม่มีออเดอร์ที่รอส่งมอบในขณะนี้'} />
+                    deliveryOrders.length === 0 && <Empty text={search ? 'ไม่พบรายการที่ค้นหา' : 'ไม่มีออเดอร์ที่รอส่งมอบในขณะนี้'} />
                 ) : (
                     readyOrders.map(order => {
                         const isDineIn = order.deliveryType === 'ทานที่ร้าน'

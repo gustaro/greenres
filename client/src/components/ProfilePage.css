@@ -551,8 +551,30 @@
 }
 
 .pf-order-list>article.cancelled {
-    border-top-color: #c5cbc3;
-    opacity: .75
+    border-color: #fca5a5;
+    border-top: 4px solid #ef4444;
+    background: #fffcfc;
+}
+
+.pf-order-list>article.cancelled header i {
+    background: #fee2e2;
+    color: #dc2626;
+    border: 1px solid #fca5a5;
+}
+
+.pf-order-list>article.cancelled header strong {
+    color: #dc2626;
+}
+
+.pf-order-list>article.cancelled ul {
+    border-block-color: #fee2e2;
+}
+
+.pf-order-list>article.cancelled .pf-cancelled {
+    background: #fef2f2;
+    color: #dc2626;
+    border: 1px dashed #f87171;
+    font-weight: 700;
 }
 
 .pf-order-list header {
@@ -681,12 +703,19 @@
 }
 
 .pf-cancelled {
-    padding: 9px;
-    border-radius: 6px;
-    background: #f0f1ef;
-    color: #7b817c;
+
+
+    padding: 10px 14px;
+    border-radius: 8px;
+    background: #fef2f2;
+    color: #dc2626;
+    border: 1px dashed #fca5a5;
     text-align: center;
-    font-size: 10px
+    font-size: 11px;
+    font-weight: 700;
+
+
+
 }
 
 .pf-activity-empty {
@@ -1281,4 +1310,277 @@
 .sidebar-role-subgrid button:hover {
     background: var(--brand-surface);
     border-color: var(--brand-primary);
+}
+
+/* ─── Slip & Bank Details in Order History ─────────────────────── */
+.pf-payment-info-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin: 8px 0 12px;
+    padding: 8px 12px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 13px;
+}
+
+.pf-payment-method-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: #334155;
+}
+
+.pf-payment-method-badge i {
+    color: var(--brand-primary, #12852f);
+}
+
+.pf-payment-status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 9px;
+    border-radius: 20px;
+}
+
+.pf-payment-status-badge.paid {
+    background: #dcfce7;
+    color: #15803d;
+    border: 1px solid #86efac;
+}
+
+.pf-payment-status-badge.slip-attached {
+    background: #e0f2fe;
+    color: #0369a1;
+    border: 1px solid #7dd3fc;
+}
+
+.pf-payment-status-badge.pending {
+    background: #fef3c7;
+    color: #b45309;
+    border: 1px solid #fde68a;
+}
+
+.pf-bank-box {
+    margin: 12px 0;
+    padding: 14px 16px;
+    background: #f0fdf4;
+    border: 1.5px solid #bbf7d0;
+    border-radius: 10px;
+}
+
+.pf-bank-box-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #dcfce7;
+}
+
+.pf-bank-title {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 14px;
+    font-weight: 800;
+    color: var(--brand-primary-dark, #0c4d1d);
+}
+
+.pf-bank-accounts {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 10px;
+    margin-bottom: 12px;
+    font-size: 13px;
+}
+
+.pf-bank-account {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-left: 4px solid var(--brand-primary, #12852f);
+    border-radius: 8px;
+    padding: 10px 12px;
+}
+
+.pf-bank-account .pf-bank-acc-num {
+    display: inline-block;
+    margin: 2px 0;
+}
+
+.pf-bank-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+    font-size: 13px;
+}
+
+.pf-bank-acc-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.pf-bank-acc-num {
+    font-family: monospace;
+    font-size: 15px;
+    font-weight: 800;
+    color: #0f172a;
+    background: #fff;
+    padding: 2px 8px;
+    border-radius: 4px;
+    border: 1px solid #cbd5e1;
+}
+
+.pf-copy-btn {
+    border: 1px solid #cbd5e1;
+    background: #fff;
+    border-radius: 5px;
+    padding: 3px 8px;
+    font-size: 11px;
+    font-weight: 700;
+    color: #334155;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    transition: all 0.15s;
+}
+
+.pf-copy-btn:hover {
+    background: #f1f5f9;
+}
+
+.pf-copy-btn.copied {
+    background: #22c55e;
+    color: #fff;
+    border-color: #16a34a;
+}
+
+.pf-slip-section {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px dashed #bbf7d0;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.pf-slip-thumbnail-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.pf-slip-thumb {
+    width: 60px;
+    height: 60px;
+    border-radius: 8px;
+    object-fit: cover;
+    border: 2px solid #86efac;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.pf-slip-thumb:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(18, 133, 47, 0.25);
+}
+
+.pf-attach-slip-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--brand-primary, #12852f);
+    color: #fff;
+    border: 0;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.pf-attach-slip-btn:hover:not(:disabled) {
+    background: var(--brand-primary-hover, #0f7027);
+}
+
+.pf-attach-slip-btn:disabled {
+    opacity: 0.6;
+    cursor: wait;
+}
+
+/* Lightbox Modal */
+.pf-lightbox-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.75);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    padding: 20px;
+    backdrop-filter: blur(4px);
+}
+
+.pf-lightbox-card {
+    background: #fff;
+    border-radius: 12px;
+    max-width: 500px;
+    width: 100%;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    animation: pfFadeUp 0.2s ease;
+}
+
+.pf-lightbox-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 18px;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.pf-lightbox-head h4 {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 800;
+    color: #0f172a;
+}
+
+.pf-lightbox-close {
+    background: none;
+    border: none;
+    font-size: 20px;
+    color: #64748b;
+    cursor: pointer;
+    padding: 0;
+}
+
+.pf-lightbox-img-wrap {
+    padding: 16px;
+    background: #f8fafc;
+    text-align: center;
+    max-height: 70vh;
+    overflow-y: auto;
+}
+
+.pf-lightbox-img-wrap img {
+    max-width: 100%;
+    max-height: 60vh;
+    object-fit: contain;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }

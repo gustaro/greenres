@@ -441,6 +441,14 @@
     color: #18782a
 }
 
+.status.cancelled,
+.status.blocked,
+.status.failed {
+    background: #fee2e2;
+    color: #dc2626;
+    border: 1px solid #fca5a5;
+}
+
 .staff-order-items {
     list-style: none;
     padding: 12px 0;
@@ -1210,8 +1218,28 @@
 
 .kitchen-outer-white-card.status-cancelled,
 .kitchen-outer-white-card.is-cancelled {
-    border-top: 6px solid #ef4444;
-    border-color: #e5e7eb;
+    background: #fef2f2 !important;
+    border-color: #fca5a5;
+    border-top: 6px solid #dc2626;
+}
+
+.kitchen-outer-white-card.status-cancelled .kitchen-outer-header,
+.kitchen-outer-white-card.is-cancelled .kitchen-outer-header {
+    background: linear-gradient(180deg, #fee2e2 0%, #fecaca 100%);
+    border-bottom-color: #fca5a5;
+}
+
+.kitchen-outer-white-card.status-cancelled .kitchen-outer-header h3,
+.kitchen-outer-white-card.is-cancelled .kitchen-outer-header h3 {
+    color: #991b1b !important;
+    text-decoration: line-through;
+}
+
+.kitchen-outer-white-card.status-cancelled .kitchen-card-open-hint,
+.kitchen-outer-white-card.is-cancelled .kitchen-card-open-hint {
+    background: #fee2e2 !important;
+    border-color: #fca5a5 !important;
+    color: #b91c1c !important;
 }
 
 .kitchen-outer-white-card:hover {
@@ -1223,15 +1251,15 @@
 .kitchen-outer-white-card.status-cancelled:hover,
 .kitchen-outer-white-card.is-cancelled:hover {
     transform: none;
-    box-shadow: 0 10px 28px -4px rgba(18, 63, 39, 0.12), 0 4px 10px -2px rgba(0, 0, 0, 0.05);
-    border-color: #e5e7eb;
+    box-shadow: 0 10px 28px -4px rgba(153, 27, 27, 0.14), 0 4px 10px -2px rgba(0, 0, 0, 0.05);
+    border-color: #fca5a5;
 }
 
 .kitchen-outer-white-card.status-cancelled:hover .kitchen-card-open-hint,
 .kitchen-outer-white-card.is-cancelled:hover .kitchen-card-open-hint {
-    background: #f9fafb !important;
-    border-color: #e5e7eb !important;
-    color: #9ca3af !important;
+    background: #fee2e2 !important;
+    border-color: #fca5a5 !important;
+    color: #b91c1c !important;
     box-shadow: none !important;
 }
 
@@ -3947,22 +3975,22 @@
 .kitchen-inventory-stepper {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
     background: var(--brand-surface);
-    padding: 4px 6px;
+    padding: 4px 8px;
     border-radius: 12px;
     border: 1.5px solid var(--brand-border-soft);
 }
 
 .kitchen-stepper-btn {
-    width: 34px;
-    height: 34px;
+    width: 32px;
+    height: 32px;
     border-radius: 8px;
     border: 1.5px solid #c2cdc1;
     background: #ffffff;
     color: var(--brand-primary-dark);
-    font-size: 16px;
-    font-weight: 800;
+    font-size: 15px;
+    font-weight: 500;
     cursor: pointer;
     display: inline-flex;
     align-items: center;
@@ -3999,17 +4027,26 @@
 }
 
 .kitchen-stepper-input {
-    width: 58px;
+    width: 84px;
+    min-width: 84px;
     height: 34px;
     text-align: center;
-    font-size: 14px;
-    font-weight: 800;
+    font-size: 12.5px;
+    font-weight: 400;
     color: var(--brand-text);
     background: #ffffff;
     border: 1.5px solid var(--brand-border-soft);
     border-radius: 8px;
     outline: none;
-    transition: border-color 0.15s ease;
+    padding: 0 8px;
+    -moz-appearance: textfield;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.kitchen-stepper-input::-webkit-outer-spin-button,
+.kitchen-stepper-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
 }
 
 .kitchen-stepper-input:focus {
@@ -4049,4 +4086,30 @@
     background: #dcfce7;
     color: var(--brand-primary-dark);
     border-color: #86efac;
+}
+
+/* Cashier: sold-out menu items stay visible but cannot be added */
+.counter-product.is-soldout {
+    background: #f5f5f4;
+    opacity: .7
+}
+
+.counter-product.is-soldout img {
+    filter: grayscale(1)
+}
+
+.counter-soldout-badge {
+    display: inline-block;
+    margin-left: 6px;
+    padding: 1px 7px;
+    border-radius: 6px;
+    background: var(--brand-primary-dark, #075c1b);
+    color: #fff !important;
+    font-size: 10px !important;
+    font-weight: 900
+}
+
+.counter-qty button:disabled {
+    opacity: .4;
+    cursor: not-allowed
 }

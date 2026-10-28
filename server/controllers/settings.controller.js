@@ -187,6 +187,30 @@ export const updateSiteSettings = async (req, res) => {
         if (payload.cloudinaryCloudName !== undefined) settings.cloudinaryCloudName = payload.cloudinaryCloudName;
         if (payload.cloudinaryApiKey !== undefined) settings.cloudinaryApiKey = payload.cloudinaryApiKey;
         if (payload.cloudinaryApiSecret !== undefined) settings.cloudinaryApiSecret = payload.cloudinaryApiSecret;
+        if (Array.isArray(payload.bankAccounts)) {
+            settings.bankAccounts = payload.bankAccounts
+                .map((account, index) => ({
+                    id: String(account?.id || `bank-${Date.now()}-${index}`).slice(0, 64),
+                    bankName: String(account?.bankName || "").trim().slice(0, 120),
+                    accountNumber: String(account?.accountNumber || "").trim().slice(0, 40),
+                    accountName: String(account?.accountName || "").trim().slice(0, 120),
+                }))
+                .filter(account => account.bankName && account.accountNumber)
+                .slice(0, 5);
+            // Keep the legacy single-account fields pointing at the first account for older screens.
+            const primary = settings.bankAccounts[0];
+            if (primary) {
+                settings.bankName = primary.bankName;
+                settings.bankAccountNumber = primary.accountNumber;
+                settings.bankAccountName = primary.accountName;
+            }
+        }
+        if (payload.bankName !== undefined && !Array.isArray(payload.bankAccounts)) settings.bankName = payload.bankName;
+        if (payload.bankAccountNumber !== undefined && !Array.isArray(payload.bankAccounts)) settings.bankAccountNumber = payload.bankAccountNumber;
+        if (payload.bankAccountName !== undefined && !Array.isArray(payload.bankAccounts)) settings.bankAccountName = payload.bankAccountName;
+        if (payload.promptpayNumber !== undefined) settings.promptpayNumber = payload.promptpayNumber;
+        if (payload.promptpayQrUrl !== undefined) settings.promptpayQrUrl = payload.promptpayQrUrl;
+        if (payload.bankTransferNote !== undefined) settings.bankTransferNote = payload.bankTransferNote;
 
         inMemorySettings = settings;
 
@@ -218,6 +242,28 @@ export const updateLogo = async (req, res, next) => {
         saveSettingsToFile(settings);
 
         res.json({ logoUrl });
+    } catch (err) {
+        next(err);
+    }
+};
+
+export const updatePromptpayQr = async (req, res, next) => {
+    try {
+        const qrUrl = req.file ? req.file.path : null;
+        if (!qrUrl) return res.status(400).json({ message: "No file uploaded" });
+
+        if (!inMemorySettings) {
+            const dbSettings = await loadSettingsFromDb();
+            inMemorySettings = dbSettings || getLocalFileSettings();
+        }
+        const settings = { ...(inMemorySettings || {}) };
+        settings.promptpayQrUrl = qrUrl;
+        inMemorySettings = settings;
+
+        await saveSettingsToDb(settings);
+        saveSettingsToFile(settings);
+
+        res.json({ promptpayQrUrl: qrUrl });
     } catch (err) {
         next(err);
     }

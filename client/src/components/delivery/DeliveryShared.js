@@ -32,14 +32,24 @@ export const DELIVERY_STATUS_CLASS = {
 
 export const normalizeJob = raw => {
     const order = raw.order || raw || {}
-    const rawDeliveryAddress = raw.deliveryAddress || raw.dropAddress || order.deliveryAddress || order.dropAddress || ''
-    const coords = extractCoordinates(rawDeliveryAddress, { ...order, ...raw })
-    const dropLat = raw.dropLat ?? order.dropLat ?? order.meta?.dropLat ?? coords?.lat ?? null
-    const dropLng = raw.dropLng ?? order.dropLng ?? order.meta?.dropLng ?? coords?.lng ?? null
+    let meta = order.meta || {}
+    if (!order.meta && order.notes && order.notes.includes('LIMELEAF_META:')) {
+        try {
+            meta = JSON.parse(order.notes.slice(order.notes.indexOf('LIMELEAF_META:') + 14))
+        } catch (_) {}
+    }
+
+    const rawDeliveryAddress = raw.deliveryAddress || raw.dropAddress || meta.deliveryAddress || order.deliveryAddress || order.dropAddress || order.address?.street || ''
+    const coords = extractCoordinates(rawDeliveryAddress, { ...order, ...raw, ...meta })
+    const dropLat = raw.dropLat ?? order.dropLat ?? meta.dropLat ?? coords?.lat ?? null
+    const dropLng = raw.dropLng ?? order.dropLng ?? meta.dropLng ?? coords?.lng ?? null
     const deliveryAddress = cleanAddressText(rawDeliveryAddress)
-    const customerName = raw.customerName || order.customerName || order.user?.name || order.customerId || 'ลูกค้า'
-    const customerPhone = raw.customerPhone || order.customerPhone || order.user?.phone || ''
+    const customerName = raw.customerName || order.customerName || meta.recipientName || order.user?.name || order.customerId || 'ลูกค้า'
+    const customerPhone = raw.customerPhone || order.customerPhone || meta.recipientPhone || order.user?.phone || ''
     const rawItems = (raw.items && raw.items.length > 0) ? raw.items : (order.items && order.items.length > 0) ? order.items : []
+    const isPaid = raw.isPaid ?? order.isPaid ?? (order.paymentStatus === 'PAID') ?? false
+    const totalAmount = raw.totalAmount ?? order.totalAmount ?? order.total ?? raw.total ?? 0
+    const paymentMethod = raw.paymentMethod ?? meta.paymentMethodDetail ?? meta.paymentMethod ?? order.paymentMethod ?? ''
 
     return {
         id: raw.id,
@@ -55,9 +65,9 @@ export const normalizeJob = raw => {
         dropLng: dropLng != null ? Number(dropLng) : null,
         provider: raw.provider ?? 'INTERNAL',
         estimatedMinutes: raw.estimatedMinutes ?? order.estimatedMinutes,
-        totalAmount: raw.totalAmount ?? order.totalAmount ?? raw.total ?? 0,
-        paymentMethod: raw.paymentMethod ?? order.paymentMethod ?? '',
-        isPaid: raw.isPaid ?? order.isPaid ?? false,
+        totalAmount,
+        paymentMethod,
+        isPaid,
         customerName,
         customerPhone,
         items: rawItems.map(item => ({
@@ -68,8 +78,8 @@ export const normalizeJob = raw => {
         })),
         riderName: raw.rider?.user?.name ?? raw.riderName ?? '',
         riderPhone: raw.rider?.user?.phone ?? raw.riderPhone ?? '',
-        proofImageUrl: raw.proofImageUrl ?? order.proofImageUrl ?? order.meta?.proofImageUrl ?? null,
-        paymentProofUrl: raw.paymentProofUrl ?? order.paymentProofUrl ?? order.meta?.paymentProofUrl ?? order.meta?.slipUrl ?? null,
-        order: raw.order ?? raw,
+        proofImageUrl: raw.proofImageUrl ?? order.proofImageUrl ?? meta.proofImageUrl ?? null,
+        paymentProofUrl: raw.paymentProofUrl ?? order.paymentProofUrl ?? meta.paymentProofUrl ?? meta.slipUrl ?? null,
+        order: { ...order, meta: { ...meta, ...order.meta } },
     }
 }

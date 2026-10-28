@@ -13,8 +13,8 @@ export function CashierHistoryTab({
         <section>
             <div className="staff-section-head cashier-section-head" style={{ alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
                 <div>
-                    <h2>ประวัติการชำระเงิน</h2>
-                    <p>รายการที่ Server ระบุ paymentStatus = PAID</p>
+                    <h2>ประวัติการชำระเงิน / คืนเงิน</h2>
+                    <p>รายการที่ชำระแล้ว และออเดอร์ที่ยกเลิกพร้อมคืนเงิน</p>
                 </div>
                 <div className="cashier-search-bar" style={{ display: 'flex', gap: 8, alignItems: 'center', marginLeft: 'auto' }}>
                     <select
@@ -59,10 +59,23 @@ export function CashierHistoryTab({
                                     <b>{orderCode(order)}</b>
                                     <small>{order.deliveryType}{order.deliveryType === 'ทานที่ร้าน' && order.tableNumber ? ` · โต๊ะ ${order.tableNumber}` : ''}</small>
                                 </td>
-                                <td data-label="เวลาชำระ">{new Date(order.paidAt || order.createdAt).toLocaleString('th-TH')}</td>
+                                <td data-label="เวลาชำระ">{new Date((order.isRefunded && order.refund?.at) || order.paidAt || order.createdAt).toLocaleString('th-TH')}</td>
                                 <td data-label="ลูกค้า">{customerLabel(order)}</td>
-                                <td data-label="ช่องทาง"><i className="status paid">{formatCashierPaymentMethod(order.paymentMethod, order)}</i></td>
-                                <td data-label="ยอดสุทธิ"><strong>{money(order.totalAmount)}</strong></td>
+                                <td data-label="ช่องทาง">
+                                    {order.isRefunded ? (
+                                        <>
+                                            <i className="status cancelled"><i className="bi bi-arrow-counterclockwise me-1" />ยกเลิก · {order.refund?.label || 'คืนเงินแล้ว'}</i>
+                                            {order.cancelReason && <small style={{ display: 'block', color: '#7a271a' }}>{order.cancelReason}</small>}
+                                        </>
+                                    ) : (
+                                        <i className="status paid">{formatCashierPaymentMethod(order.paymentMethod, order)}</i>
+                                    )}
+                                </td>
+                                <td data-label="ยอดสุทธิ">
+                                    {order.isRefunded
+                                        ? <strong style={{ color: '#b42318' }}>−{money(order.refund?.amount ?? order.totalAmount)}</strong>
+                                        : <strong>{money(order.totalAmount)}</strong>}
+                                </td>
                                 <td className="cashier-history-action">
                                     <button className="staff-link" onClick={() => onViewReceipt(order)}>
                                         <i className="bi bi-printer me-1"></i> พิมพ์ใบเสร็จ

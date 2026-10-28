@@ -160,7 +160,7 @@ export const mapProduct = row => {
         price: Number(row.price),
         img: row.imageUrl || '/assets/basil-rice.png',
         imageUrl: row.imageUrl,
-        status: !row.isActive
+        status: !row.isActive || (Number(row.stock || 0) <= 0 && !row.recipeItems?.length)
             ? 'หมด'
             : hasUnavailableRequiredOptions || (row.recipeItems?.length && row.recipeItems.some(item => !item.ingredient?.isActive || Number(item.ingredient?.quantity || 0) < Number(item.quantityRequired || 0)))
                 ? 'วัตถุดิบไม่เพียงพอ'
@@ -237,6 +237,11 @@ export const mapOrder = row => {
     const accountName = row.user?.name || row.user?.email || row.userId || ''
     const customerName = meta.customerName || meta.recipientName || (orderSource === 'online' ? accountName : '')
     const tableNumber = orderSource === 'walkin' ? String(meta.tableNumber || '').trim() : ''
+    const totalAmount = Number(row.total || 0)
+    const isPaid = row.paymentStatus === 'PAID'
+    // paidAmount > 0 on an unpaid order means items were added after payment.
+    const paidAmount = isPaid ? totalAmount : Math.max(0, Number(meta.paidAmount || 0))
+    const delivery = row.delivery || null
 
     return {
         id: row.id,
@@ -275,11 +280,25 @@ export const mapOrder = row => {
         discountAmount: Number(row.discount || 0),
         promotionCode: row.coupon?.code || meta.promotionCode || null,
         deliveryFee: Number(row.deliveryFee || 0),
-        totalAmount: Number(row.total || 0),
+        totalAmount,
+        paidAmount,
+        amountDue: isPaid ? 0 : Math.max(0, totalAmount - paidAmount),
+        // Slip/PromptPay delivery orders are verified by the cashier; only COD is left to the rider.
+        isCashOnDelivery: deliveryType === 'ให้จัดส่ง' && !isPaid && row.paymentMethod !== 'STRIPE'
+            && /ปลายทาง|cod|เงินสด/i.test(meta.paymentMethodDetail || meta.paymentMethod || paymentLabel(row.paymentMethod, deliveryType)),
+        isRefunded: row.paymentStatus === 'REFUNDED',
+        refund: meta.refund || null,
+        cancelReason: meta.cancelReason || '',
+        cancelledAt: meta.cancelledAt || null,
+        deliveryId: delivery?.id || null,
+        deliveryStatus: delivery?.status || null,
+        deliveryPickedUpAt: delivery?.pickedUpAt || null,
+        riderName: delivery?.rider?.user?.name || '',
+        riderPhone: delivery?.rider?.user?.phone || '',
         paymentMethod: meta.paymentMethodDetail || meta.paymentMethod || paymentLabel(row.paymentMethod, deliveryType),
         serverPaymentMethod: row.paymentMethod,
         paymentStatus: row.paymentStatus,
-        isPaid: row.paymentStatus === 'PAID',
+        isPaid,
         stripePaymentId: row.stripePaymentId || meta.stripePaymentId || null,
         deliveryType,
         deliveryAddress: address,
@@ -453,6 +472,9 @@ export async function placeOrder({
     pointsUsed = 0,
     dropLat = null,
     dropLng = null,
+    paymentProofUrl = null,
+    slipUrl = null,
+    slipFile = null,
 }) {
     const productMap = new Map(products.map(product => [product.id, product]))
     const overrideItems = Object.entries(cart)
@@ -511,6 +533,8 @@ export async function placeOrder({
         pointsUsed: Number(pointsUsed || 0),
         dropLat: finalDropLat,
         dropLng: finalDropLng,
+        paymentProofUrl: paymentProofUrl || slipUrl || null,
+        slipUrl: paymentProofUrl || slipUrl || null,
     })}`
 
     const serverPaymentMethod = (paymentMethod === 'บัตรเครดิต/เดบิต' || (paymentMethod === 'พร้อมเพย์' && stripePaymentId)) ? 'STRIPE' : 'CASH'
@@ -528,6 +552,15 @@ export async function placeOrder({
         }),
     })
 
+    // If slip file is attached directly at checkout, upload it
+    if (slipFile && order?.id) {
+        try {
+            await attachOrderSlip(order.id, slipFile)
+        } catch (e) {
+            console.warn('[placeOrder] attachOrderSlip notice:', e.message)
+        }
+    }
+
     // If customer paid via embedded card or PromptPay, mark order paid directly
     if (paymentMethod === 'บัตรเครดิต/เดบิต' || paymentMethod === 'พร้อมเพย์') {
         try {
@@ -540,6 +573,24 @@ export async function placeOrder({
     return { order: mapOrder(order), payment: null }
 }
 
+export const attachOrderSlip = async (id, fileOrUrl) => {
+    if (!fileOrUrl) throw new Error('No slip provided')
+    if (fileOrUrl instanceof File || fileOrUrl instanceof Blob) {
+        const formData = new FormData()
+        formData.append('slip', fileOrUrl)
+        const updated = await api(`/orders/${id}/slip`, {
+            method: 'POST',
+            body: formData,
+        })
+        return mapOrder(updated)
+    }
+    const updated = await api(`/orders/${id}/slip`, {
+        method: 'POST',
+        body: JSON.stringify({ slipUrl: fileOrUrl, paymentProofUrl: fileOrUrl }),
+    })
+    return mapOrder(updated)
+}
+
 export const markOrderPaid = (id, paymentMethod = 'CASH', paymentDetail = '', stripePaymentId = null, paymentProofUrl = null) => api(`/orders/${id}/payment`, {
     method: 'PUT',
     body: JSON.stringify({ paymentMethod, paymentDetail, stripePaymentId, paymentProofUrl }),
@@ -547,7 +598,11 @@ export const markOrderPaid = (id, paymentMethod = 'CASH', paymentDetail = '', st
 
 export const cancelOwnOrder = id => api(`/orders/${id}/cancel`, { method: 'PUT', body: JSON.stringify({}) })
 
-export const cancelOrder = id => api(`/orders/${id}/cancel`, { method: 'PUT', body: JSON.stringify({}) })
+// refundMethod (CASH | TRANSFER | STRIPE) is required by the server when the order was already paid.
+export const cancelOrder = (id, { reason = '', refundMethod = '' } = {}) => api(`/orders/${id}/cancel`, {
+    method: 'PUT',
+    body: JSON.stringify({ reason, refundMethod }),
+})
 
 export const confirmOrder = id =>
     api(`/orders/${id}/status`, { method: 'PUT', body: JSON.stringify({ status: 'CONFIRMED' }) })
@@ -813,6 +868,14 @@ export const settingsApi = {
         const formData = new FormData()
         formData.append('image', file)
         return api('/settings/logo', {
+            method: 'POST',
+            body: formData,
+        })
+    },
+    updatePromptpayQr: file => {
+        const formData = new FormData()
+        formData.append('image', file)
+        return api('/settings/promptpay-qr', {
             method: 'POST',
             body: formData,
         })

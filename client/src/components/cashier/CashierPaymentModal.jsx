@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { money, orderCode } from '../StaffShared'
 import { CashierPaymentMethodDetails } from './CashierPaymentMethodDetails'
+import { orderAmountDue } from './useCashierOperations'
 
 export function CashierPaymentModal({
     order,
@@ -47,7 +48,8 @@ export function CashierPaymentModal({
 
     if (!order) return null
 
-    const total = Number(order.totalAmount) || 0
+    const total = orderAmountDue(order)
+    const isTopUp = Number(order.paidAmount) > 0
     const cash = Number(cashReceived) || 0
     const change = cash - total
     const isCashShort = selectedPaymentMethod === 'CASH' && cash < total
@@ -101,6 +103,11 @@ export function CashierPaymentModal({
                     <div style={{ fontSize: 38, fontWeight: 900, color: 'var(--brand-primary-dark, #075c1b)', letterSpacing: '-0.5px', margin: '4px 0' }}>
                         {money(total)}
                     </div>
+                    {isTopUp && (
+                        <div style={{ fontSize: 12, color: 'var(--brand-primary-dark, #075c1b)', fontWeight: 700, marginBottom: 2 }}>
+                            ยอดรวม {money(order.totalAmount)} · ชำระแล้ว {money(order.paidAmount)} · เก็บเฉพาะเมนูสั่งเพิ่ม
+                        </div>
+                    )}
                     <div style={{ fontSize: 12, color: 'var(--brand-primary, #12852f)', fontWeight: 600 }}>
                         {order.items?.length || 0} รายการสินค้า
                     </div>

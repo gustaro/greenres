@@ -9,6 +9,9 @@ export const Footer = () => {
     const navigate = useNavigate()
     const footerCredit = settings?.footerCredit || 'Made with {heart} in Thailand'
     const creditParts = footerCredit.split('{heart}')
+    const facebookUrl = settings?.facebookUrl || 'https://www.facebook.com'
+    const instagramUrl = settings?.instagramUrl || 'https://www.instagram.com'
+    const lineUrl = settings?.lineUrl || 'https://line.me'
 
     // Navigate to a route or scroll to an anchor on the homepage
     const goTo = (to, anchor) => {
@@ -42,7 +45,7 @@ export const Footer = () => {
             heading: isEn ? 'Info' : 'ข้อมูลร้าน',
             links: [
                 { label: isEn ? 'Contact Us' : 'ติดต่อร้าน',    to: '/map' },
-                { label: isEn ? 'Delivery Info' : 'ข้อมูลจัดส่ง',  anchor: 'delivery-info' },
+                { label: isEn ? 'Contact & Inquiries' : 'ติดต่อสอบถาม', to: '/map' },
                 { label: isEn ? 'Store Map' : 'แผนที่ร้าน',    to: '/map' },
                 { label: isEn ? 'Opening Hours' : 'เวลาทำการ',    to: '/map' },
             ],
@@ -60,11 +63,6 @@ export const Footer = () => {
                     <div style={{ fontSize: 13, opacity: 0.8, lineHeight: 1.6, marginBottom: 16 }}>
                         <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}><i className="bi bi-geo-alt-fill"></i> <span>{settings?.restaurantAddress || 'กรุงเทพมหานคร'}</span></div>
                         <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 4 }}><i className="bi bi-telephone-fill"></i> <a href={`tel:${settings?.restaurantPhone}`} style={{ color: 'inherit', textDecoration: 'none' }}>{settings?.restaurantPhone || '02-123-4567'}</a></div>
-                    </div>
-                    <div className="footer-socials">
-                        {settings?.facebookUrl && <a href={settings.facebookUrl} target="_blank" rel="noopener noreferrer" aria-label="Facebook" style={{ display: 'inline-flex', width: 32, height: 32, overflow: 'hidden', borderRadius: 4 }}><img src="/assets/social/facebook.png" alt="Facebook" style={{ width: 52, height: 52, margin: '-10px' }} /></a>}
-                        {settings?.instagramUrl && <a href={settings.instagramUrl} target="_blank" rel="noopener noreferrer" aria-label="Instagram"><img src="/assets/social/instagram.png" alt="Instagram" style={{ width: 32, height: 32 }} /></a>}
-                        {settings?.lineUrl && <a href={settings.lineUrl} target="_blank" rel="noopener noreferrer" aria-label="LINE"><img src="/assets/social/line.png" alt="LINE" style={{ width: 32, height: 32 }} /></a>}
                     </div>
                 </div>
 
@@ -86,6 +84,26 @@ export const Footer = () => {
                             </ul>
                         </div>
                     ))}
+                    <div className="footer-col footer-col-socials">
+                        <h4>{isEn ? 'Social' : 'โซเชียล'}</h4>
+                        <div className="footer-socials" style={{ marginTop: 8 }}>
+                            {facebookUrl && (
+                                <a href={facebookUrl} target="_blank" rel="noopener noreferrer" aria-label="Facebook" style={{ display: 'inline-flex', width: 32, height: 32, overflow: 'hidden', borderRadius: 4 }}>
+                                    <img src="/assets/social/facebook.png" alt="Facebook" style={{ width: 52, height: 52, margin: '-10px' }} />
+                                </a>
+                            )}
+                            {instagramUrl && (
+                                <a href={instagramUrl} target="_blank" rel="noopener noreferrer" aria-label="Instagram">
+                                    <img src="/assets/social/instagram.png" alt="Instagram" style={{ width: 32, height: 32 }} />
+                                </a>
+                            )}
+                            {lineUrl && (
+                                <a href={lineUrl} target="_blank" rel="noopener noreferrer" aria-label="LINE">
+                                    <img src="/assets/social/line.png" alt="LINE" style={{ width: 32, height: 32 }} />
+                                </a>
+                            )}
+                        </div>
+                    </div>
                 </div>
             </div>
 

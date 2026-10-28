@@ -12,7 +12,7 @@ export function KitchenOuterCard({
 }) {
     const isActionLoading = actionLoadingId === order.id
     const isDineIn = order.deliveryType === 'ทานที่ร้าน'
-    const isCancelled = order.serverStatus === 'CANCELLED' || order.foodStatus === 'ยกเลิก'
+    const isCancelled = order.serverStatus === 'CANCELLED' || order.foodStatus === 'ยกเลิก' || order.status === 'CANCELLED'
 
     const items = order.items || []
     const readyItems = items.filter(i => i.itemStatus === 'READY' || i.itemStatus === 'SERVED')
@@ -26,7 +26,7 @@ export function KitchenOuterCard({
         <article
             className={`kitchen-outer-white-card status-${(order.serverStatus || 'CONFIRMED').toLowerCase()}${isCancelled ? ' is-cancelled' : ''}`}
             style={{
-                opacity: isCancelled ? 0.78 : 1,
+                opacity: 1,
             }}
             title={isCancelled ? 'ออเดอร์ถูกยกเลิกแล้ว (ไม่สามารถดำเนินการได้)' : undefined}
         >
@@ -62,7 +62,7 @@ export function KitchenOuterCard({
                 </div>
 
                 <div style={{ textAlign: 'right' }}>
-                    <span className={`status ${order.serverStatus === 'PREPARING' ? 'cooking' : order.serverStatus === 'READY' ? 'paid' : order.serverStatus === 'CANCELLED' ? 'blocked' : 'pending'}`}>
+                    <span className={`status ${isCancelled ? 'cancelled' : order.serverStatus === 'PREPARING' ? 'cooking' : order.serverStatus === 'READY' ? 'paid' : 'pending'}`}>
                         {order.serverStatus === 'CONFIRMED' ? (
                             <><i className="bi bi-clock-history"></i> รอทำ</>
                         ) : order.serverStatus === 'PREPARING' ? (

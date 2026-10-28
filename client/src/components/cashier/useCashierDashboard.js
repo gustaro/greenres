@@ -12,6 +12,7 @@ export function useCashierDashboard(orders, setOrders, refreshOrders) {
     const [search, setSearch] = useState('')
     const [searchField, setSearchField] = useState('all')
     const [period, setPeriod] = useState('today')
+    const [ordersFilter, setOrdersFilter] = useState('all')
 
     // Toast notifications
     const [toasts, setToasts] = useState([])
@@ -26,7 +27,8 @@ export function useCashierDashboard(orders, setOrders, refreshOrders) {
         setOrders,
         refreshOrders,
         addToast,
-        counterProducts: counter.counterProducts
+        counterProducts: counter.counterProducts,
+        refreshCounterCatalog: counter.refreshCounterCatalog,
     })
 
     const visibleAddItemsGroups = ops.addItemsCategory === 'all'
@@ -36,8 +38,23 @@ export function useCashierDashboard(orders, setOrders, refreshOrders) {
     const customerLabel = order => order.customerName || (order.orderSource === 'online' ? order.customerId : '') || 'ลูกค้าทั่วไป'
 
     const validOrders = orders.filter(order => order.foodStatus !== 'ยกเลิก')
-    const unpaidOrders = validOrders.filter(order => !order.isPaid).sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt))
+    // Cash-on-delivery orders are collected by the rider, so they never wait at the cashier.
+    const unpaidOrders = validOrders.filter(order => !order.isPaid && !order.isCashOnDelivery).sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt))
     const paidOrders = validOrders.filter(order => order.isPaid).sort((a, b) => new Date(b.paidAt || b.createdAt) - new Date(a.paidAt || a.createdAt))
+    const refundedOrders = orders.filter(order => order.isRefunded)
+    const historyOrders = [...paidOrders, ...refundedOrders].sort((a, b) => new Date(b.cancelledAt || b.paidAt || b.createdAt) - new Date(a.cancelledAt || a.paidAt || a.createdAt))
+
+    // Every order still in progress stays on a card, paid or not, so more items can be added or it can be cancelled.
+    const pendingFirst = order => order.serverStatus === 'PENDING' ? 0 : 1
+    const activeOrders = validOrders
+        .filter(order => !order.isPaid || order.serverStatus !== 'DELIVERED')
+        .sort((a, b) => pendingFirst(a) - pendingFirst(b) || new Date(a.createdAt) - new Date(b.createdAt))
+    const pendingConfirmCount = activeOrders.filter(order => order.serverStatus === 'PENDING').length
+
+    // Delivery orders the kitchen finished: waiting for the rider, or already picked up.
+    const deliveryOrders = validOrders
+        .filter(order => order.deliveryType === 'ให้จัดส่ง' && ['READY', 'DELIVERING'].includes(order.serverStatus))
+        .sort((a, b) => new Date(a.updatedAt || a.createdAt) - new Date(b.updatedAt || b.createdAt))
 
     // An order is in readyOrders if the whole order is READY or if ANY item has been marked READY or SERVED (item-by-item dispatch from kitchen)
     const readyOrders = validOrders.filter(order => {
@@ -151,8 +168,15 @@ export function useCashierDashboard(orders, setOrders, refreshOrders) {
     }
 
     const filteredUnpaid = unpaidOrders.filter(matchesSearch)
-    const filteredPaid = paidOrders.filter(matchesSearch)
+    const filteredPaid = historyOrders.filter(matchesSearch)
     const filteredReady = readyOrders.filter(matchesSearch)
+    const filteredDelivery = deliveryOrders.filter(matchesSearch)
+    const filteredActive = activeOrders.filter(order => {
+        if (ordersFilter === 'pending') return order.serverStatus === 'PENDING'
+        if (ordersFilter === 'unpaid') return !order.isPaid
+        if (ordersFilter === 'paid') return order.isPaid
+        return true
+    }).filter(matchesSearch)
 
     const periodStart = new Date()
     if (period === 'today') periodStart.setHours(0, 0, 0, 0)
@@ -330,13 +354,14 @@ export function useCashierDashboard(orders, setOrders, refreshOrders) {
         search, setSearch,
         searchField, setSearchField,
         period, setPeriod,
+        ordersFilter, setOrdersFilter,
         toasts, dismissToast,
         ...counter,
         ...ops,
         visibleAddItemsGroups,
         completeCounterOrder, customerLabel,
         serveItem, serveAllReadyItems,
-        filteredUnpaid, filteredPaid, filteredReady,
+        filteredUnpaid, filteredPaid, filteredReady, filteredDelivery, filteredActive, pendingConfirmCount,
         revenue, periodOrders, paymentMethods, productSales, exportSales, exportSalesPdf,
     }
 }

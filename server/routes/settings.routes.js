@@ -10,7 +10,8 @@ import {
     submitContactMessage,
     getContactMessages,
     testStripeConnection,
-    testCloudinaryConnection
+    testCloudinaryConnection,
+    updatePromptpayQr
 } from "../controllers/settings.controller.js";
 import { authenticate } from "../middleware/auth.js";
 import { isAdmin } from "../middleware/role.js";
@@ -20,6 +21,7 @@ const router = express.Router();
 
 router.get("/", getSiteSettings);
 router.post("/logo", authenticate, isAdmin, upload.single("image"), updateLogo);
+router.post("/promptpay-qr", authenticate, isAdmin, upload.single("image"), updatePromptpayQr);
 router.put("/", authenticate, isAdmin, updateSiteSettings);
 router.post("/stripe/test-connection", authenticate, isAdmin, testStripeConnection);
 router.post("/cloudinary/test-connection", authenticate, isAdmin, testCloudinaryConnection);

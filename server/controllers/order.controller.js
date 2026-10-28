@@ -1,5 +1,76 @@
 import { prisma } from "../config/prisma.js";
 import { getActiveSettings } from "./settings.controller.js";
+import { ensureDeliveryForOrder } from "../services/delivery.service.js";
+import { clearProductsCache } from "./product.controller.js";
+import { createRefund } from "../services/stripe.service.js";
+
+const META_PREFIX = "LIMELEAF_META:";
+
+// Order metadata lives in notes as "[source] ... LIMELEAF_META:{json}".
+const readNotesMeta = (notes) => {
+  const text = notes || "";
+  const idx = text.indexOf(META_PREFIX);
+  if (idx === -1) return { meta: {}, head: text.trim() };
+  try {
+    return { meta: JSON.parse(text.slice(idx + META_PREFIX.length)), head: text.slice(0, idx).trim() };
+  } catch {
+    return { meta: {}, head: text.trim() };
+  }
+};
+
+const writeNotesMeta = (notes, meta) => {
+  const { head } = readNotesMeta(notes);
+  return `${head ? `${head} ` : ""}${META_PREFIX}${JSON.stringify(meta)}`;
+};
+
+// Light delivery summary so cashier cards can show rider pickup state.
+const deliverySummaryInclude = {
+  select: {
+    id: true,
+    status: true,
+    pickedUpAt: true,
+    riderId: true,
+    rider: { select: { id: true, user: { select: { name: true, phone: true } } } },
+  },
+};
+
+// Close the delivery and free the rider when an order is delivered or cancelled.
+const syncDeliveryOnOrderEnd = async (orderId, status) => {
+  try {
+    const relatedDelivery = await prisma.delivery.findUnique({ where: { orderId } });
+    if (!relatedDelivery) return;
+    const newDeliveryStatus = status === "DELIVERED" ? "DELIVERED" : "CANCELLED";
+    if (relatedDelivery.status !== newDeliveryStatus) {
+      await prisma.delivery.update({
+        where: { id: relatedDelivery.id },
+        data: {
+          status: newDeliveryStatus,
+          ...(status === "DELIVERED" && !relatedDelivery.deliveredAt ? { deliveredAt: new Date() } : {}),
+        },
+      });
+    }
+    if (relatedDelivery.riderId) {
+      const activeDeliveriesCount = await prisma.delivery.count({
+        where: {
+          riderId: relatedDelivery.riderId,
+          id: { not: relatedDelivery.id },
+          status: { in: ["ASSIGNED", "PICKED_UP", "ON_THE_WAY"] },
+        },
+      });
+      if (activeDeliveriesCount === 0) {
+        await prisma.rider.update({
+          where: { id: relatedDelivery.riderId },
+          data: {
+            status: "AVAILABLE",
+            ...(status === "DELIVERED" ? { totalDeliveries: { increment: 1 } } : {}),
+          },
+        });
+      }
+    }
+  } catch (e) {
+    console.warn("[order] Delivery sync warning:", e.message);
+  }
+};
 
 const calcDeliveryFee = (subtotal) => {
   const { freeDeliveryThreshold, deliveryFee } = getActiveSettings();
@@ -98,6 +169,19 @@ const getIngredientUsage = async (client, items) => {
   return [...usage.values()];
 };
 
+// Products without a recipe use their own stock count; zero means sold out.
+const findSoldOutProduct = async (products) => {
+  const zeroStock = products.filter(product => product && Number(product.stock ?? 1) <= 0);
+  if (zeroStock.length === 0) return null;
+  const withRecipe = await prisma.recipeIngredient.findMany({
+    where: { productId: { in: zeroStock.map(product => product.id) } },
+    select: { productId: true },
+    distinct: ["productId"],
+  });
+  const recipeIds = new Set(withRecipe.map(row => row.productId));
+  return zeroStock.find(product => !recipeIds.has(product.id)) || null;
+};
+
 const findInsufficientIngredient = (usage) => usage.find(({ ingredient, required }) =>
   !ingredient.isActive || Number(ingredient.quantity) < required
 );
@@ -152,6 +236,10 @@ export const createOrder = async (req, res, next) => {
       if (!item.product.isActive) {
         return res.status(400).json({ message: `${item.product.name} is no longer available` });
       }
+    }
+    const soldOut = await findSoldOutProduct(cartItems.map(item => item.product));
+    if (soldOut) {
+      return res.status(400).json({ message: `${soldOut.name} หมดแล้ว` });
     }
 
     const ingredientUsage = await getIngredientUsage(prisma, cartItems);
@@ -308,6 +396,7 @@ export const createOrder = async (req, res, next) => {
       timeout: 10000 // 10 seconds max transaction execution time
     });
 
+    clearProductsCache();
     res.status(201).json(order);
   } catch (error) {
     next(error);
@@ -348,6 +437,7 @@ export const getOrders = async (req, res, next) => {
           user: { select: { id: true, name: true, email: true } },
           items: { include: { product: { select: { id: true, name: true, imageUrl: true } } } },
           address: true,
+          delivery: deliverySummaryInclude,
         },
       }),
       prisma.order.count({ where }),
@@ -371,6 +461,7 @@ export const getOrderById = async (req, res, next) => {
         items: { include: { product: true } },
         address: true,
         coupon: true,
+        delivery: deliverySummaryInclude,
       },
     });
     if (!order) return res.status(404).json({ message: "Order not found" });
@@ -415,6 +506,14 @@ export const updateOrderStatus = async (req, res, next) => {
       include: { items: { include: { product: true } } },
     });
 
+    if (status === "READY") {
+      try {
+        await ensureDeliveryForOrder(updated.id);
+      } catch (deliveryErr) {
+        console.warn("[updateOrderStatus READY] ensureDeliveryForOrder error:", deliveryErr.message);
+      }
+    }
+
     // Award loyalty points when order is marked DELIVERED
     if (status === "DELIVERED") {
       const activeSettings = getActiveSettings();
@@ -448,42 +547,9 @@ export const updateOrderStatus = async (req, res, next) => {
 
     // Sync related delivery & rider if order is delivered or cancelled
     if (status === "DELIVERED" || status === "CANCELLED") {
-      try {
-        const relatedDelivery = await prisma.delivery.findUnique({ where: { orderId: req.params.id } });
-        if (relatedDelivery) {
-          const newDeliveryStatus = status === "DELIVERED" ? "DELIVERED" : "CANCELLED";
-          if (relatedDelivery.status !== newDeliveryStatus) {
-            await prisma.delivery.update({
-              where: { id: relatedDelivery.id },
-              data: {
-                status: newDeliveryStatus,
-                ...(status === "DELIVERED" && !relatedDelivery.deliveredAt ? { deliveredAt: new Date() } : {}),
-              },
-            });
-          }
-          if (relatedDelivery.riderId) {
-            const activeDeliveriesCount = await prisma.delivery.count({
-              where: {
-                riderId: relatedDelivery.riderId,
-                id: { not: relatedDelivery.id },
-                status: { in: ["ASSIGNED", "PICKED_UP", "ON_THE_WAY"] },
-              },
-            });
-            if (activeDeliveriesCount === 0) {
-              await prisma.rider.update({
-                where: { id: relatedDelivery.riderId },
-                data: {
-                  status: "AVAILABLE",
-                  ...(status === "DELIVERED" ? { totalDeliveries: { increment: 1 } } : {}),
-                },
-              });
-            }
-          }
-        }
-      } catch (e) {
-        console.warn("[updateOrderStatus] Delivery sync warning:", e.message);
-      }
+      await syncDeliveryOnOrderEnd(req.params.id, status);
     }
+    if (status === "CANCELLED") clearProductsCache();
 
     res.json(updated);
   } catch (error) {
@@ -491,36 +557,87 @@ export const updateOrderStatus = async (req, res, next) => {
   }
 };
 
+const REFUND_METHOD_LABELS = {
+  CASH: "คืนเงินสด",
+  TRANSFER: "โอนเงินคืน",
+  STRIPE: "คืนเงินผ่าน Stripe",
+};
+
 export const cancelOrder = async (req, res, next) => {
   try {
-    const isStaff = req.user.role === "ADMIN" || req.user.role === "STAFF" || req.user.role === "CASHIER";
+    const isStaff = req.user.role === "ADMIN" || req.user.role === "STAFF";
     const where = isStaff ? { id: req.params.id } : { id: req.params.id, userId: req.user.id };
     const order = await prisma.order.findFirst({
       where,
       include: { items: true },
     });
     if (!order) return res.status(404).json({ message: "Order not found" });
+    if (order.status === "CANCELLED") {
+      return res.status(400).json({ message: "ออเดอร์นี้ถูกยกเลิกไปแล้ว" });
+    }
 
     const cancellableStatuses = ["PENDING", "CONFIRMED"];
     if (!cancellableStatuses.includes(order.status) && !isStaff) {
       return res.status(400).json({ message: "Order cannot be cancelled at this stage" });
     }
 
-    // Check if points were used and need to be refunded
-    const metaMatch = (order.notes || "").match(/LIMELEAF_META:(\{.*\})/);
-    let pointsToRefund = 0;
-    if (metaMatch) {
-      try {
-        const meta = JSON.parse(metaMatch[1]);
-        if (meta.pointsUsed && Number(meta.pointsUsed) > 0) {
-          pointsToRefund = Number(meta.pointsUsed);
+    const { meta } = readNotesMeta(order.notes);
+    const pointsToRefund = Number(meta.pointsUsed) > 0 ? Number(meta.pointsUsed) : 0;
+
+    // Money already collected: the full total when PAID, or the earlier paid amount
+    // when items were added after payment (order is back to PENDING with a balance).
+    const paidAmount = order.paymentStatus === "PAID"
+      ? Number(order.total)
+      : Math.max(0, Number(meta.paidAmount || 0));
+    const needsRefund = order.paymentStatus !== "REFUNDED" && paidAmount > 0;
+
+    const reason = String(req.body?.reason || "").trim();
+    let refundMethod = String(req.body?.refundMethod || "").toUpperCase();
+    if (needsRefund) {
+      if (!isStaff) {
+        // Customers can only self-cancel a paid order when it can be refunded automatically.
+        if (!order.stripePaymentId) {
+          return res.status(400).json({ message: "ออเดอร์นี้ชำระเงินแล้ว กรุณาติดต่อร้านเพื่อยกเลิกและขอคืนเงิน" });
         }
-      } catch {}
+        refundMethod = "STRIPE";
+      }
+      if (!REFUND_METHOD_LABELS[refundMethod]) {
+        return res.status(400).json({ message: "กรุณาเลือกวิธีคืนเงินสำหรับออเดอร์ที่ชำระแล้ว" });
+      }
+      if (refundMethod === "STRIPE") {
+        if (!order.stripePaymentId) {
+          return res.status(400).json({ message: "ออเดอร์นี้ไม่ได้ชำระผ่าน Stripe จึงคืนเงินอัตโนมัติไม่ได้" });
+        }
+        try {
+          await createRefund(order.stripePaymentId);
+        } catch (stripeErr) {
+          return res.status(502).json({ message: `คืนเงินผ่าน Stripe ไม่สำเร็จ: ${stripeErr.message}` });
+        }
+      }
+    }
+
+    const nextMeta = { ...meta, cancelledAt: new Date().toISOString(), cancelledBy: req.user.id };
+    if (reason) nextMeta.cancelReason = reason;
+    if (needsRefund) {
+      nextMeta.refund = {
+        amount: paidAmount,
+        method: refundMethod,
+        label: REFUND_METHOD_LABELS[refundMethod],
+        at: new Date().toISOString(),
+        by: req.user.id,
+      };
     }
 
     const ingredientUsage = await getIngredientUsage(prisma, order.items);
     const txOps = [
-      prisma.order.update({ where: { id: order.id }, data: { status: "CANCELLED" } }),
+      prisma.order.update({
+        where: { id: order.id },
+        data: {
+          status: "CANCELLED",
+          notes: writeNotesMeta(order.notes, nextMeta),
+          ...(needsRefund ? { paymentStatus: "REFUNDED" } : {}),
+        },
+      }),
       ...ingredientUsage.map(({ ingredient, required }) =>
         prisma.ingredient.update({
           where: { id: ingredient.id },
@@ -539,8 +656,13 @@ export const cancelOrder = async (req, res, next) => {
     }
 
     await prisma.$transaction(txOps);
+    await syncDeliveryOnOrderEnd(order.id, "CANCELLED");
+    clearProductsCache();
 
-    res.json({ message: "Order cancelled successfully" });
+    res.json({
+      message: needsRefund ? "ยกเลิกออเดอร์และบันทึกการคืนเงินเรียบร้อย" : "Order cancelled successfully",
+      refund: nextMeta.refund || null,
+    });
   } catch (error) {
     next(error);
   }
@@ -567,6 +689,7 @@ export const markPaymentPaid = async (req, res, next) => {
         const meta = JSON.parse(match[1]);
         meta.paymentMethodDetail = detailLabel;
         meta.paymentMethod = detailLabel;
+        meta.paidAmount = Number(order.total);
         if (stripePaymentId) meta.stripePaymentId = stripePaymentId;
         if (paymentProofUrl) meta.paymentProofUrl = paymentProofUrl;
         updatedNotes = updatedNotes.replace(match[0], `LIMELEAF_META:${JSON.stringify(meta)}`);
@@ -628,13 +751,22 @@ export const appendOrderItems = async (req, res, next) => {
       include: { items: true },
     });
     if (!order) return res.status(404).json({ message: "Order not found" });
-    if (order.status === "CANCELLED" || order.paymentStatus === "PAID") {
-      return res.status(400).json({ message: "Cannot add items to paid or cancelled orders" });
+    if (order.status === "CANCELLED" || order.paymentStatus === "REFUNDED") {
+      return res.status(400).json({ message: "Cannot add items to cancelled orders" });
     }
+    if (order.status === "DELIVERING") {
+      return res.status(400).json({ message: "ไรเดอร์รับออเดอร์ไปแล้ว ไม่สามารถเพิ่มเมนูได้" });
+    }
+    const wasPaid = order.paymentStatus === "PAID";
 
     const productIds = items.map(i => i.productId);
     const products = await prisma.product.findMany({ where: { id: { in: productIds } }, include: optionGroupInclude });
     const productMap = new Map(products.map(p => [p.id, p]));
+
+    const unavailable = products.find(product => !product.isActive) || await findSoldOutProduct(products);
+    if (unavailable) {
+      return res.status(400).json({ message: `${unavailable.name} หมดแล้ว` });
+    }
 
     let addedSubtotal = 0;
     const itemsToCreate = [];
@@ -688,6 +820,10 @@ export const appendOrderItems = async (req, res, next) => {
       meta.itemStatuses = {};
     }
 
+    // Items added after payment open a new balance: remember what was already paid
+    // so the cashier only collects the difference.
+    if (wasPaid) meta.paidAmount = parseFloat(order.total);
+
     // Determine batch / round count
     const nextRound = (meta.roundCount || 1) + 1;
     meta.roundCount = nextRound;
@@ -735,6 +871,7 @@ export const appendOrderItems = async (req, res, next) => {
           total: parseFloat(newTotal.toFixed(2)),
           status: nextStatus,
           notes: updatedNotes,
+          ...(wasPaid ? { paymentStatus: "PENDING" } : {}),
         },
         include: {
           items: { include: { product: true } },
@@ -742,6 +879,51 @@ export const appendOrderItems = async (req, res, next) => {
           user: { select: { id: true, name: true, email: true, phone: true } },
         },
       });
+    });
+
+    clearProductsCache();
+    res.json(updated);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const uploadOrderSlip = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const order = await prisma.order.findUnique({ where: { id } });
+    if (!order) return res.status(404).json({ message: "Order not found" });
+
+    // Allow order owner or staff/admin
+    if (order.userId !== req.user.id && req.user.role === 'CUSTOMER') {
+      return res.status(403).json({ message: "Forbidden" });
+    }
+
+    const slipUrl = req.file ? req.file.path : (req.body.slipUrl || req.body.paymentProofUrl);
+    if (!slipUrl) return res.status(400).json({ message: "No slip image provided" });
+
+    let updatedNotes = order.notes || "";
+    const match = updatedNotes.match(/LIMELEAF_META:(\{.*\})/);
+    if (match) {
+      try {
+        const meta = JSON.parse(match[1]);
+        meta.paymentProofUrl = slipUrl;
+        meta.slipUrl = slipUrl;
+        meta.slipUploadedAt = new Date().toISOString();
+        updatedNotes = updatedNotes.replace(match[0], `LIMELEAF_META:${JSON.stringify(meta)}`);
+      } catch {}
+    } else {
+      updatedNotes += ` LIMELEAF_META:{"paymentProofUrl":"${slipUrl}","slipUrl":"${slipUrl}","slipUploadedAt":"${new Date().toISOString()}"}`;
+    }
+
+    const updated = await prisma.order.update({
+      where: { id },
+      data: { notes: updatedNotes },
+      include: {
+        items: { include: { product: true } },
+        address: true,
+        user: { select: { id: true, name: true, email: true, phone: true } },
+      },
     });
 
     res.json(updated);
