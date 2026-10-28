@@ -898,6 +898,9 @@ export const uploadOrderSlip = async (req, res, next) => {
     if (order.userId !== req.user.id && req.user.role === 'CUSTOMER') {
       return res.status(403).json({ message: "Forbidden" });
     }
+    if (req.user.role === 'CUSTOMER' && ["DELIVERED", "CANCELLED"].includes(order.status)) {
+      return res.status(400).json({ message: "ออเดอร์นี้ปิดแล้ว ไม่สามารถแนบสลิปได้" });
+    }
 
     const slipUrl = req.file ? req.file.path : (req.body.slipUrl || req.body.paymentProofUrl);
     if (!slipUrl) return res.status(400).json({ message: "No slip image provided" });

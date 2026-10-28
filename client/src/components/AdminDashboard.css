@@ -3628,3 +3628,309 @@
         min-height: 44px
     }
 }
+
+/* ==========================================================================
+   Bank settings (multiple shop accounts)
+   ========================================================================== */
+.admin-bank-section-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+}
+
+.admin-bank-count {
+    padding: 4px 11px;
+    border-radius: 999px;
+    background: var(--brand-accent-soft);
+    color: var(--brand-primary-dark);
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.admin-bank-list {
+    display: grid;
+    gap: 14px;
+}
+
+.admin-bank-account {
+    padding: 16px 18px;
+    border: 1px solid var(--brand-border-soft);
+    border-left: 5px solid var(--bank-color);
+    border-radius: 14px;
+    background: #fff;
+    box-shadow: 0 4px 14px rgba(18, 63, 39, .05);
+    display: grid;
+    gap: 14px;
+}
+
+.admin-bank-account-head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.admin-bank-avatar {
+    width: 40px;
+    height: 40px;
+    flex: 0 0 40px;
+    display: grid;
+    place-items: center;
+    border-radius: 12px;
+    background: var(--bank-color);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 900;
+    letter-spacing: .02em;
+}
+
+.admin-bank-account-title {
+    min-width: 0;
+    flex: 1;
+    display: grid;
+    justify-items: start;
+    gap: 3px;
+}
+
+.admin-bank-account-title b {
+    color: var(--brand-primary-dark);
+    font-size: 15px;
+}
+
+.admin-bank-account-title small {
+    color: var(--brand-muted);
+    font-size: 12px;
+}
+
+.admin-bank-primary-tag {
+    padding: 2px 9px;
+    border-radius: 999px;
+    background: var(--brand-accent);
+    color: var(--brand-primary-dark);
+    font-size: 11px;
+    font-weight: 900;
+}
+
+.admin-bank-account-actions {
+    display: flex;
+    gap: 6px;
+}
+
+.admin-bank-icon-btn {
+    width: 36px;
+    height: 36px;
+    display: grid;
+    place-items: center;
+    border: 1px solid var(--brand-border);
+    border-radius: 10px;
+    background: #fff;
+    color: var(--brand-primary-dark);
+    cursor: pointer;
+    transition: background .15s ease, border-color .15s ease;
+}
+
+.admin-bank-icon-btn:hover:not(:disabled) {
+    background: var(--brand-accent-soft);
+}
+
+.admin-bank-icon-btn.is-danger {
+    color: #c33b2d;
+    border-color: #f5c2bc;
+}
+
+.admin-bank-icon-btn.is-danger:hover:not(:disabled) {
+    background: #fff0ed;
+}
+
+.admin-bank-icon-btn:disabled {
+    opacity: .4;
+    cursor: not-allowed;
+}
+
+.admin-bank-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.admin-bank-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 12px;
+    border: 1px solid var(--brand-border-soft);
+    border-radius: 999px;
+    background: #fff;
+    color: #475569;
+    font-size: 12px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: all .15s ease;
+}
+
+.admin-bank-chip > span {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--chip-color);
+}
+
+.admin-bank-chip:hover {
+    border-color: var(--chip-color);
+}
+
+.admin-bank-chip.is-active {
+    border: 2px solid var(--chip-color);
+    background: color-mix(in srgb, var(--chip-color) 10%, #fff);
+    color: var(--chip-color);
+}
+
+.admin-bank-fields {
+    display: grid;
+    grid-template-columns: 1.1fr 1fr 1.2fr;
+    gap: 14px;
+}
+
+.admin-bank-add {
+    min-height: 54px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border: 2px dashed var(--brand-border);
+    border-radius: 14px;
+    background: transparent;
+    color: var(--brand-primary);
+    font-size: 14px;
+    font-weight: 900;
+    cursor: pointer;
+    transition: background .15s ease, border-color .15s ease;
+}
+
+.admin-bank-add:hover {
+    background: var(--brand-accent-soft);
+    border-color: var(--brand-primary);
+}
+
+.admin-bank-promptpay {
+    display: grid;
+    grid-template-columns: minmax(0, 1.4fr) minmax(220px, 1fr);
+    gap: 20px;
+    align-items: start;
+}
+
+.admin-bank-qr {
+    display: grid;
+    gap: 12px;
+    padding: 16px;
+    border: 1px solid var(--brand-border-soft);
+    border-radius: 14px;
+    background: #fff;
+}
+
+.admin-bank-qr-preview {
+    min-height: 170px;
+    display: grid;
+    place-items: center;
+    border: 2px dashed var(--brand-border);
+    border-radius: 12px;
+    background: #f8fbf5;
+}
+
+.admin-bank-qr-preview img {
+    max-width: 160px;
+    max-height: 160px;
+    object-fit: contain;
+    border-radius: 8px;
+    background: #fff;
+}
+
+.admin-bank-qr-empty {
+    display: grid;
+    justify-items: center;
+    gap: 6px;
+    color: #9aae9e;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.admin-bank-qr-empty i {
+    font-size: 40px;
+}
+
+.admin-bank-qr-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.admin-bank-qr-btn {
+    flex: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    white-space: nowrap;
+}
+
+.admin-bank-qr-btn.is-danger {
+    color: #c33b2d;
+    border-color: #f5c2bc;
+}
+
+.admin-bank-preview-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+    gap: 10px;
+}
+
+.admin-bank-preview-card {
+    position: relative;
+    display: grid;
+    gap: 2px;
+    padding: 12px 40px 12px 14px;
+    border: 1px solid #e2e8f0;
+    border-left: 4px solid var(--bank-color);
+    border-radius: 10px;
+    background: #fff;
+}
+
+.admin-bank-preview-card small {
+    color: var(--bank-color);
+    font-size: 11px;
+    font-weight: 800;
+}
+
+.admin-bank-preview-card strong {
+    color: #0f172a;
+    font-size: 16px;
+    letter-spacing: .03em;
+}
+
+.admin-bank-preview-card span {
+    color: #475569;
+    font-size: 12px;
+}
+
+.admin-bank-preview-card > i {
+    position: absolute;
+    top: 50%;
+    right: 14px;
+    transform: translateY(-50%);
+    color: #94a3b8;
+}
+
+.admin-bank-preview-note {
+    margin: 12px 0 0;
+    color: var(--brand-muted);
+    font-size: 12px;
+}
+
+@media (max-width: 900px) {
+    .admin-bank-fields,
+    .admin-bank-promptpay {
+        grid-template-columns: 1fr;
+    }
+}

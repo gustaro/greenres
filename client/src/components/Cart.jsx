@@ -349,6 +349,7 @@ export function CartSidebar({ cart, setCart, products, itemNotes, setItemNotes, 
             return
         }
         setAddressError('')
+        setAddressForm(current => ({ ...current, phone: current.phone || profile?.phone || '' }))
         setShowAddressForm(current => !current)
     }
 
@@ -357,15 +358,22 @@ export function CartSidebar({ cart, setCart, products, itemNotes, setItemNotes, 
             setAddressError(isEn ? 'Please complete the address and postal code.' : 'กรุณากรอกที่อยู่ จังหวัด และรหัสไปรษณีย์ให้ครบ')
             return
         }
+        const phone = String(addressForm.phone || '').trim()
+        if (!phone) {
+            setAddressError(isEn ? 'Please enter a contact phone.' : 'กรุณากรอกเบอร์โทรติดต่อ')
+            return
+        }
         setSavingAddress(true)
         setAddressError('')
-        const { error } = await addAddress({ ...addressForm, phone: profile?.phone || '', isDefault: true })
+        const { error } = await addAddress({ ...addressForm, phone, isDefault: true })
+        // The contact phone shown in the cart comes from the profile, so keep them in sync.
+        if (!error && phone !== profile?.phone) await updateProfile({ phone })
         setSavingAddress(false)
         if (error) {
             setAddressError(error.message)
             return
         }
-        setAddressForm({ label: 'บ้าน', street: '', province: 'กรุงเทพมหานคร', zip: '' })
+        setAddressForm({ label: 'บ้าน', street: '', province: 'กรุงเทพมหานคร', zip: '', phone: '' })
         setShowAddressForm(false)
     }
 
@@ -420,10 +428,48 @@ export function CartSidebar({ cart, setCart, products, itemNotes, setItemNotes, 
                         return addrText ? <><b>{label}</b> — {addrText}</> : <b>{label}</b>
                     })() : (isEn ? 'Enter your delivery address' : 'กรอกที่อยู่จัดส่งของคุณ')}
                 </p>
-                {session && savedAddresses.length > 0 && (
-                    <button type="button" className="op-address-manage" onClick={() => navigate('/profile?tab=address')}>
-                        <i className="bi bi-geo-alt me-1" />{isEn ? 'Manage My Addresses' : 'จัดการในที่อยู่ของฉัน'}
-                    </button>
+                {/* Contact phone lives with the address: same row as "manage my addresses" */}
+                <div className="op-contact-row">
+                    <span className={`op-contact-phone ${profile?.phone ? 'has-phone' : ''}`}>
+                        <i className="bi bi-telephone-fill" />
+                        {profile?.phone || (isEn ? 'No contact phone' : 'ยังไม่ระบุเบอร์โทร')}
+                        <button type="button" className="op-contact-edit" onClick={openPhoneForm}>
+                            {showPhoneForm ? (isEn ? 'Cancel' : 'ยกเลิก') : profile?.phone ? (isEn ? 'Edit' : 'แก้ไข') : (isEn ? '+ Add' : '+ เพิ่ม')}
+                        </button>
+                    </span>
+                    {session && savedAddresses.length > 0 && (
+                        <button type="button" className="op-address-manage" onClick={() => navigate('/profile?tab=address')}>
+                            <i className="bi bi-geo-alt me-1" />{isEn ? 'Manage My Addresses' : 'จัดการในที่อยู่ของฉัน'}
+                        </button>
+                    )}
+                </div>
+                {showPhoneForm && (
+                    <div className="op-phone-form">
+                        <div style={{ display: 'flex', gap: 6 }}>
+                            <input
+                                type="tel"
+                                value={phoneInput}
+                                onChange={event => setPhoneInput(event.target.value)}
+                                placeholder="08x-xxx-xxxx"
+                                autoFocus
+                            />
+                            <button
+                                type="button"
+                                className="op-address-save"
+                                onClick={savePhone}
+                                disabled={savingPhone}
+                                style={{ width: 'auto', padding: '0 12px', margin: 0, whiteSpace: 'nowrap' }}
+                            >
+                                {savingPhone ? (isEn ? 'Saving...' : 'กำลังบันทึก...') : (isEn ? 'Save' : 'บันทึก')}
+                            </button>
+                        </div>
+                        {phoneError && <small className="op-address-error">{phoneError}</small>}
+                        {phoneSuccess && (
+                            <small style={{ color: '#16a34a', fontWeight: 700, fontSize: 10, display: 'flex', alignItems: 'center', gap: 4 }}>
+                                <i className="bi bi-check-circle-fill" /> {phoneSuccess}
+                            </small>
+                        )}
+                    </div>
                 )}
                 {showAddressForm && (
                     <div className="op-address-form">
@@ -451,63 +497,16 @@ export function CartSidebar({ cart, setCart, products, itemNotes, setItemNotes, 
                                 inputMode="numeric"
                             />
                         </div>
+                        <input
+                            type="tel"
+                            value={addressForm.phone || ''}
+                            onChange={event => updateAddressField('phone', event.target.value)}
+                            placeholder={isEn ? 'Contact phone 08x-xxx-xxxx' : 'เบอร์โทรติดต่อ 08x-xxx-xxxx'}
+                        />
                         {addressError && <small className="op-address-error">{addressError}</small>}
                         <button type="button" className="op-address-save" onClick={saveAddress} disabled={savingAddress}>
                             {savingAddress ? (isEn ? 'Saving...' : 'กำลังบันทึก...') : (isEn ? 'Save Address' : 'บันทึกที่อยู่')}
                         </button>
-                    </div>
-                )}
-            </div>
-            <div className="op-cart-info op-cart-phone">
-                <div className="op-cart-info-row">
-                    <span><i className="bi bi-telephone-fill me-1 text-success" />{isEn ? 'Contact Phone' : 'เบอร์โทรติดต่อ'}</span>
-                    <button type="button" className="op-edit-btn" onClick={openPhoneForm}>
-                        {showPhoneForm ? (isEn ? 'Cancel' : 'ยกเลิก') : (profile?.phone ? (isEn ? 'Edit' : 'แก้ไข') : (isEn ? '+ Add Phone' : '+ เพิ่มเบอร์โทร'))}
-                    </button>
-                </div>
-                {!showPhoneForm ? (
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginTop: 3 }}>
-                        <p className={`op-addr-text ${profile?.phone ? 'has-address' : ''}`} style={{ fontWeight: profile?.phone ? 700 : 500, margin: 0 }}>
-                            {profile?.phone || (isEn ? 'Enter your contact phone' : 'ยังไม่ได้ระบุเบอร์โทรศัพท์')}
-                        </p>
-                        {session && (
-                            <button
-                                type="button"
-                                className="op-address-manage"
-                                style={{ margin: 0, padding: 0, fontSize: 10, whiteSpace: 'nowrap' }}
-                                onClick={() => navigate('/profile?tab=info')}
-                                title={isEn ? 'Manage in Profile' : 'จัดการในหน้าโปรไฟล์'}
-                            >
-                                <i className="bi bi-person-gear me-1" />{isEn ? 'Profile' : 'โปรไฟล์'}
-                            </button>
-                        )}
-                    </div>
-                ) : (
-                    <div className="op-phone-form">
-                        <div style={{ display: 'flex', gap: 6 }}>
-                            <input
-                                type="tel"
-                                value={phoneInput}
-                                onChange={event => setPhoneInput(event.target.value)}
-                                placeholder="08x-xxx-xxxx"
-                                autoFocus
-                            />
-                            <button
-                                type="button"
-                                className="op-address-save"
-                                onClick={savePhone}
-                                disabled={savingPhone}
-                                style={{ width: 'auto', padding: '0 12px', margin: 0, whiteSpace: 'nowrap' }}
-                            >
-                                {savingPhone ? (isEn ? 'Saving...' : 'กำลังบันทึก...') : (isEn ? 'Save' : 'บันทึก')}
-                            </button>
-                        </div>
-                        {phoneError && <small className="op-address-error">{phoneError}</small>}
-                        {phoneSuccess && (
-                            <small style={{ color: '#16a34a', fontWeight: 700, fontSize: 10, display: 'flex', alignItems: 'center', gap: 4 }}>
-                                <i className="bi bi-check-circle-fill" /> {phoneSuccess}
-                            </small>
-                        )}
                     </div>
                 )}
             </div>

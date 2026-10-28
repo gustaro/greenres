@@ -1522,6 +1522,15 @@
     cursor: wait;
 }
 
+.pf-attach-slip-btn.is-closed,
+.pf-attach-slip-btn.is-closed:disabled {
+    background: #e7e5e4;
+    color: #57534e;
+    border-color: #d6d3d1;
+    opacity: 1;
+    cursor: not-allowed;
+}
+
 /* Lightbox Modal */
 .pf-lightbox-overlay {
     position: fixed;

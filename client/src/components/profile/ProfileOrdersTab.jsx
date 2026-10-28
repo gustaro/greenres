@@ -136,6 +136,8 @@ export function ProfileOrdersTab({
                     const steps = orderSteps(order)
                     const currentStep = steps.indexOf(order.foodStatus)
                     const isCancelled = order.foodStatus === 'ยกเลิก' || order.status === 'CANCELLED' || order.serverStatus === 'CANCELLED'
+                    // Completed orders are closed: the slip can no longer be attached or replaced.
+                    const isCompleted = order.serverStatus === 'DELIVERED' || order.status === 'DELIVERED' || ['เสร็จสิ้น', 'จัดส่งเสร็จสิ้น'].includes(order.foodStatus)
                     const slipUrl = order.paymentProofUrl || order.slipUrl
                     const isBankTransfer = (order.paymentMethodDetail || order.paymentMethod || '').includes('โอน') ||
                                            (order.paymentMethodDetail || order.paymentMethod || '').includes('สลิป')
@@ -299,14 +301,16 @@ export function ProfileOrdersTab({
                                                     >
                                                         {isEn ? 'View Full Slip' : 'ดูรูปสลิปขยาย'}
                                                     </button>
-                                                    <button
-                                                        type="button"
-                                                        disabled={uploadingOrderId === order.id}
-                                                        onClick={() => triggerUploadSlip(order.id)}
-                                                        style={{ background: 'none', border: 'none', color: 'var(--brand-primary, #12852f)', fontSize: '0.8rem', cursor: 'pointer', padding: 0, fontWeight: 600 }}
-                                                    >
-                                                        {uploadingOrderId === order.id ? (isEn ? 'Uploading...' : 'กำลังอัปโหลด...') : (isEn ? 'Change Slip' : 'เปลี่ยนสลิปใหม่')}
-                                                    </button>
+                                                    {!isCompleted && (
+                                                        <button
+                                                            type="button"
+                                                            disabled={uploadingOrderId === order.id}
+                                                            onClick={() => triggerUploadSlip(order.id)}
+                                                            style={{ background: 'none', border: 'none', color: 'var(--brand-primary, #12852f)', fontSize: '0.8rem', cursor: 'pointer', padding: 0, fontWeight: 600 }}
+                                                        >
+                                                            {uploadingOrderId === order.id ? (isEn ? 'Uploading...' : 'กำลังอัปโหลด...') : (isEn ? 'Change Slip' : 'เปลี่ยนสลิปใหม่')}
+                                                        </button>
+                                                    )}
                                                 </div>
                                             </div>
                                         ) : (
@@ -319,11 +323,14 @@ export function ProfileOrdersTab({
                                         <div>
                                             <button
                                                 type="button"
-                                                className="pf-attach-slip-btn"
-                                                disabled={uploadingOrderId === order.id}
-                                                onClick={() => triggerUploadSlip(order.id)}
+                                                className={`pf-attach-slip-btn ${isCompleted ? 'is-closed' : ''}`}
+                                                disabled={isCompleted || uploadingOrderId === order.id}
+                                                onClick={() => { if (!isCompleted) triggerUploadSlip(order.id) }}
+                                                title={isCompleted ? (isEn ? 'This order is completed' : 'ออเดอร์นี้เสร็จสิ้นแล้ว') : undefined}
                                             >
-                                                {uploadingOrderId === order.id ? (
+                                                {isCompleted ? (
+                                                    <><i className="bi bi-lock-fill" /> {isEn ? 'Order completed — slip locked' : 'ออเดอร์เสร็จสิ้นแล้ว แนบสลิปไม่ได้'}</>
+                                                ) : uploadingOrderId === order.id ? (
                                                     <><i className="bi bi-arrow-repeat spin" /> {isEn ? 'Uploading Slip...' : 'กำลังอัปโหลดสลิป...'}</>
                                                 ) : slipUrl ? (
                                                     <><i className="bi bi-arrow-repeat" /> {isEn ? 'Upload New Slip' : 'อัปโหลดสลิปใหม่'}</>
