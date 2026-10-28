@@ -183,7 +183,7 @@ export function OrderPage({ onHome, user, onAuth, onLogout, onCart, products, ca
                                                 disabled={isSoldOut}
                                                 onClick={() => add(p)}
                                             >
-                                                {isSoldOut ? (isEn ? 'Sold Out' : 'หมด') : (isEn ? 'Add' : 'สั่งซื้อ')}
+                                                {isSoldOut ? t('outOfStock') : (isEn ? 'Add' : 'สั่งซื้อ')}
                                             </button>
                                         </div>
                                     </div>
